@@ -39,8 +39,11 @@ Configuration is done through `application.conf` when possible, rather than usin
 
 ## Deployment
 
-The scala apps run in a single container, but you'll need kafka and mariadb.
+The scala apps run in a single container, but you'll need kafka and mariadb. Write a valid ota-lith.conf.
 
-Write a valid `application.conf` and run `docker run advancedtelematic/ota-lith:20201212T113900 -DconfigFile=/path/to/application.conf`
+```
+sbt docker:publishLocal
+docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf advancedtelematic/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
+```
 
 You'll need to mount `application.conf` somewhere the app can access it from inside the container.

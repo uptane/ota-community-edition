@@ -10,12 +10,12 @@ updateOptions := updateOptions.value.withLatestSnapshots(false)
 
 libraryDependencies ++= {
   val bouncyCastleV = "1.59"
-  val libatsV = "0.4.0-15-g2b67637-SNAPSHOT"
-  val tufV = "0.7.1-24-g4db4c23-SNAPSHOT"
+  val libatsV = "0.4.0-15-g006c435-SNAPSHOT"
+  val tufV = "0.7.1-23-g3ea21d4-SNAPSHOT"
 
   Seq(
     "com.advancedtelematic" %% "libats" % libatsV,
-    "com.advancedtelematic" %% "director-v2" % "439ba2ad56a584916174dbb36561cb0d80e918f0-SNAPSHOT",
+    "com.advancedtelematic" %% "director-v2" % "e55efb5b82384c53f9d6063e34513d64f90139ec-SNAPSHOT",
     "com.advancedtelematic" %% "keyserver" % tufV,
     "com.advancedtelematic" %% "reposerver" % tufV,
 
@@ -27,7 +27,6 @@ libraryDependencies ++= {
 enablePlugins(BuildInfoPlugin, GitVersioning, JavaAppPackaging)
 
 buildInfoOptions += BuildInfoOption.ToMap
-
 buildInfoOptions += BuildInfoOption.BuildTime
 
 mainClass in Compile := Some("com.advancedtelematic.ota_lith.OtaLithBoot")

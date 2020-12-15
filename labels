@@ -1,0 +1,13 @@
+traefik.http.routers.reposerver.service=reposerver
+traefik.http.routers.reposerver.rule=Host(`reposerver.ota-lith`)
+traefik.http.services.reposerver.loadbalancer.server.port=7100
+traefik.http.routers.keyserver.service=keyserver
+traefik.http.routers.keyserver.rule=Host(`keyserver.ota-lith`)
+traefik.http.services.keyserver.loadbalancer.server.port=7200
+traefik.http.routers.director.service=director
+traefik.http.routers.director.rule=Host(`director.ota-lith`)
+traefik.http.services.director.loadbalancer.server.port=7300
+
+
+
+
