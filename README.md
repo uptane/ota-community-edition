@@ -5,12 +5,19 @@ Services marked with X are already included:
 - [X] tuf-keyserver
 - [X] tuf-reposerver
 - [X] director
-- [ ] device-registry
-- [ ] user-profile
+- [X] treehub
+- [X] device-registry
 - [ ] campaigner
-- [ ] api gateway
-- [ ] treehub
+
+Non open source:
+
+- [ ] user-profile
+- [ ] api provider
+
+Not libats/jvm based:
+
 - [ ] web app
+- [ ] api gateway
 - [ ] device gateway
 - [ ] auth+
 - [ ] crypt service

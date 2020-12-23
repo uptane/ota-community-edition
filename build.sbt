@@ -8,6 +8,8 @@ resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
+scalacOptions += "-Xlog-implicits"
+
 libraryDependencies ++= {
   val bouncyCastleV = "1.59"
   val libatsV = "0.4.0-15-g006c435-SNAPSHOT"
@@ -23,6 +25,12 @@ libraryDependencies ++= {
     "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV
   )
 }
+
+// TODO: Add to libraryDependencies when done
+lazy val treehub = (ProjectRef(file("/home/simao/ats/treehub"), "root"))
+lazy val device_registry = (ProjectRef(file("/home/simao/ats/ota-device-registry"), "ota-device-registry"))
+
+dependsOn(treehub, device_registry)
 
 enablePlugins(BuildInfoPlugin, GitVersioning, JavaAppPackaging)
 
