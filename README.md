@@ -7,20 +7,21 @@ Services marked with X are already included:
 - [X] director
 - [X] treehub
 - [X] device-registry
-- [ ] campaigner
+- [X] campaigner
+- [ ] web events (?)
 
 Non open source:
 
-- [ ] user-profile
-- [ ] api provider
+- [X] user-profile
+- [X] api provider
 
 Not libats/jvm based:
 
+- [ ] crypt service
 - [ ] web app
 - [ ] api gateway
 - [ ] device gateway
-- [ ] auth+
-- [ ] crypt service
+- [ ] ~~auth+~~
 
 ## Missing infrastructure
 

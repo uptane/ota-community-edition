@@ -8,29 +8,39 @@ resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
-scalacOptions += "-Xlog-implicits"
+// todo: pin akka-http, akka versions
 
 libraryDependencies ++= {
   val bouncyCastleV = "1.59"
-  val libatsV = "0.4.0-15-g006c435-SNAPSHOT"
   val tufV = "0.7.1-23-g3ea21d4-SNAPSHOT"
+  val akkaV = "2.6.5"
+  val akkaHttpV = "10.1.12"
 
   Seq(
-    "com.advancedtelematic" %% "libats" % libatsV,
+//    "com.advancedtelematic" %% "libats" % libatsV,
     "com.advancedtelematic" %% "director-v2" % "e55efb5b82384c53f9d6063e34513d64f90139ec-SNAPSHOT",
     "com.advancedtelematic" %% "keyserver" % tufV,
     "com.advancedtelematic" %% "reposerver" % tufV,
 
     "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
-    "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV
+    "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV,
+
+    "com.typesafe.akka" %% "akka-actor" % akkaV,
+    "com.typesafe.akka" %% "akka-stream" % akkaV,
+    "com.typesafe.akka" %% "akka-http" % akkaHttpV,
   )
 }
 
 // TODO: Add to libraryDependencies when done
 lazy val treehub = (ProjectRef(file("/home/simao/ats/treehub"), "root"))
 lazy val device_registry = (ProjectRef(file("/home/simao/ats/ota-device-registry"), "ota-device-registry"))
+lazy val campaigner = (ProjectRef(file("/home/simao/ats/campaigner"), "campaigner"))
+// lazy val libats = (ProjectRef(file("/home/simao/ats/libats"), "libats"))
+//lazy val crypt = (ProjectRef(file("/home/simao/ats/crypt-service"), "crypt-service"))
+lazy val user_profile = (ProjectRef(file("/home/simao/ats/ota-plus-user-profile"), "ota-plus-user-profile"))
+lazy val api_provider = (ProjectRef(file("/home/simao/ats/api-provider"), "root"))
 
-dependsOn(treehub, device_registry)
+dependsOn(treehub, device_registry, campaigner, user_profile, api_provider)
 
 enablePlugins(BuildInfoPlugin, GitVersioning, JavaAppPackaging)
 
