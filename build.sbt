@@ -18,9 +18,11 @@ libraryDependencies ++= {
 
   Seq(
 //    "com.advancedtelematic" %% "libats" % libatsV,
-    "com.advancedtelematic" %% "director-v2" % "e55efb5b82384c53f9d6063e34513d64f90139ec-SNAPSHOT",
+//    "com.advancedtelematic" %% "director-v2" % "e55efb5b82384c53f9d6063e34513d64f90139ec-SNAPSHOT",
     "com.advancedtelematic" %% "keyserver" % tufV,
     "com.advancedtelematic" %% "reposerver" % tufV,
+
+    "com.advancedtelematic" %% "libats-slick" % "0.4.0-17-ga03bec5-SNAPSHOT",
 
     "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
     "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV,
@@ -35,12 +37,15 @@ libraryDependencies ++= {
 lazy val treehub = (ProjectRef(file("/home/simao/ats/treehub"), "root"))
 lazy val device_registry = (ProjectRef(file("/home/simao/ats/ota-device-registry"), "ota-device-registry"))
 lazy val campaigner = (ProjectRef(file("/home/simao/ats/campaigner"), "campaigner"))
-// lazy val libats = (ProjectRef(file("/home/simao/ats/libats"), "libats"))
+lazy val director = (ProjectRef(file("/home/simao/ats/director"), "director"))
+lazy val keyserver = (ProjectRef(file("/home/simao/ats/ota-tuf"), "keyserver"))
+lazy val reposerver = (ProjectRef(file("/home/simao/ats/ota-tuf"), "reposerver"))
+// lazy val libats_slick = (ProjectRef(file("/home/simao/ats/libats"), "libats_slick"))
 //lazy val crypt = (ProjectRef(file("/home/simao/ats/crypt-service"), "crypt-service"))
-lazy val user_profile = (ProjectRef(file("/home/simao/ats/ota-plus-user-profile"), "ota-plus-user-profile"))
-lazy val api_provider = (ProjectRef(file("/home/simao/ats/api-provider"), "root"))
+//lazy val user_profile = (ProjectRef(file("/home/simao/ats/ota-plus-user-profile"), "ota-plus-user-profile"))
+//lazy val api_provider = (ProjectRef(file("/home/simao/ats/api-provider"), "root"))
 
-dependsOn(treehub, device_registry, campaigner, user_profile, api_provider)
+dependsOn(treehub, device_registry, campaigner, director, keyserver, reposerver)
 
 enablePlugins(BuildInfoPlugin, GitVersioning, JavaAppPackaging)
 
@@ -74,6 +79,8 @@ dockerCommands := Seq(
   Cmd("WORKDIR", s"/opt/${moduleName.value}"),
   ExecCmd("ENTRYPOINT", s"/opt/${moduleName.value}/bin/${moduleName.value}"),
   Cmd("RUN", s"chown -R daemon:daemon /opt/${moduleName.value}"),
+  Cmd("RUN", s"mkdir /var/lib/${moduleName.value}"),
+  Cmd("RUN", s"chown -R daemon:daemon /var/lib/${moduleName.value}"),
   Cmd("RUN", s"chown -R daemon:daemon /var/log/${moduleName.value}"),
   Cmd("USER", "daemon")
 )
