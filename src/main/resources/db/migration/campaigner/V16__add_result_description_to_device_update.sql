@@ -1,0 +1,1 @@
+ALTER TABLE device_updates ADD COLUMN result_description VARCHAR(255) NULL;
