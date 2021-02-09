@@ -2,7 +2,6 @@ package com.advancedtelematic.treehub.object_store
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectIdOps, ObjectStatus, TObject}
@@ -19,8 +18,6 @@ class S3BlobStoreIntegrationSpec extends TreeHubSpec {
   implicit val ec = ExecutionContext.global
 
   implicit lazy val system = ActorSystem("S3BlobStoreSpec")
-
-  implicit lazy val mat = ActorMaterializer()
 
   val ns = Namespace("S3BlobStoreIntegrationSpec")
 

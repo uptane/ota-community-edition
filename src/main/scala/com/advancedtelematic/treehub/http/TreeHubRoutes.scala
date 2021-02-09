@@ -2,7 +2,6 @@ package com.advancedtelematic.treehub.http
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directives, _}
-import akka.stream.Materializer
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.ErrorRepresentation
 import com.advancedtelematic.libats.http.{DefaultRejectionHandler, ErrorHandler}
@@ -15,6 +14,9 @@ import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter
 import com.amazonaws.SdkClientException
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import ErrorRepresentation._
+import akka.actor.ActorSystem
+import com.advancedtelematic.metrics.MetricsSupport
+import com.codahale.metrics.MetricRegistry
 
 import scala.concurrent.ExecutionContext
 import slick.jdbc.MySQLProfile.api._
@@ -25,8 +27,9 @@ class TreeHubRoutes(tokenValidator: Directive0,
                     messageBus: MessageBusPublisher,
                     objectStore: ObjectStore,
                     deltaStorage: StaticDeltaStorage,
-                    usageHandler: UsageMetricsRouter.HandlerRef)
-                   (implicit val db: Database, ec: ExecutionContext, mat: Materializer) extends VersionInfo {
+                    usageHandler: UsageMetricsRouter.HandlerRef,
+                    metricRegistry: MetricRegistry = MetricsSupport.metricRegistry)
+                   (implicit val db: Database, ec: ExecutionContext, system: ActorSystem) extends VersionInfo {
 
   import Directives._
 
@@ -55,7 +58,7 @@ class TreeHubRoutes(tokenValidator: Directive0,
           } ~
             (pathPrefix("api" / "v3") & tokenValidator) {
               allRoutes(namespaceExtractor)
-            } ~ DbHealthResource(versionMap).route
+            } ~ DbHealthResource(versionMap, metricRegistry = metricRegistry).route
         }
       }
     }

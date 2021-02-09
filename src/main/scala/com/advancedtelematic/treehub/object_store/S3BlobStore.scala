@@ -6,9 +6,9 @@ import java.time.temporal.ChronoUnit
 import java.time.{Duration, Instant}
 import java.util.Date
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
-import akka.stream.Materializer
 import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
@@ -28,12 +28,12 @@ import scala.concurrent.{ExecutionContext, Future, blocking}
 
 object S3BlobStore {
   def apply(s3Credentials: S3Credentials, allowRedirects: Boolean)
-           (implicit ec: ExecutionContext, mat: Materializer): S3BlobStore =
+           (implicit ec: ExecutionContext, system: ActorSystem): S3BlobStore =
     new S3BlobStore(s3Credentials, S3Client(s3Credentials), allowRedirects)
 }
 
 class S3BlobStore(s3Credentials: S3Credentials, s3client: AmazonS3, allowRedirects: Boolean)
-                 (implicit ec: ExecutionContext, mat: Materializer) extends BlobStore {
+                 (implicit ec: ExecutionContext, system: ActorSystem) extends BlobStore {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 

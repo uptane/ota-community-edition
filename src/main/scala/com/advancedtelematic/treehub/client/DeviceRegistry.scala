@@ -7,7 +7,6 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, ResponseEntity, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.http.scaladsl.util.FastFuture
-import akka.stream.Materializer
 import com.advancedtelematic.libats.data.DataType.Namespace
 import io.circe.Json
 import org.slf4j.LoggerFactory
@@ -21,7 +20,7 @@ trait DeviceRegistryClient {
 }
 
 class DeviceRegistryHttpClient(baseUri: Uri, mydeviceUri: Uri)
-                              (implicit system: ActorSystem, mat: Materializer) extends DeviceRegistryClient {
+                              (implicit system: ActorSystem) extends DeviceRegistryClient {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 

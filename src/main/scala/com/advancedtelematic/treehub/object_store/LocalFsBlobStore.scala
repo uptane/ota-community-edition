@@ -3,9 +3,9 @@ package com.advancedtelematic.treehub.object_store
 import java.nio.file.StandardOpenOption.{CREATE, READ, WRITE}
 import java.nio.file.{Files, Path}
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.util.FastFuture
-import akka.stream.Materializer
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
 import com.advancedtelematic.data.DataType.ObjectId
@@ -20,7 +20,7 @@ import scala.util.Try
 object LocalFsBlobStore {
   private val _log = LoggerFactory.getLogger(this.getClass)
 
-  def apply(root: Path)(implicit mat: Materializer, ec: ExecutionContext): LocalFsBlobStore = {
+  def apply(root: Path)(implicit ec: ExecutionContext, system: ActorSystem): LocalFsBlobStore = {
     if(!root.toFile.exists() && !root.getParent.toFile.canWrite) {
       throw new IllegalArgumentException(s"Could not open $root as local blob store")
     } else if (!root.toFile.exists()) {
@@ -33,7 +33,7 @@ object LocalFsBlobStore {
   }
 }
 
-class LocalFsBlobStore(root: Path)(implicit ec: ExecutionContext, mat: Materializer) extends BlobStore {
+class LocalFsBlobStore(root: Path)(implicit ec: ExecutionContext, system: ActorSystem) extends BlobStore {
   def store(ns: Namespace, id: ObjectId, blob: Source[ByteString, _]): Future[(Path, Long)] = {
     for {
       path <- Future.fromTry(objectPath(ns, id))

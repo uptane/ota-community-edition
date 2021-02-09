@@ -4,7 +4,6 @@ import java.io.File
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
-import akka.stream.Materializer
 import com.advancedtelematic.data.DataType
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -21,7 +20,7 @@ import scala.util.Success
 class ObjectResource(namespace: Directive1[Namespace],
                      objectStore: ObjectStore,
                      usageHandler: UsageMetricsRouter.HandlerRef)
-                    (implicit db: Database, ec: ExecutionContext, mat: Materializer) {
+                    (implicit db: Database, ec: ExecutionContext) {
   import akka.http.scaladsl.server.Directives._
 
   val PrefixedObjectId: PathMatcher1[ObjectId] = (Segment / Segment).tflatMap { case (oprefix, osuffix) =>

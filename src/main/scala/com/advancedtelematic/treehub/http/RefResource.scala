@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.http
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.{Directive, Directive1, Route}
-import akka.stream.Materializer
 import com.advancedtelematic.data.DataType.{Ref, RefName}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 class RefResource(namespace: Directive1[Namespace], objectStore: ObjectStore)
-                 (implicit db: Database, ec: ExecutionContext, mat: Materializer)
+                 (implicit db: Database, ec: ExecutionContext, system: ActorSystem)
   extends RefRepositorySupport {
 
   import akka.http.scaladsl.server.Directives._

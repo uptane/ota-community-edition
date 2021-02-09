@@ -3,7 +3,6 @@ package com.advancedtelematic.treehub.http
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.server.{Directives, _}
-import akka.stream.{ActorMaterializer, Materializer}
 import com.advancedtelematic.libats.auth.{NamespaceDirectives, TokenValidator}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.client.DeviceRegistryClient
@@ -21,6 +20,5 @@ object Http {
     }
   }
 
-  // TODO: Should be Materializer instead of ActorMaterializer
-  def tokenValidator(implicit s: ActorSystem, mat: ActorMaterializer): Directive0 = TokenValidator().fromConfig
+  def tokenValidator(implicit s: ActorSystem): Directive0 = TokenValidator().fromConfig
 }
