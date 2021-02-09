@@ -8,22 +8,12 @@ resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
-// todo: pin akka-http, akka versions
-
 libraryDependencies ++= {
   val bouncyCastleV = "1.59"
-  val tufV = "0.7.1-23-g3ea21d4-SNAPSHOT"
   val akkaV = "2.6.5"
   val akkaHttpV = "10.1.12"
 
   Seq(
-//    "com.advancedtelematic" %% "director-v2" % "e55efb5b82384c53f9d6063e34513d64f90139ec-SNAPSHOT",
-    "com.advancedtelematic" %% "keyserver" % tufV,
-    "com.advancedtelematic" %% "reposerver" % tufV,
-
-    "com.advancedtelematic" %% "libats" % "0.4.0-17-ga03bec5-SNAPSHOT",
-    "com.advancedtelematic" %% "libats-slick" % "0.4.0-17-ga03bec5-SNAPSHOT",
-
     "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
     "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV,
 
@@ -37,7 +27,7 @@ libraryDependencies ++= {
 lazy val treehub = (ProjectRef(file("./repos/treehub"), "root"))
 lazy val device_registry = (ProjectRef(file("./repos/device-registry"), "ota-device-registry"))
 lazy val campaigner = (ProjectRef(file("./repos/campaigner"), "campaigner"))
-lazy val director = (ProjectRef(file("./repos/ats/director"), "director"))
+lazy val director = (ProjectRef(file("./repos/director"), "director"))
 lazy val keyserver = (ProjectRef(file("./repos/tuf"), "keyserver"))
 lazy val reposerver = (ProjectRef(file("./repos/tuf"), "reposerver"))
 // lazy val libats_slick = (ProjectRef(file("/home/simao/ats/libats"), "libats_slick"))
