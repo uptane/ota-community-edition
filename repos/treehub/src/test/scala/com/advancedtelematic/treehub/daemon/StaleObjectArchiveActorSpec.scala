@@ -6,7 +6,6 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
-import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKitBase}
 import com.advancedtelematic.data.DataType.{ObjectStatus, TObject}
 import com.advancedtelematic.libats.test.{DatabaseSpec, LongTest}
@@ -26,8 +25,6 @@ protected abstract class StaleObjectArchiveActorSpecUtil extends TreeHubSpec wit
   with ObjectRepositorySupport with Eventually with LongTest with BeforeAndAfterEach {
 
   override implicit lazy val system: ActorSystem = ActorSystem(this.getClass.getSimpleName)
-
-  implicit lazy val mat = ActorMaterializer()
 
   val subject: ActorRef
 

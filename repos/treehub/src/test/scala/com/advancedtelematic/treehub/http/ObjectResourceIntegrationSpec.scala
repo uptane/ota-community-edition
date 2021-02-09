@@ -5,7 +5,6 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.libats.http.{DefaultRejectionHandler, ErrorHandler}
@@ -15,7 +14,6 @@ import com.advancedtelematic.util.ResourceSpec.ClientTObject
 import com.advancedtelematic.util.{FakeUsageUpdate, TreeHubSpec}
 
 class ObjectResourceIntegrationSpec extends TreeHubSpec with ScalatestRouteTest with DatabaseSpec with LongTest {
-  implicit val mat = ActorMaterializer()
 
   val ns = DataType.Namespace("ObjectResourceIntegrationSpec")
 

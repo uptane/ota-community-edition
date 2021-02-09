@@ -19,7 +19,7 @@ lazy val ItTest = config("it").extend(Test)
 lazy val UnitTest = config("ut").extend(Test)
 
 lazy val root = (project in file("."))
-  .enablePlugins(BuildInfoPlugin)
+  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, Versioning.Plugin)
   .configs(ItTest)
   .settings(inConfig(ItTest)(Defaults.testTasks): _*)
   .configs(UnitTest)
@@ -28,10 +28,10 @@ lazy val root = (project in file("."))
   .settings(testOptions in IntegrationTest := Seq(Tests.Filter(itFilter)))
   .settings(sonarSettings)
   .settings(Seq(libraryDependencies ++= {
-    val akkaV = "2.5.25"
-    val akkaHttpV = "10.1.10"
+    val akkaV = "2.6.5"
+    val akkaHttpV = "10.1.12"
     val scalaTestV = "3.0.8"
-    val libatsV = "0.3.0-109-ge12f057"
+    val libatsV = "0.4.0-17-ga03bec5-SNAPSHOT"
 
     Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -58,7 +58,7 @@ lazy val root = (project in file("."))
       "com.advancedtelematic" %% "libats-logging" % libatsV,
 
       "org.scala-lang.modules" %% "scala-async" % "0.9.6",
-      "org.mariadb.jdbc" % "mariadb-java-client" % "1.4.4",
+      "org.mariadb.jdbc" % "mariadb-java-client" % "2.4.4",
 
       "com.amazonaws" % "aws-java-sdk-s3" % "1.11.86"
     )
@@ -67,8 +67,11 @@ lazy val root = (project in file("."))
 mainClass in Compile := Some("com.advancedtelematic.treehub.Boot")
 
 buildInfoOptions += BuildInfoOption.ToMap
-
 buildInfoOptions += BuildInfoOption.BuildTime
+buildInfoObject := "AppBuildInfo"
+buildInfoPackage := "com.advancedtelematic.treehub"
+buildInfoUsePackageAsPath := true
+buildInfoOptions += BuildInfoOption.Traits("com.advancedtelematic.libats.boot.VersionInfoProvider")
 
 import com.typesafe.sbt.packager.docker._
 
@@ -93,15 +96,9 @@ dockerCommands := Seq(
   Cmd("USER", "daemon")
 )
 
-enablePlugins(JavaAppPackaging)
-
-Revolver.settings
-
 Versioning.settings
 
 Release.settings
-
-enablePlugins(Versioning.Plugin)
 
 lazy val sonarSettings = Seq(
   sonarProperties ++= Map(

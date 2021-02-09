@@ -5,7 +5,7 @@ import java.util.UUID
 
 import scala.concurrent.duration._
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Status}
-import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Sink, Source}
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -53,9 +53,8 @@ protected class StorageUpdate(publisher: MessageBusPublisher, objectStore: Objec
   with ActorLogging {
 
   import context.dispatcher
+  import context.system
   import scala.async.Async._
-
-  implicit val mat = ActorMaterializer()
 
   val BUFFER_SIZE = 1024 * 100
   val PARALLELISM = 10
