@@ -34,7 +34,7 @@ libraryDependencies ++= {
 }
 
 // TODO: Add to libraryDependencies when done
-lazy val treehub = (ProjectRef(file("/home/simao/ats/treehub"), "root"))
+lazy val treehub = (ProjectRef(file("./repos/treehub"), "root"))
 lazy val device_registry = (ProjectRef(file("/home/simao/ats/ota-device-registry"), "ota-device-registry"))
 lazy val campaigner = (ProjectRef(file("/home/simao/ats/campaigner"), "campaigner"))
 lazy val director = (ProjectRef(file("/home/simao/ats/director"), "director"))
