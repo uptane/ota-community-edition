@@ -17,11 +17,11 @@ libraryDependencies ++= {
   val akkaHttpV = "10.1.12"
 
   Seq(
-//    "com.advancedtelematic" %% "libats" % libatsV,
 //    "com.advancedtelematic" %% "director-v2" % "e55efb5b82384c53f9d6063e34513d64f90139ec-SNAPSHOT",
     "com.advancedtelematic" %% "keyserver" % tufV,
     "com.advancedtelematic" %% "reposerver" % tufV,
 
+    "com.advancedtelematic" %% "libats" % "0.4.0-17-ga03bec5-SNAPSHOT",
     "com.advancedtelematic" %% "libats-slick" % "0.4.0-17-ga03bec5-SNAPSHOT",
 
     "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,

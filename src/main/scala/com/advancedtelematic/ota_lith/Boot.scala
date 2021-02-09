@@ -29,8 +29,8 @@ object OtaLithBoot extends App {
   val directorBind = new DirectorBoot(appConfig, directorDbConfig, new MetricRegistry)(ActorSystem("director-actor-system")).bind()
 
   // TODO: Causing everything o crash
-//  val treehubDbConfig = appConfig.getConfig("ats.treehub.database")
-//  val treehubBind = new TreehubBoot(appConfig, treehubDbConfig, new MetricRegistry)(ActorSystem("treehub-actor-system")).bind()
+  val treehubDbConfig = appConfig.getConfig("ats.treehub.database")
+  val treehubBind = new TreehubBoot(appConfig, treehubDbConfig, new MetricRegistry)(ActorSystem("treehub-actor-system")).bind()
 
   val deviceRegistryDbConfig = appConfig.getConfig("ats.deviceregistry.database")
   val deviceRegistryBind = new DeviceRegistryBoot(appConfig, deviceRegistryDbConfig, new MetricRegistry)(ActorSystem("deviceregistry-actor-system")).bind()
