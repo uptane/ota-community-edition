@@ -1,0 +1,58 @@
+{
+	"signatures" : 
+	[
+		
+		{
+			"keyid" : "9db4abce9f280c8bdd55c3c7a3250677ebb35b30da7bae010351a159480edddd",
+			"method" : "rsassa-pss",
+			"sig" : "W5Lvw0RK1oHw3YYHeK0oo+crpHV0m3oItBUJ0I4r0DwElbmM4gwlkNVOHEYqCSGw1K7h35nrEhjUZnJgvecjX5dvPvCyqiQNn1dXsbWZahPjmvvuI+fZV/5Iy3zUoC4Yfh4HcggPNiQ+82K6CioMoJZjXBltW5wsanRm/96yWX7NC0GHrArhCnBtVMsfu8q3JgoMxrSXuMq3cR2+P9dgrGaBlonUmx9txXH56nZ7AJuWanG0h3gF7qLwWZ3/JebATZ9VPOBKYC1qYBCfpQp3PsYiD0t6eQ4Z/yqW5UiIQ4N2wIoYHtYI+yAvKvPp4pcQQqnE2ABZgI86+75sDRR0Rg=="
+		}
+	],
+	"signed" : 
+	{
+		"ecu_version_manifests" : 
+		{
+			"9db4abce9f280c8bdd55c3c7a3250677ebb35b30da7bae010351a159480edddd" : 
+			{
+				"signatures" : 
+				[
+					
+					{
+						"keyid" : "9db4abce9f280c8bdd55c3c7a3250677ebb35b30da7bae010351a159480edddd",
+						"method" : "rsassa-pss",
+						"sig" : "FvZIeXeigcpy4y02ldaWmVuZZ+/3F/Dn91K7OytF/gTAzP/S7F4+oZDdegySagoBkQo+5Zaf+b90501wTDLyDDERs85oAZvEwHMuVBhEHhcw5xEdJ3Cxmrad9upmAQhg/0b1YSANy/KvnfQ3stRYMA0rmNfBw/R3EWJm3Yl46qRQFhOxSpgkdz3UywgHcZLJuQU3B8m7SGloMNUKdmAqM0TZE7hqNwuh1/yydjxzXV0eKLMyg735fLMt3hdhilHJYZ32U7N1N1wrx8iaEFrvZ86K0cFK+UQ4Wssyz+GJKXE4UikCrZZj9GEhiW5N1WP5SzfdV+5q53YlXeh6kO8kSg=="
+					}
+				],
+				"signed" : 
+				{
+					"attacks_detected" : "",
+					"custom" : 
+					{
+						"operation_result" : 
+						{
+							"id" : "js_0.23.0",
+							"result_code" : 0,
+							"result_text" : "Installing fake package was successful"
+						}
+					},
+					"ecu_serial" : "9db4abce9f280c8bdd55c3c7a3250677ebb35b30da7bae010351a159480edddd",
+					"installed_image" : 
+					{
+						"fileinfo" : 
+						{
+							"hashes" : 
+							{
+								"sha256" : "605ce00cadf795dc3f2b36d3a47c6e93cc6f38878ef1cd1a309737943b93d9ff"
+							},
+							"length" : 7827355
+						},
+						"filepath" : "js_0.23.0"
+					},
+					"previous_timeserver_time" : "1970-01-01T00:00:00Z",
+					"timeserver_time" : "1970-01-01T00:00:00Z"
+				}
+			}
+		},
+		"primary_ecu_serial" : "9db4abce9f280c8bdd55c3c7a3250677ebb35b30da7bae010351a159480edddd"
+	}
+}
