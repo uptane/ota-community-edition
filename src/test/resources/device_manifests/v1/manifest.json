@@ -1,0 +1,58 @@
+{
+	"signatures" : 
+	[
+		
+		{
+			"keyid" : "6c23993435f9b910bff621148c947e478e1685835af2c6af7385f3816a930595",
+			"method" : "rsassa-pss",
+			"sig" : "wK93cRkLdSNx1+A6vuDZazOY+n4QCgb0Gm0f0J+6C23lX2D10fgI8nEhnscAOT2K4jt9BahTmoHTP6EIxkCgDNbf1iva1OFuTbO/LbenxnhHx5twwFfVpqFKepkUqvQzWLQQhdlgSsCM16n0BH2iC/Batb0ofSSU96Dk6aZhEJOkL1Yd4vv0Tr3SK77iiAy3Au+5Ts0dRwXyK0jMQoJzN/dEtAw9oLx8K5wWSEEvsbbFxoCenxSG8OyfIxuOwIpRLoTeVg4xIOcs/AZngUjhdqy/S+j+7kVAH1xUbRK4cvJPzNX0cXmJUnaQl0NzaJk3LwL5SAiSG6SqoC5bfRmuQw=="
+		}
+	],
+	"signed" : 
+	{
+		"ecu_version_manifest" : 
+		[
+			
+			{
+				"signatures" : 
+				[
+					
+					{
+						"keyid" : "6c23993435f9b910bff621148c947e478e1685835af2c6af7385f3816a930595",
+						"method" : "rsassa-pss",
+						"sig" : "maIedfCNJP3inNgSHOmQOaYyVyYE7XyLvutA6WkFv2iu9Lz7Gu/+tOBtstjZbEvm2I6NTqr6iq6DfF7f1kApriXsxhI4vc/xD3wo6KxQ1EgMlNM1eGvz9ieC/yYgmHgVYWGhhozb4d7hKpNOIqEZBwTEffiG27HId7C0/IDwvfjTgK9S66jxHPyj3ES8Ou0zHY7eZ3C4aSEe2ojbi7j0VAmS7nXsztyHCJvKZhrJA7r7xVZ8UMvyNEqa0nfRrFpdP3bt3xLwXpCgd9cphUhVtoEVNx8u/nWxYvpeFd93szGtlVaFDsng6ggfRtXRwzqfcCKBwqngr+Pr+JiOMHS/rg=="
+					}
+				],
+				"signed" : 
+				{
+					"attacks_detected" : "",
+					"custom" : 
+					{
+						"operation_result" : 
+						{
+							"id" : "nginx_1.15.2",
+							"result_code" : 0,
+							"result_text" : "Pulling ostree image was successful"
+						}
+					},
+					"ecu_serial" : "6c23993435f9b910bff621148c947e478e1685835af2c6af7385f3816a930595",
+					"installed_image" : 
+					{
+						"fileinfo" : 
+						{
+							"hashes" : 
+							{
+								"sha256" : "eeba09aecfbe8277ac33a5a2486ec2d6731739f3c1c701b42a0c3784af67ad90"
+							},
+							"length" : 0
+						},
+						"filepath" : "unknown-eeba09aecfbe8277ac33a5a2486ec2d6731739f3c1c701b42a0c3784af67ad90"
+					},
+					"previous_timeserver_time" : "1970-01-01T00:00:00Z",
+					"timeserver_time" : "1970-01-01T00:00:00Z"
+				}
+			}
+		],
+		"primary_ecu_serial" : "6c23993435f9b910bff621148c947e478e1685835af2c6af7385f3816a930595"
+	}
+}
