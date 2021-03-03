@@ -9,6 +9,7 @@ Services marked with X are already included:
 - [X] device-registry
 - [X] campaigner
 - [ ] web events (?)
+- [ ] auditor ?
 
 Non open source:
 
@@ -17,9 +18,9 @@ Non open source:
 
 Not libats/jvm based:
 
+- [ ] webapp
 - [ ] crypt service
-- [ ] web app
-- [ ] api gateway
+- [ ] api-gateway
 - [ ] device gateway
 - [ ] ~~auth+~~
 
@@ -39,7 +40,6 @@ Besides the services mentioned above, we are missing:
 - [ ] kafka instances
 - [ ] mysql instances
 - [ ] A docker compose file to setup all of the above with the `ota-lith` container
-- [ ] helm chart for ota-lith
 
 ## Configuration
 

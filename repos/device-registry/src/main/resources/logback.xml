@@ -1,0 +1,3 @@
+<configuration debug="true">
+    <include resource="logback-libats.xml"/>
+</configuration>
