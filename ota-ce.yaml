@@ -93,8 +93,6 @@ services:
       # - traefik.http.routers.apiprovider.service=apiprovider
       # - traefik.http.routers.apiprovider.rule=Host(`apiprovider.ota.ce`)
       # - traefik.http.services.apiprovider.loadbalancer.server.port=7800
-    environment:
-      CASSANDRA_CONTACT_POINT: ''
     volumes:
       - ./ota-lith-ce.conf:/tmp/ota-lith.conf
       - objects:/var/lib/ota-lith
