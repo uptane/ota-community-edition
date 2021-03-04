@@ -1,57 +1,81 @@
-# OTA (mono)-Lith
+# OTA Community Edition (mono)-lith
 
-Services marked with X are already included:
+Easy to run, secure, open source [tuf](https://theupdateframework.io/)/[uptane](https://uptane.github.io/) over the air (OTA) updates.
 
-- [X] tuf-keyserver
-- [X] tuf-reposerver
-- [X] director
-- [X] treehub
-- [X] device-registry
-- [X] campaigner
-- [ ] web events (?)
-- [ ] auditor ?
+You may not want or need to run [ota-community-edition](https://github.com/advancedtelematic/ota-community-edition) using a microservice architecure. A monolith might fit your use case better if you just want to try `ota-community-edition` or if your organization doesn't need to serve millions of devices. A monolith architecture is easier to deploy and manage, and uses less resources.
 
-Non open source:
+This project bundles all the scala apps included in [ota-community-edition](https://github.com/advancedtelematic/ota-community-edition) into a application that can be executed in a single container. The app can be easily configured using a single configuration file and avoids the usage of environment variables to simplifly configuration. Additionally, a `docker-compose` file is provided to run the application. This means you no longer need a kubernetes cluster if you just want to try or test `ota-community-edition`.
 
-- [X] user-profile
-- [X] api provider
+For small deployments, you don't need kubernetes. This solution can fit your organization better. With this app you could run ota in a single machine/vm + mariadb and kafka.
 
-Not libats/jvm based:
-
-- [ ] webapp
-- [ ] crypt service
-- [ ] api-gateway
-- [ ] device gateway
-- [ ] ~~auth+~~
-
-## Missing infrastructure
-
-This container will need to be deployed somewhere with a kafka instance and a running mariadb database.
+Currently the app does not include a web ui as it is broken in `ota-community-edition` due to it's dependency on closed source components.
 
 ## Building
 
 To build a container running the services, run `sbt docker:publishLocal`
 
-## Parts missing
-
-Besides the services mentioned above, we are missing:
-
-- [ ] A reverse proxy (nginx?) to proxy to each port depending on hostname
-- [ ] kafka instances
-- [ ] mysql instances
-- [ ] A docker compose file to setup all of the above with the `ota-lith` container
-
 ## Configuration
 
-Configuration is done through `application.conf` when possible, rather than using enviroment variables. This is meant to simplify the deployment scripts and just pass `configFile=file.conf` argument to the container, or when needed, using system properties (`-Dkey=value`). `file.conf` can just be a file defined in a `YAML` config for kubernetes, for example. The idea is to be able to configure all included services using a single `application.conf` file.
+Configuration is done through a single config file, rather than using enviroment variables. This is meant to simplify the deployment scripts and just pass a `configFile=file.conf` argument to the container, or when needed, using system properties (`-Dkey=value`). An example config file is provied in `ota-lith-ce.conf`.
 
-## Deployment
+## Running
+
+If you already have kafka and mariadb instances you can just run the ota-lith binary using sbt or docker.
+
+### Using sbt
+
+You'll need a valid ota-lith.conf, then run:
+
+    sbt -Dconfig.file=$(pwd)/ota-lith.conf run
+
+### Using docker
 
 The scala apps run in a single container, but you'll need kafka and mariadb. Write a valid ota-lith.conf.
 
-```
-sbt docker:publishLocal
-docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf advancedtelematic/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
-```
+    sbt docker:publishLocal
+    docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf advancedtelematic/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
 
-You'll need to mount `application.conf` somewhere the app can access it from inside the container.
+## Running With Docker Compose
+
+If you don't have kafka or mariadb running and just want to try ota-ce, run using docker-compose:
+
+1. Generate the required certificates using `scripts/gen-server-certs.sh` 
+
+2. Update /etc/hosts
+
+3. build docker image
+
+`sbt docker:publishLocal`
+
+4. Run docker-compose 
+ 
+`docker-compose -f ota-ce.yaml up`
+
+5. Test
+
+For example `curl director.ota.ce/health/version`
+
+6. You can now create device credentials and provision devices
+
+Run `scripts/gen-device.sh`. This will create a new dir in `ota-ce-gen/devices/:uuid` where `uuid` is the id of the new device. You can run `aktualizr` in that directory using:
+
+    aktualizr --run-mode=once --config=config.toml
+    
+7. You can now deploy updates to the devices
+
+## Deploy updates
+
+You can either use the API directly or use [ota-cli](https://github.com/simao/ota-cli/) to deploy updates. After provisioning devices (see above).
+
+Before using the api or `ota-cli` you will need to generate a valid `credentials.zip`. Run `scripts/get-credentials.zip`.
+
+To deploy an update using the API and a custom campaign, see [api-updates.md](docs/api-updates.md).
+
+To deploy an update using [ota-cli](https://github.com/simao/ota-cli/) with or without a custom campaign see [updates-ota-cli.md](docs/updates-ota-cli.md).
+
+## Related
+
+- https://github.com/simao/ota-cli
+- https://github.com/advancedtelematic/ota-community-edition
+- https://docs.ota.here.com/getstarted/dev/index.html
+- https://docs.ota.here.com/ota-client/latest/aktualizr-config-options.html

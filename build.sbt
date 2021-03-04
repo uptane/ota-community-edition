@@ -31,9 +31,6 @@ lazy val director = (ProjectRef(file("./repos/director"), "director"))
 lazy val keyserver = (ProjectRef(file("./repos/tuf"), "keyserver"))
 lazy val reposerver = (ProjectRef(file("./repos/tuf"), "reposerver"))
 // lazy val libats_slick = (ProjectRef(file("/home/simao/ats/libats"), "libats_slick"))
-//lazy val crypt = (ProjectRef(file("/home/simao/ats/crypt-service"), "crypt-service"))
-//lazy val user_profile = (ProjectRef(file("/home/simao/ats/ota-plus-user-profile"), "ota-plus-user-profile"))
-//lazy val api_provider = (ProjectRef(file("/home/simao/ats/api-provider"), "root"))
 
 dependsOn(treehub, device_registry, campaigner, director, keyserver, reposerver)
 

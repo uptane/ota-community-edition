@@ -1,4 +1,9 @@
 .idea/
 target/
 project/target
+project/.bloop
 /.bsp/
+ota-ce/generated/
+ota-ce-gen
+project/project
+

@@ -28,7 +28,6 @@ object OtaLithBoot extends App {
   val directorDbConfig = appConfig.getConfig("ats.director.database")
   val directorBind = new DirectorBoot(appConfig, directorDbConfig, new MetricRegistry)(ActorSystem("director-actor-system")).bind()
 
-  // TODO: Causing everything o crash
   val treehubDbConfig = appConfig.getConfig("ats.treehub.database")
   val treehubBind = new TreehubBoot(appConfig, treehubDbConfig, new MetricRegistry)(ActorSystem("treehub-actor-system")).bind()
 
@@ -37,12 +36,6 @@ object OtaLithBoot extends App {
 
   val campaignerDbConfig = appConfig.getConfig("ats.campaigner.database")
   val campaignerBind = new CampaignerBoot(appConfig, campaignerDbConfig, new MetricRegistry)(ActorSystem("campaigner-actor-system")).bind()
-
-//  val userprofileDbConfig = appConfig.getConfig("ats.user_profile.database")
-//  val userprofileBind = new UserProfileBoot(appConfig, userprofileDbConfig, new MetricRegistry)(ActorSystem("userprofile-actor-system")).bind()
-
-//  val apiproviderDbConfig = appConfig.getConfig("ats.user_profile.database")
-//  val apiproviderBind = new ApiProviderBoot(appConfig, apiproviderDbConfig, new MetricRegistry)(ActorSystem("apiprovider-actor-system")).bind()
 }
 
 object OtaLithDaemonBoot extends App {
@@ -61,7 +54,4 @@ object OtaLithDaemonBoot extends App {
 
   val campaignerDbConfig = appConfig.getConfig("ats.campaigner.database")
   val campaignerDaemonBind = new CampaignerDaemon(appConfig, campaignerDbConfig, new MetricRegistry)(ActorSystem("campaigner-actor-system")).bind()
-
-//  val userprofileDbConfig = appConfig.getConfig("ats.user_profile.database")
-//  val userprofileDaemonBind = new UserProfileDaemonBoot(appConfig, userprofileDbConfig, new MetricRegistry)(ActorSystem("userprofile-actor-system"))
 }
