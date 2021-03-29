@@ -40,6 +40,41 @@ services:
       - ./ota-ce-gen/server.key:/etc/ssl/gateway/server.key:ro
       - ./ota-ce-gen/devices/ca.crt:/etc/ssl/gateway/ca.crt:ro
 
+  webapp:
+    image: advancedtelematic/ota-plus-web:48fed9434c838536a1d90e32d4ffe59bae708cd2
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.app.service=app
+      - traefik.http.routers.app.rule=Host(`app.ota.ce`)
+      - traefik.http.services.app.loadbalancer.server.port=9000
+    environment:
+      JAVA_OPTS: "-Dtrace.zipkin.sample-rate=0"
+      CAMPAIGNER_HOST: "ota-lith"
+      CAMPAIGNER_PORT: "7600"
+      DEVICE_REGISTRY_HOST: "ota-lith"
+      DEVICE_REGISTRY_PORT: "7500"
+      TUF_REPOSERVER_HOST: "ota-lith"
+      TUF_REPOSERVER_PORT: "7100"
+      TUF_KEYSERVER_HOST: "ota-lith"
+      TUF_KEYSERVER_HOST: "7200"
+      DIRECTOR_HOST: "ota-lith"
+      DIRECTOR_PORT: "7300"
+      PLAY_CRYPTO_SECRET: youshouldreplacethiswithsomeotherlongsecret
+      JWT_SECRET: eW91c2hvdWxkcmVwbGFjZXRoaXN3aXRoc29tZW90aGVybG9uZ3NlY3JldA==
+      PLAY_HTTP_SESSION_SECURE: "false"
+      OIDC_KEYSET: '{"keys": []}'
+      OIDC_NS_PROVIDER: "com.advancedtelematic.auth.oidc.ConfiguredNamespace"
+      OIDC_LOGIN_ACTION: "com.advancedtelematic.auth.NoLoginAction"
+      OIDC_LOGOUT_ACTION: "com.advancedtelematic.auth.NoLogoutAction"
+      MESSAGING_MODE: "test" #TODO
+      ATS_HTTP_TRACING: "false"
+      ATS_LOG_LEVEL: "debug"
+      WS_HOST: "app.ota.ce"
+      WS_PORT: '80'
+      WS_SCHEME: ws            
+      NAMESPACE_DIRECTOR_MODULE: ""
+
   db:
     image: mariadb:10.2
     #restart: always
