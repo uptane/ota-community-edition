@@ -14,7 +14,7 @@ libraryDependencies ++= {
   val scalaTestV = "3.0.8"
   val bouncyCastleV = "1.59"
   val tufV = "0.7.1-23-g3ea21d4-SNAPSHOT"
-  val libatsV = "0.4.0-17-ga03bec5-SNAPSHOT"
+  val libatsV = "0.4.0-20-ge903ac1"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -35,8 +35,8 @@ libraryDependencies ++= {
     "com.advancedtelematic" %% "libats-slick" % libatsV,
     "com.advancedtelematic" %% "libats-logging" % libatsV,
     "com.advancedtelematic" %% "libats-auth" % libatsV,
-    "com.advancedtelematic" %% "libtuf" % tufV,
-    "com.advancedtelematic" %% "libtuf-server" % tufV,
+//    "com.advancedtelematic" %% "libtuf" % tufV,
+//    "com.advancedtelematic" %% "libtuf-server" % tufV,
 
     "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
     "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV,
@@ -46,6 +46,12 @@ libraryDependencies ++= {
     "org.mariadb.jdbc" % "mariadb-java-client" % "2.2.1"
   )
 }
+
+lazy val libtuf = ProjectRef(file("../tuf"), "libtuf")
+
+lazy val libtuf_server = ProjectRef(file("../tuf"), "libtuf_server")
+
+dependsOn(libtuf, libtuf_server)
 
 scalacOptions in Compile ++= Seq(
   "-deprecation",

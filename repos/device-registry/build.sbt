@@ -20,7 +20,7 @@ lazy val `ota-device-registry` =
         library.attoCore,
         library.circeTesting % Test,
         library.kafkaClient,
-        library.libTuf,
+//        library.libTuf,
         library.mariaDb,
         library.scalaCheck % Test,
         library.scalaTest  % Test,
@@ -39,7 +39,7 @@ lazy val library =
       val attoCore = "0.7.1"
       val scalaCheck = "1.14.1"
       val scalaTest  = "3.0.8"
-      val libAts     = "0.4.0-17-ga03bec5-SNAPSHOT"
+      val libAts     = "0.4.0-20-ge903ac1"
       val libTuf = "0.7.1-23-g3ea21d4-SNAPSHOT"
       val akka = "2.6.5"
       val akkaHttp = "10.1.12"
@@ -64,7 +64,7 @@ lazy val library =
       "libats-http-tracing",
       "libats-logging"
     ).map("com.advancedtelematic" %% _ % Version.libAts)
-    val libTuf = "com.advancedtelematic" %% "libtuf-server" % Version.libTuf
+//    val libTuf = "com.advancedtelematic" %% "libtuf-server" % Version.libTuf
     val akkaHttpTestKit = "com.typesafe.akka" %% "akka-http-testkit" % Version.akkaHttp
     val akkaStreamTestKit = "com.typesafe.akka" %% "akka-stream-testkit" % Version.akka
     val akkaAlpakkaCsv = "com.lightbend.akka" %% "akka-stream-alpakka-csv" % Version.alpakkaCsv
@@ -110,6 +110,12 @@ lazy val commonSettings =
     dependencyCheckAssemblyAnalyzerEnabled := Some(false),
     dependencyCheckSuppressionFiles := Seq(new File("dependency-check-suppressions.xml"))
   )
+
+lazy val libtuf = ProjectRef(file("../tuf"), "libtuf")
+
+lazy val libtuf_server = ProjectRef(file("../tuf"), "libtuf_server")
+
+dependsOn(libtuf, libtuf_server)
 
 mainClass in Compile := Some("com.advancedtelematic.ota.deviceregistry.Boot")
 

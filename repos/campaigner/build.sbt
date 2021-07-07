@@ -22,11 +22,16 @@ resolvers += "ATS Releases" at "https://nexus.ota.here.com/content/repositories/
 
 resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots"
 
+lazy val libtuf = ProjectRef(file("../tuf"), "libtuf")
+
+lazy val libtuf_server = ProjectRef(file("../tuf"), "libtuf_server")
+
+dependsOn(libtuf, libtuf_server)
+
 libraryDependencies ++= {
   val akkaV = "2.6.5"
   val akkaHttpV = "10.1.12"
-  val libatsV = "0.4.0-17-ga03bec5-SNAPSHOT"
-  val libtufV = "0.7.1-23-g3ea21d4-SNAPSHOT"
+  val libatsV = "0.4.0-20-ge903ac1"
 
   val scalaTestV = "3.0.8"
 
@@ -51,8 +56,6 @@ libraryDependencies ++= {
     "com.advancedtelematic" %% "libats-metrics-prometheus" % libatsV,
     "com.advancedtelematic" %% "libats-slick" % libatsV,
     "com.advancedtelematic" %% "libats-logging" % libatsV,
-    "com.advancedtelematic" %% "libtuf" % libtufV,
-    "com.advancedtelematic" %% "libtuf-server" % libtufV,
     "org.scalacheck" %% "scalacheck" % "1.14.1" % Test,
     "org.scalatest" %% "scalatest" % scalaTestV % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaV % Test
