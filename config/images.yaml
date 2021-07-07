@@ -10,7 +10,7 @@ pause_docker_image: gcr.io/google_containers/pause:3.0
 zookeeper_docker_image: gcr.io/google_samples/k8szk:v2
 
 # service images
-app_docker_image: advancedtelematic/ota-plus-web:f5d02d1a7cc284397e07b1b79104cbeccac78078
+app_docker_image: uptane/ota-plus-web:06053862900a6be6e9b54fe4529e4d1070c98711
 bootstrap_docker_image: advancedtelematic/bootstrap_ota_kube:2.1
 campaigner_docker_image: advancedtelematic/campaigner:ebc1f5771021ef40fff63f966178da34a5d7ecd9
 campaigner_daemon_docker_image: advancedtelematic/campaigner:ebc1f5771021ef40fff63f966178da34a5d7ecd9
