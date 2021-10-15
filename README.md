@@ -16,8 +16,6 @@ Currently there are three active branches in this repository:
 
 - `webapp`. The webapp is broken in `ota-community-edition` and therefore is not included in `ota-lith/master`. The `webapp` branch includes patched version of `webapp` that does not rely on user profile and is therefore working with both `ota-community-edition` and `ota-lith`.
 
-- `db-queue`. Kafka can be difficult to run and not needed for your use case. This branch uses a version of `ota-community-edition` that does not require kafka and instead uses a simple pub/sub system implemented using `mysql`.
-
 ## Pending changes and dependencies
   
 This project depends on changes to other `ota-community-edition` repositories. The changes were incorporated into this repository using `git subtree`, and they will need to be updated using the same method once those changes are merged upstream. 
