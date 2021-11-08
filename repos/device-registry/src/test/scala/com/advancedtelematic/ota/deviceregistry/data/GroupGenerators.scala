@@ -21,7 +21,7 @@ trait GroupGenerators {
   def genGroupName(charGen: Gen[Char] = Arbitrary.arbChar.arbitrary): Gen[GroupName] = for {
     strLen <- Gen.choose(2, 100)
     name   <- Gen.listOfN[Char](strLen, charGen)
-  } yield GroupName(name.mkString).right.get
+  } yield GroupName.from(name.mkString).right.get
 
   def genStaticGroup: Gen[Group] = for {
     groupName <- genGroupName()

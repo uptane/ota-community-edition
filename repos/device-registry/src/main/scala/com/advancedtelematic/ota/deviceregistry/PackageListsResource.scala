@@ -3,7 +3,6 @@ package com.advancedtelematic.ota.deviceregistry
 import akka.http.scaladsl.model.StatusCodes.{Created, NoContent}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import com.advancedtelematic.libats.auth.{AuthedNamespaceScope, Scopes}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.ota.deviceregistry.data.Codecs._
@@ -32,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * instead of "blacklisted packages", for lack of a better description
   * of what the feature was being used for.
   */
-class PackageListsResource(namespaceExtractor: Directive1[AuthedNamespaceScope],
+class PackageListsResource(namespaceExtractor: Directive1[Namespace],
                            deviceNamespaceAuthorizer: Directive1[DeviceId],
                           )(implicit db: Database, ec: ExecutionContext) {
 
@@ -55,27 +54,25 @@ class PackageListsResource(namespaceExtractor: Directive1[AuthedNamespaceScope],
     db.run(PackageListItemRepository.remove(ns, packageId).map(_ => ()))
 
   val route: Route = namespaceExtractor { namespace =>
-    val scope = Scopes.devices(namespace)
-    val ns = namespace.namespace
     pathPrefix("package_lists") {
       pathEnd {
-        scope.get {
-          complete(getPackageListItemCounts(ns))
+        get {
+          complete(getPackageListItemCounts(namespace))
         } ~
-        (scope.post & entity(as[Namespace => PackageListItem])) { fn =>
-          complete(Created -> createPackageListItem(fn(ns)))
+        (post & entity(as[Namespace => PackageListItem])) { fn =>
+          complete(Created -> createPackageListItem(fn(namespace)))
         } ~
         // This would better be as a PATCH /package_lists/package-name/package-version, but the UI is already sending this request.
-        (scope.put & entity(as[Namespace => PackageListItem])) { fn =>
-          complete(NoContent -> updatePackageListItem(fn(ns)))
+        (put & entity(as[Namespace => PackageListItem])) { fn =>
+          complete(NoContent -> updatePackageListItem(fn(namespace)))
         }
       } ~
       extractPackageId { packageId =>
-        scope.get {
-          complete(getPackageListItem(ns, packageId))
+        get {
+          complete(getPackageListItem(namespace, packageId))
         } ~
-        scope.delete {
-          complete(NoContent -> deletePackageListItem(ns, packageId))
+        delete {
+          complete(NoContent -> deletePackageListItem(namespace, packageId))
         }
       }
     }

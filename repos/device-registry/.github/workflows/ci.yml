@@ -1,0 +1,27 @@
+name: Test & Build
+on: [push]
+env:
+  SBT_OPTS: "-Dsbt.color=true -Dscala.color=true"
+jobs:
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    container: uptane/ci:latest
+    services:
+      db:
+        image: mariadb:10.4
+        env:
+          MYSQL_ROOT_PASSWORD: "root"
+          MYSQL_DATABASE: "device_registry"
+          MYSQL_USER: "device_registry"
+          MYSQL_PASSWORD: "device_registry"
+
+    env:
+      DB_URL: "jdbc:mariadb://db:3306/device_registry"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Coursier cache
+        uses: coursier/cache-action@v6
+      - run: ./deploy/ci-db-setup.sh db
+      - run: sbt test

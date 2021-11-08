@@ -10,10 +10,10 @@ object GroupName {
 
   implicit val validatedGroupName = new ValidatedGeneric[GroupName, String] {
     override def to(expression: GroupName): String = expression.value
-    override def from(s: String): Either[ValidationError, GroupName] = apply(s)
+    override def from(s: String): Either[ValidationError, GroupName] = GroupName.from(s)
   }
 
-  def apply(s: String): Either[ValidationError, GroupName] =
+  def from(s: String): Either[ValidationError, GroupName] =
     if (s.length < 2 || s.length > 100)
       Left(ValidationError(s"$s should be between two and a hundred alphanumeric characters long."))
     else

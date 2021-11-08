@@ -15,6 +15,7 @@ import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.advancedtelematic.ota.deviceregistry.data.Device.{DeviceOemId, DeviceType}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.ota.deviceregistry.data.DeviceName
+import DeviceId._
 
 final case class DeviceCreated(namespace: Namespace,
                                uuid: DeviceId,
@@ -26,6 +27,8 @@ final case class DeviceCreated(namespace: Namespace,
 object DeviceCreated {
   import cats.syntax.show._
   import com.advancedtelematic.libats.codecs.CirceCodecs._
+  import com.advancedtelematic.ota.deviceregistry.data.Codecs._
+
   implicit val EncoderInstance     = io.circe.generic.semiauto.deriveEncoder[DeviceCreated]
   implicit val DecoderInstance     = io.circe.generic.semiauto.deriveDecoder[DeviceCreated]
   implicit val MessageLikeInstance = MessageLike[DeviceCreated](_.uuid.show)

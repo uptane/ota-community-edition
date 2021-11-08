@@ -2,7 +2,6 @@ package com.advancedtelematic.ota.deviceregistry
 
 import java.time.Instant
 import java.util.UUID
-
 import akka.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.libats.messaging_datatype.DataType.{Event, EventType}
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceEventMessage
@@ -15,21 +14,26 @@ import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.ota.deviceregistry.DeviceResource2.ApiDeviceEvents
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.testing.ArbitraryInstances
-import org.scalatest.FunSuite
 import cats.syntax.either._
 import org.scalatest.OptionValues._
+import org.scalatest.EitherValues._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.time.{Millis, Seconds, Span}
 
 
-class DeviceResource2Spec extends FunSuite with ResourceSpec with Eventually with ScalaFutures with ArbitraryInstances {
+class DeviceResource2Spec extends AnyFunSuite with ResourceSpec with Eventually with ScalaFutures with ArbitraryInstances {
   import com.advancedtelematic.ota.deviceregistry.data.GeneratorOps._
   import io.circe.syntax._
 
   private val deviceEventListener = new DeviceEventListener()
 
+  implicit override val patienceConfig =
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(15, Millis))
+
   test("events includes events for a device") {
     val device = genDeviceT.retryUntil(_.uuid.isDefined).generate
     val deviceId = createDeviceOk(device)
-    val ecuId = EcuIdentifier("somefakeid").valueOr(throw _)
+    val ecuId = EcuIdentifier.from("somefakeid").valueOr(throw _)
     val campaignIdUuid = UUID.randomUUID()
     val campaignId = CampaignId(campaignIdUuid)
     val now = Instant.now()
@@ -68,7 +72,7 @@ class DeviceResource2Spec extends FunSuite with ResourceSpec with Eventually wit
   test("returns events filtered by updateId") {
     val device = genDeviceT.retryUntil(_.uuid.isDefined).generate
     val deviceId = createDeviceOk(device)
-    val ecuId = EcuIdentifier("somefakeid").valueOr(throw _)
+    val ecuId = EcuIdentifier.from("somefakeid").valueOr(throw _)
     val now = Instant.now()
 
     val campaignId01 = CampaignId(UUID.randomUUID())
