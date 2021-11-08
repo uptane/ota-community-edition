@@ -1,8 +1,0 @@
-create table `root_role_cache` (
-  repo_id CHAR(36) NOT NULL PRIMARY KEY,
-  expires_at DATETIME(3) NOT NULL,
-  signed_payload TEXT NOT NULL,
-  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)
-;

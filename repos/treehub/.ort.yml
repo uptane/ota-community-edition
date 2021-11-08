@@ -1,5 +1,0 @@
-excludes:
-  scopes:
-  - name: "test"
-    reason: "TEST_TOOL_OF"
-    comment: "Test dependencies which are not distributed."

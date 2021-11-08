@@ -1,1 +1,0 @@
-ALTER TABLE `signed_roles` MODIFY COLUMN `content` LONGTEXT NOT NULL;
