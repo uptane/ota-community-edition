@@ -1,0 +1,30 @@
+= campaigner
+
+== Messages published
+
+None
+
+== Message topics subscribed to
+
+// tag::messagesub-list[]
+* DeviceUpdateReport
+// end::messagesub-list[]
+
+// tag::messagesub-detail[]
+----
+Topic: DeviceUpdateReport-<env>
+
+{
+  "namespace": Namespace,
+  "device": DeviceId,
+  "updateId": UpdateId,
+  "timestampVersion": Int,
+  "operationResult": {
+    "<EcuSerial>": OperationResult
+    }
+  "resultCode": Int
+}
+----
+// end::messagesub-detail[]
+
+Campaigner listens for device update reports to know the status of update campaigns.
