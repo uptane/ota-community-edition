@@ -1,0 +1,72 @@
+stages:
+  - test
+  - build image
+  - deploy
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://localhost:2375
+  DOCKER_DRIVER: overlay2
+  MYSQL_ROOT_PASSWORD: "root"
+  MYSQL_DATABASE: "ota_treehub"
+  MYSQL_USER: "treehub"
+  MYSQL_PASSWORD: "treehub"
+  SBT_OPTS: "-sbt-launch-dir .sbt/launchers -sbt-dir .sbt -ivy .ivy2 -Dsbt.color=true -Dscala.color=true"
+  ARTIFACTORY_USERNAME: cicd-innovation
+  ARTIFACTORY_URL: https://artifactory-horw.int.toradex.com/artifactory
+  SERVICE: treehub
+
+image: artifactory-horw.int.toradex.com/ota-docker-dev-horw/tdx-inno-ci-scala:0.0.1
+
+services:
+  - name: docker:dind
+  - name: mariadb:10.4
+    alias: db
+    command:
+      - --character-set-server=utf8
+      - --collation-server=utf8_unicode_ci
+      - --max_connections=1000
+
+default:
+  cache:
+    key: treehub
+    when: always
+    paths:
+      - .ivy2/
+      - .sbt/
+
+test:
+  stage: test
+  only:
+    refs:
+      - master
+      - branches
+      - merge_requests
+  variables:
+    DB_URL: "jdbc:mariadb://db:3306/ota_treehub"
+  before_script:
+    - echo "GRANT ALL PRIVILEGES ON \`ota\_treehub%\`.* TO 'treehub'@'%'; FLUSH PRIVILEGES;" > db_user.sql
+    - until mysqladmin ping --protocol=TCP -h db -P 3306 -u root -proot; do echo waiting for mysql; sleep 1; done
+    - mysql -v -h db -u root -proot < db_user.sql
+  script:
+    - sbt -J-Xmx1G -J-XX:MaxPermSize=256m -J-XX:ReservedCodeCacheSize=128m ut:test
+
+include:
+  - project: rd/innovation/continuous-delivery/ci-container-build
+    file: gitlab-ci-templates/jfrog-sbt-docker-publish.yaml
+  - project: 'rd/platform/deploy-env'
+    ref: master
+    file: '/gitlab/deploy-core-service.yml'
+
+build docker image:
+  stage: build image
+  only:
+    refs:
+      - master
+      - merge_requests
+  extends: .jfrog-sbt-docker-publish
+  variables:
+    ARTIFACTORY_REPO: ota-docker-dev-horw
+    SERVICE_NAME: treehub
+
+
