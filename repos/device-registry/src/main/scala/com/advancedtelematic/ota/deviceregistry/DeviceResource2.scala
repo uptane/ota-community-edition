@@ -4,6 +4,7 @@ import java.time.Instant
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive1, Route}
+import com.advancedtelematic.libats.auth.AuthedNamespaceScope
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
@@ -39,7 +40,7 @@ object DeviceResource2 {
   implicit val apiUpdateStatusCodec = deriveCodec[ApiDeviceEvents]
 }
 
-class DeviceResource2(namespaceExtractor: Directive1[Namespace], deviceNamespaceAuthorizer: Directive1[DeviceId])
+class DeviceResource2(namespaceExtractor: Directive1[AuthedNamespaceScope], deviceNamespaceAuthorizer: Directive1[DeviceId])
                      (implicit db: Database, ec: ExecutionContext) {
 
   val eventJournal = new EventJournal()
@@ -59,7 +60,7 @@ class DeviceResource2(namespaceExtractor: Directive1[Namespace], deviceNamespace
     pathPrefix("devices") {
       deviceNamespaceAuthorizer { uuid =>
         (get & path("events") & parameter('updateId.as[CorrelationId].?)) { correlationId =>
-          val f = findUpdateEvents(ns, uuid, correlationId)
+          val f = findUpdateEvents(ns.namespace, uuid, correlationId)
           complete(f)
         }
       }

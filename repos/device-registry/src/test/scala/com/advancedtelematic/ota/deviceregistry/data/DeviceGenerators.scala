@@ -22,17 +22,17 @@ trait DeviceGenerators {
   import Arbitrary._
   import Device._
 
-  def genDeviceName: Gen[DeviceName] = for {
+  val genDeviceName: Gen[DeviceName] = for {
     //use a minimum length for DeviceName to reduce possibility of naming conflicts
     size <- Gen.choose(50, 200)
-    name <- Gen.listOfN(size, Gen.alphaNumChar)
+    name <- Gen.containerOfN[Seq, Char](size, Gen.alphaNumChar)
   } yield validatedDeviceType.from(name.mkString).right.get
 
   val genDeviceUUID: Gen[DeviceId] = Gen.delay(DeviceId.generate)
 
-  def genDeviceId: Gen[DeviceOemId] = for {
+  val genDeviceId: Gen[DeviceOemId] = for {
     size <- Gen.choose(10, 100)
-    name <- Gen.listOfN(size, Gen.alphaNumChar)
+    name <- Gen.containerOfN[Seq, Char](size, Gen.alphaNumChar)
   } yield DeviceOemId(name.mkString)
 
   val genDeviceType: Gen[DeviceType] = for {
@@ -63,7 +63,7 @@ trait DeviceGenerators {
       deviceType <- genDeviceType
     } yield DeviceT(uuid, name, deviceId, deviceType)
 
-  def genDeviceT: Gen[DeviceT] = genDeviceTWith(genDeviceName, genDeviceId)
+  val genDeviceT: Gen[DeviceT] = genDeviceTWith(genDeviceName, genDeviceId)
 
   def genConflictFreeDeviceTs(): Gen[Seq[DeviceT]] =
     genConflictFreeDeviceTs(arbitrary[Int].sample.get)

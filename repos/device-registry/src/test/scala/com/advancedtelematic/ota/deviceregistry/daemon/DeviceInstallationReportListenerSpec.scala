@@ -4,18 +4,16 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.advancedtelematic.libats.data.DataType.ResultCode
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs.deviceUpdateCompletedCodec
-import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceSeen, DeviceUpdateInFlight}
+import com.advancedtelematic.ota.deviceregistry.DatabaseSpec
 import com.advancedtelematic.ota.deviceregistry.data.DataType.{DeviceInstallationResult, EcuInstallationResult}
 import com.advancedtelematic.ota.deviceregistry.data.GeneratorOps._
-import com.advancedtelematic.ota.deviceregistry.data.{DeviceStatus, InstallationReportGenerators}
+import com.advancedtelematic.ota.deviceregistry.data.InstallationReportGenerators
 import com.advancedtelematic.ota.deviceregistry.db.InstallationReportRepository
-import com.advancedtelematic.ota.deviceregistry.{DatabaseSpec, ResourcePropSpec}
+import com.advancedtelematic.ota.deviceregistry.ResourcePropSpec
 import io.circe.syntax._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.matchers.should.Matchers
-
-import java.time.Instant
+import org.scalatest.Matchers
 
 class DeviceUpdateEventListenerSpec
     extends ResourcePropSpec
@@ -82,18 +80,4 @@ class DeviceUpdateEventListenerSpec
 
   }
 
-  property("should process DeviceUpdateInFlight"){
-    val deviceId = createDeviceOk(genDeviceT.generate)
-    val correlationId = genCorrelationId.generate
-    val updateInFlight = DeviceUpdateInFlight(defaultNs, Instant.now(), correlationId, deviceId)
-
-    val deviceSeenListener = new DeviceSeenListener(messageBus)
-    deviceSeenListener.apply(DeviceSeen(defaultNs, deviceId, Instant.now())).futureValue
-
-    listener.apply(updateInFlight).futureValue
-
-    val device = fetchDeviceOk(deviceId)
-
-    device.deviceStatus shouldBe DeviceStatus.UpdatePending
-  }
 }

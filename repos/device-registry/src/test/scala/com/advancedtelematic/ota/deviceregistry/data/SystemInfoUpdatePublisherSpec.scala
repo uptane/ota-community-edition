@@ -6,13 +6,12 @@ import akka.dispatch.ExecutionContexts
 import com.advancedtelematic.ota.deviceregistry.SystemInfoUpdatePublisher
 import io.circe.syntax._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{FunSuite, Matchers}
 import cats.syntax.either._
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
 
-class SystemInfoUpdatePublisherSpec extends AnyFunSuite
+class SystemInfoUpdatePublisherSpec extends FunSuite
   with Matchers
   with ScalaFutures {
 
