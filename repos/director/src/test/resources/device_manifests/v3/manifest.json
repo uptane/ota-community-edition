@@ -1,0 +1,77 @@
+{
+	"signatures" : 
+	[
+		
+		{
+			"keyid" : "e026ed9d761a563610fd703637668cb196fa98612551e633b845c707fab4e68c",
+			"method" : "rsassa-pss",
+			"sig" : "XmiJYukpbk+vnYQuS7cxZPyHfDsuHQKvxeKUEKI4o9iGKrP1p4s2rlp1u9LIE1gVrzfl9tYPZe2XfYWMqPGuAEDk2sfeUHvR6uiT+gE8AfNo0RyBbsT7/d/V/Nz5lvHHs0qYBfPYAJr1JCQz62ZpVFp9c7C9ZPI4pM6CPTNm+f3AUd1YNFqKTqqxN9iF2fo5mbyZNi7dtCb7XJls49FmziAV0ySTQsUcy0kiu3LItj8DZzo5PSCVtEYLfExhIF2I2uH//n0tsDFMKZeNixJye5/XgLKYEVjGxMyA3268jOlsOCuax4wfQa6OqIjEonY0geoc/vI/8kkmRpUpiAubbQ=="
+		}
+	],
+	"signed" : 
+	{
+		"ecu_version_manifests" : 
+		{
+			"e026ed9d761a563610fd703637668cb196fa98612551e633b845c707fab4e68c" : 
+			{
+				"signatures" : 
+				[
+					
+					{
+						"keyid" : "e026ed9d761a563610fd703637668cb196fa98612551e633b845c707fab4e68c",
+						"method" : "rsassa-pss",
+						"sig" : "EdRhiWKmmODEj9zsOdRJgktdTdI9iW8dk+RLAJwLJQTSxwVmNwEhBSJyTcYjlH7xK6WqrO7o3QjNUT6OgY3AFQVGXOKpMkxU05PbtZdYMPO37we/inh/PfHgEzlEiytfJIKeeaXDdJxnQ7I7TDMD8dcV3csRiniiJ2A0Vp/Oi8UX8kFkDdGIGTiMMkmnfuvBBloVsP7bVI0H/wrHCpru5/2TyK2ZSAcLfqz/qRakqlNox++zO6pRdMMNQ3pm7LR6uztU5dM4Xg/nc3MCZTsZNkEos5yS5e2vcxwpR92ecJllvbjohc1l0Jmf8xQnz+Fk0yVpeartmGk7PGFERQy+WA=="
+					}
+				],
+				"signed" : 
+				{
+					"attacks_detected" : "",
+					"ecu_serial" : "e026ed9d761a563610fd703637668cb196fa98612551e633b845c707fab4e68c",
+					"installed_image" : 
+					{
+						"fileinfo" : 
+						{
+							"hashes" : 
+							{
+								"sha256" : "120e7e0bcbcb7976a5f64fe4e09ea7c5476b25b2cffd508061341a14f5f0105e"
+							},
+							"length" : 16224720
+						},
+						"filepath" : "helm_2.6.1"
+					},
+					"previous_timeserver_time" : "1970-01-01T00:00:00Z",
+					"timeserver_time" : "1970-01-01T00:00:00Z"
+				}
+			}
+		},
+		"installation_report" : 
+		{
+			"content_type" : "application/vnd.com.here.otac.installationReport.v1",
+			"report" : 
+			{
+				"correlation_id" : "urn:here-ota:mtu:a1377415-f888-40fd-95e9-1ffcd9063707",
+				"items" : 
+				[
+					
+					{
+						"ecu" : "e026ed9d761a563610fd703637668cb196fa98612551e633b845c707fab4e68c",
+						"result" : 
+						{
+							"code" : "OK",
+							"description" : "Installing package was successful",
+							"success" : true
+						}
+					}
+				],
+				"raw_report" : "Installation succesful",
+				"result" : 
+				{
+					"code" : "OK",
+					"description" : "Device has been successfully installed",
+					"success" : true
+				}
+			}
+		},
+		"primary_ecu_serial" : "e026ed9d761a563610fd703637668cb196fa98612551e633b845c707fab4e68c"
+	}
+}
