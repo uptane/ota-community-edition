@@ -55,12 +55,12 @@ protected class StorageUpdate(publisher: MessageBusPublisher, objectStore: Objec
   import context.dispatcher
   import scala.async.Async._
 
-  implicit val mat = ActorMaterializer()
-
   val BUFFER_SIZE = 1024 * 100
   val PARALLELISM = 10
 
   var namespaceUsageStream: ActorRef = null
+
+  implicit val _system = context.system
 
   override def preStart(): Unit = {
     namespaceUsageStream =

@@ -20,8 +20,6 @@ class S3DeltaStorageIntegrationSpec extends TreeHubSpec with BeforeAndAfterAll {
 
   implicit lazy val system = ActorSystem("S3BlobStoreSpec")
 
-  implicit lazy val mat = ActorMaterializer()
-
   val s3Client = object_store.S3Client(s3Credentials)
 
   val s3DeltaStore = new S3DeltaStorage(s3Credentials, s3Client)

@@ -1,12 +1,6 @@
 package com.advancedtelematic.treehub
+import com.advancedtelematic.libats.boot.VersionInfoProvider
 
-trait VersionInfo {
-  lazy val projectName: String = buildinfo.BuildInfo.name
-
-  lazy val version: String = {
-    val bi = buildinfo.BuildInfo
-    s"${bi.name}/${bi.version}"
-  }
-
-  lazy val versionMap: Map[String, Any] = buildinfo.BuildInfo.toMap
+trait VersionInfo extends com.advancedtelematic.libats.boot.VersionInfo {
+  override protected lazy val provider: VersionInfoProvider = AppBuildInfo
 }

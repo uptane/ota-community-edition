@@ -1,5 +1,5 @@
 name := "treehub"
-organization := "com.advancedtelematic.com"
+organization := "io.github.uptane"
 scalaVersion := "2.12.15"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
@@ -18,14 +18,13 @@ lazy val treehub = (project in file("."))
   .settings(inConfig(ItTest)(Defaults.testTasks): _*)
   .configs(UnitTest)
   .settings(inConfig(UnitTest)(Defaults.testTasks): _*)
-  .settings(testOptions in UnitTest := Seq(Tests.Filter(unitFilter)))
-  .settings(testOptions in IntegrationTest := Seq(Tests.Filter(itFilter)))
-  .settings(sonarSettings)
+  .settings(UnitTest / testOptions := Seq(Tests.Filter(unitFilter)))
+  .settings(IntegrationTest / testOptions := Seq(Tests.Filter(itFilter)))
   .settings(Seq(libraryDependencies ++= {
     val akkaV = "2.6.17"
     val akkaHttpV = "10.2.7"
     val scalaTestV = "3.0.9"
-    val libatsV = "0.4.0-21-g0e8d408"
+    val libatsV = "2.0.3"
 
     Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -57,23 +56,19 @@ lazy val treehub = (project in file("."))
     )
   }))
 
-mainClass in Compile := Some("com.advancedtelematic.treehub.Boot")
-
-buildInfoOptions += BuildInfoOption.ToMap
-
-buildInfoOptions += BuildInfoOption.BuildTime
+Compile / mainClass := Some("com.advancedtelematic.treehub.Boot")
 
 import com.typesafe.sbt.packager.docker._
 
 dockerRepository := Some("advancedtelematic")
 
-packageName in Docker := packageName.value
+Docker / packageName := packageName.value
 
 dockerUpdateLatest := true
 
 dockerAliases ++= Seq(dockerAlias.value.withTag(git.gitHeadCommit.value))
 
-defaultLinuxInstallLocation in Docker := s"/opt/${moduleName.value}"
+Docker / defaultLinuxInstallLocation := s"/opt/${moduleName.value}"
 
 dockerCommands := Seq(
   Cmd("FROM", "advancedtelematic/alpine-jre:adoptopenjdk-jre8u262-b10"),
@@ -86,19 +81,12 @@ dockerCommands := Seq(
   Cmd("USER", "daemon")
 )
 
-enablePlugins(JavaAppPackaging, GitVersioning)
+enablePlugins(JavaAppPackaging, GitVersioning, BuildInfoPlugin)
 
 Versioning.settings
 
-lazy val sonarSettings = Seq(
-  sonarProperties ++= Map(
-    "sonar.projectName" -> "OTA Connect Treehub",
-    "sonar.projectKey" -> "ota-connect-treehub",
-    "sonar.host.url" -> "http://sonar.in.here.com",
-    "sonar.links.issue" -> "https://saeljira.it.here.com/projects/OTA/issues",
-    "sonar.links.scm" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/treehub",
-    "sonar.links.ci" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/treehub/pipelines",
-    "sonar.language" -> "scala",
-    "sonar.projectVersion" -> version.value,
-  )
-)
+buildInfoObject := "AppBuildInfo"
+buildInfoPackage := "com.advancedtelematic.treehub"
+buildInfoOptions += BuildInfoOption.Traits("com.advancedtelematic.libats.boot.VersionInfoProvider")
+buildInfoOptions += BuildInfoOption.ToMap
+buildInfoOptions += BuildInfoOption.BuildTime
