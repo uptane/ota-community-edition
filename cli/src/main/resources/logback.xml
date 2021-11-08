@@ -1,0 +1,15 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%message%n%exception</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="sttp.client.logging.slf4j.Slf4jCurlBackend" level="${STTP_CURL_LOG_LEVEL:-error}" />
+    <logger name="sttp.client.logging.slf4j" level="${CLI_LOG_LEVEL:-error}" />
+    <logger name="org.asynchttpclient" level="${CLI_LOG_LEVEL:-error}" />
+
+    <root level="${rootLevel:-info}">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>
