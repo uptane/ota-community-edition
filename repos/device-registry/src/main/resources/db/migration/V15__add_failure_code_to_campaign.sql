@@ -1,1 +1,0 @@
-ALTER TABLE campaigns ADD COLUMN failure_code VARCHAR(255) NULL;
