@@ -1,20 +1,21 @@
 package com.advancedtelematic.campaigner.db
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
 import cats.data.NonEmptyList
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.data.Generators._
 import com.advancedtelematic.campaigner.util.CampaignerSpecUtil
 import com.advancedtelematic.campaigner.util.DatabaseUpdateSpecUtil
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.campaigner.util.DatabaseSpec
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalacheck.Gen
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.Seconds
 import org.scalatest.time.Span
 import org.scalatest.time.SpanSugar._
+
 import scala.concurrent.Future
 import slick.jdbc.MySQLProfile.api._
 
@@ -27,8 +28,9 @@ final class CampaignStatusRecalculateSpec
     with DatabaseUpdateSpecUtil
     with CampaignerSpecUtil {
 
+  lazy val testDbConfig: Config = ConfigFactory.load().getConfig("ats.campaigner.database")
+
   implicit lazy val ec = system.dispatcher
-  implicit val mat = ActorMaterializer()
   implicit val defaultPatience = PatienceConfig(timeout = Span(2, Seconds))
 
   it should "set campaign status to `finished` if all devices finished the campaign" in {

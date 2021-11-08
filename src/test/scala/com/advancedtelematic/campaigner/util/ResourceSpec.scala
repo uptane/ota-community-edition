@@ -11,13 +11,12 @@ import com.advancedtelematic.campaigner.data.Codecs._
 import com.advancedtelematic.campaigner.data.DataType.CampaignStatus.CampaignStatus
 import com.advancedtelematic.campaigner.data.DataType.SortBy.SortBy
 import com.advancedtelematic.campaigner.data.DataType._
-import com.advancedtelematic.campaigner.db.{Campaigns, Repositories}
+import com.advancedtelematic.campaigner.db.Campaigns
 import com.advancedtelematic.campaigner.http.Routes
 import com.advancedtelematic.libats.data.DataType.{Namespace, ResultCode}
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.http.HttpOps._
 import com.advancedtelematic.libats.http.tracing.NullServerRequestTracing
-import com.advancedtelematic.libats.test.DatabaseSpec
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Json
 import org.scalatest.Suite

@@ -10,7 +10,7 @@ import com.advancedtelematic.campaigner.util.{CampaignerSpec, DatabaseUpdateSpec
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, ResultCode, ResultDescription, CampaignId => CampaignCorrelationId}
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, InstallationResult}
 import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent}
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.campaigner.util.DatabaseSpec
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
 

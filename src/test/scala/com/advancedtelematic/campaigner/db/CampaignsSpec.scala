@@ -6,7 +6,8 @@ import com.advancedtelematic.campaigner.data.Generators._
 import com.advancedtelematic.campaigner.util.{CampaignerSpecUtil, DatabaseUpdateSpecUtil}
 import com.advancedtelematic.libats.data.DataType.{ResultCode, ResultDescription}
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.campaigner.util.DatabaseSpec
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.SpanSugar._
@@ -21,6 +22,8 @@ class CampaignsSpec extends AsyncFlatSpec
   with ScalaFutures
   with DatabaseUpdateSpecUtil
   with CampaignerSpecUtil {
+
+  lazy val testDbConfig: Config = ConfigFactory.load().getConfig("ats.campaigner.database")
 
   import Arbitrary._
 
@@ -64,7 +67,9 @@ final class CampaignsFindFailedDevicesSpec extends AsyncFlatSpec
   with DatabaseUpdateSpecUtil
   with CampaignerSpecUtil {
 
-  implicit val defaultPatience = PatienceConfig(timeout = 2 seconds)
+  lazy val testDbConfig: Config = ConfigFactory.load().getConfig("ats.campaigner.database")
+
+  implicit val defaultPatience = PatienceConfig(timeout = 2.seconds)
 
   "findFailedDeviceUpdates" should "find all failed device update from all the given campaigns and return only the most recent ones" in {
     val campaignIds = Gen.choose(3, 6).flatMap(Gen.listOfN(_, genCampaignId)).generate

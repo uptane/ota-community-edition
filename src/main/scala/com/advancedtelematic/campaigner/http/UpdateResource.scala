@@ -105,7 +105,7 @@ class UpdateResource(extractNamespace: Directive1[Namespace],
           (post & entity(as[CreateUpdate])) { request =>
             createUpdate(ns, request)
           } ~
-          (get & parameters(('groupId.as[GroupId].*, 'nameContains.as[String].?, 'sortBy.as[SortBy].?, 'offset.as(nonNegativeLongUnmarshaller) ? 0L, 'limit.as(nonNegativeLongUnmarshaller) ? 50L))) {
+          (get & parameters('groupId.as[GroupId].*, 'nameContains.as[String].?, 'sortBy.as[SortBy].?, 'offset.as(nonNegativeLongUnmarshaller) ? 0L, 'limit.as(nonNegativeLongUnmarshaller) ? 50L)) {
             (groupId, nameContains, sortBy, offset, limit) => (groupId, nameContains) match {
               case (Nil, _) => complete(getAllUpdates(ns, offset, limit, sortBy, nameContains))
               case (groups, None) => availableUpdatesForGroups(ns, groups.toSet)

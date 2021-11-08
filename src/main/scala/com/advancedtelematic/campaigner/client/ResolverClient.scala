@@ -2,7 +2,6 @@ package com.advancedtelematic.campaigner.client
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.stream.Materializer
 import com.advancedtelematic.campaigner.data.DataType.ExternalUpdateId
 import com.advancedtelematic.libats.codecs.CirceCodecs._
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -11,6 +10,7 @@ import com.advancedtelematic.libats.http.ServiceHttpClient
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.Decoder
+import com.advancedtelematic.campaigner.data.Codecs._
 
 import scala.concurrent.Future
 
@@ -29,8 +29,7 @@ object ExternalUpdate {
 
 }
 
-class ResolverHttpClient(httpClient: HttpRequest => Future[HttpResponse])(implicit system: ActorSystem,
-                                                                          mat: Materializer)
+class ResolverHttpClient(httpClient: HttpRequest => Future[HttpResponse])(implicit system: ActorSystem)
     extends ServiceHttpClient(httpClient)
     with ResolverClient {
 
