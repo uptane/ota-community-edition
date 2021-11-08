@@ -49,7 +49,7 @@ object Publish {
     sonatypeCredentialHost := "s01.oss.sonatype.org",
     sonatypeProfileName := "io.github.uptane",
     publish / skip := true,
-    publishArtifact := false,
+    publishArtifact := true,
     publish := (()),
     publishTo := None,
     publishLocal := (())

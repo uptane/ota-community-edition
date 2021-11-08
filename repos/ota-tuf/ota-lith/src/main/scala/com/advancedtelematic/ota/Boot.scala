@@ -25,7 +25,7 @@ object OtaLithBoot extends App {
   val reposerverDbConfig = globalConfig.getConfig("ats.reposerver.database")
   val reposerverBind = new ReposerverBoot(globalConfig, reposerverDbConfig, new MetricRegistry)(ActorSystem("reposerver-actor-system")).bind()
 
-  val directorDbConfig = globalConfig.getConfig("ats.director.database")
+  val directorDbConfig = globalConfig.getConfig("ats.director-v2.database")
   val directorBind = new DirectorBoot(globalConfig, reposerverDbConfig, new MetricRegistry)(ActorSystem("director-actor-system")).bind()
 }
 
@@ -37,6 +37,6 @@ object OtaLithDaemonBoot extends BootApp3 {
   val keyserverDbConfig = globalConfig.getConfig("ats.keyserver.database")
   val keyserverDaemonBind = new KeyserverDaemon(globalConfig, keyserverDbConfig, new MetricRegistry)
 
-  val directorDbConfig = globalConfig.getConfig("ats.director.database")
+  val directorDbConfig = globalConfig.getConfig("ats.director-v2.database")
   val directorDaemonBind = new DirectorDaemon(globalConfig, directorDbConfig, new MetricRegistry)
 }
