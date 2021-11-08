@@ -57,7 +57,10 @@ object GroupMemberRepository {
       .delete
       .handleSingleUpdateError(Errors.MissingGroup)
 
-  def removeGroupMemberAll(deviceUuid: DeviceId)(implicit ec: ExecutionContext): DBIO[Int] =
+  def removeAllGroupMembers(groupId: GroupId)(implicit ec: ExecutionContext): DBIO[Int] =
+    groupMembers.filter(_.groupId === groupId).delete
+
+  def removeDeviceFromAllGroups(deviceUuid: DeviceId)(implicit ec: ExecutionContext): DBIO[Int] =
     groupMembers
       .filter(_.deviceUuid === deviceUuid)
       .delete

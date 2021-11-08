@@ -1,7 +1,6 @@
 package com.advancedtelematic.ota.deviceregistry.daemon
 
 import java.time.Instant
-
 import akka.http.scaladsl.util.FastFuture
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace}
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
@@ -9,7 +8,7 @@ import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs.deviceUpdateCompletedCodec
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
-import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateAssigned, DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent, DeviceUpdateInFlight}
 import com.advancedtelematic.ota.deviceregistry.common.Errors
 import com.advancedtelematic.ota.deviceregistry.daemon.DeviceUpdateStatus._
 import com.advancedtelematic.ota.deviceregistry.data.DeviceStatus
@@ -66,8 +65,9 @@ class DeviceUpdateEventListener(messageBus: MessageBusPublisher)
   }
 
   private def handleEvent(event: DeviceUpdateEvent): Future[DeviceStatus] = event match {
-    case   _: DeviceUpdateAssigned  => Future.successful(DeviceStatus.Outdated)
-    case   _: DeviceUpdateCanceled  => Future.successful(DeviceStatus.UpToDate)
+    case   _: DeviceUpdateAssigned  => FastFuture.successful(DeviceStatus.Outdated)
+    case   _: DeviceUpdateCanceled  => FastFuture.successful(DeviceStatus.UpToDate)
+    case   _: DeviceUpdateInFlight => FastFuture.successful(DeviceStatus.UpdatePending)
     case msg: DeviceUpdateCompleted =>
       db.run {
         InstallationReportRepository

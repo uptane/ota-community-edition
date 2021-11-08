@@ -1,0 +1,8 @@
+pull_request_rules:
+  - name: Automatic merge scala-steward changes with green CI 💚
+    conditions:
+        - author=scala-steward
+        - check-success="Run tests"
+    actions:
+      merge:
+        method: merge

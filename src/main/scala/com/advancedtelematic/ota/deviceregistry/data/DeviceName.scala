@@ -10,10 +10,10 @@ object DeviceName {
 
   implicit val validatedDeviceType = new ValidatedGeneric[DeviceName, String] {
     override def to(deviceType: DeviceName): String = deviceType.value
-    override def from(s: String): Either[ValidationError, DeviceName] = apply(s)
+    override def from(s: String): Either[ValidationError, DeviceName] = DeviceName.from(s)
   }
 
-  def apply(s: String): Either[ValidationError, DeviceName] =
+  def from(s: String): Either[ValidationError, DeviceName] =
     if (s.length > 200)
       Left(ValidationError(s"$s is not a valid DeviceName since it is longer than 200 characters"))
     else

@@ -30,7 +30,7 @@ import scala.util.Random
 trait GroupRequests {
   self: ResourceSpec =>
 
-  private val defaultExpression = GroupExpression("deviceid contains abcd").right.get
+  private val defaultExpression = GroupExpression.from("deviceid contains abcd").right.get
   protected val groupsApi = "device_groups"
 
   def listDevicesInGroup(groupId: GroupId, offset: Option[Long] = None, limit: Option[Long] = None)
@@ -55,14 +55,18 @@ trait GroupRequests {
     }
 
   def getGroupDetails(groupId: GroupId)(implicit ec: ExecutionContext): HttpRequest =
-    Get(Resource.uri("device_groups", groupId.show))
+    Get(Resource.uri(groupsApi, groupId.show))
 
   def countDevicesInGroup(groupId: GroupId)(implicit ec: ExecutionContext): HttpRequest =
-    Get(Resource.uri("device_groups", groupId.show, "count"))
+    Get(Resource.uri(groupsApi, groupId.show, "count"))
 
   def listGroups(sortBy: Option[SortBy] = None, limit : Option[Long] = None, nameContains: Option[String] = None): HttpRequest = {
     val m = List("sortBy" -> sortBy, "limit" -> limit, "nameContains" -> nameContains).collect { case (k, Some(v)) => k -> v.toString }.toMap
     Get(Resource.uri(groupsApi).withQuery(Query(m)))
+  }
+
+  def deleteGroup(groupId: GroupId): HttpRequest = {
+    Delete(Resource.uri("device_groups", groupId.show))
   }
 
   def createGroup(body: Json)(implicit ec: ExecutionContext): HttpRequest =

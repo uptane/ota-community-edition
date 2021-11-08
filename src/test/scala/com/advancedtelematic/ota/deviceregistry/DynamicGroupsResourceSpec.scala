@@ -11,19 +11,19 @@ import com.advancedtelematic.ota.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.ota.deviceregistry.data.{GroupExpression, GroupType}
 import com.advancedtelematic.ota.deviceregistry.db.DeviceRepository
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import org.scalatest.FunSuite
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.SpanSugar._
+import org.scalatest.funsuite.AnyFunSuite
 
-class DynamicGroupsResourceSpec extends FunSuite with ResourceSpec with Eventually {
+class DynamicGroupsResourceSpec extends AnyFunSuite with ResourceSpec with Eventually {
 
   implicit class DeviceIdToExpression(value: DeviceOemId) {
     def toValidExp: GroupExpression =
-      GroupExpression(s"deviceid contains ${value.underlying}").valueOr(err => throw new IllegalArgumentException(err))
+      GroupExpression.from(s"deviceid contains ${value.underlying}").valueOr(err => throw new IllegalArgumentException(err))
   }
 
   test("dynamic group gets created.") {
-    createGroup(GroupType.dynamic, Some(GroupExpression("deviceid contains something").right.get), None) ~> route ~> check {
+    createGroup(GroupType.dynamic, Some(GroupExpression.from("deviceid contains something").right.get), None) ~> route ~> check {
       status shouldBe Created
     }
   }
@@ -42,7 +42,7 @@ class DynamicGroupsResourceSpec extends FunSuite with ResourceSpec with Eventual
   }
 
   test("dynamic group is empty when no device matches the expression") {
-    val groupId    = createDynamicGroupOk(GroupExpression("deviceid contains nothing").right.get)
+    val groupId    = createDynamicGroupOk(GroupExpression.from("deviceid contains nothing").right.get)
 
     listDevicesInGroup(groupId) ~> route ~> check {
       status shouldBe OK
@@ -121,9 +121,9 @@ class DynamicGroupsResourceSpec extends FunSuite with ResourceSpec with Eventual
     val deviceId: DeviceOemId = deviceT.deviceId
     val deviceUuid = createDeviceOk(deviceT)
 
-    val expression1 = GroupExpression(s"deviceid contains ${deviceId.show.substring(0, 5)}").right.get // To test "starts with"
+    val expression1 = GroupExpression.from(s"deviceid contains ${deviceId.show.substring(0, 5)}").right.get // To test "starts with"
     val groupId1    = createDynamicGroupOk(expression1)
-    val expression2 = GroupExpression(s"deviceid contains ${deviceId.show.substring(2, 10)}").right.get // To test "contains"
+    val expression2 = GroupExpression.from(s"deviceid contains ${deviceId.show.substring(2, 10)}").right.get // To test "contains"
     val groupId2    = createDynamicGroupOk(expression2)
 
     getGroupsOfDevice(deviceUuid) ~> route ~> check {
@@ -140,9 +140,9 @@ class DynamicGroupsResourceSpec extends FunSuite with ResourceSpec with Eventual
     val deviceId: DeviceOemId = deviceT.deviceId
     val deviceUuid = createDeviceOk(deviceT)
 
-    val expression1 = GroupExpression(s"deviceid contains ${deviceId.show.substring(0, 3)} and deviceid contains ${deviceId.show.substring(6, 9)}").right.get
+    val expression1 = GroupExpression.from(s"deviceid contains ${deviceId.show.substring(0, 3)} and deviceid contains ${deviceId.show.substring(6, 9)}").right.get
     val groupId1    = createDynamicGroupOk(expression1)
-    val expression2 = GroupExpression(s"deviceid contains 0empty0").right.get
+    val expression2 = GroupExpression.from(s"deviceid contains 0empty0").right.get
     val _    = createDynamicGroupOk(expression2)
 
     getGroupsOfDevice(deviceUuid) ~> route ~> check {
@@ -162,7 +162,7 @@ class DynamicGroupsResourceSpec extends FunSuite with ResourceSpec with Eventual
     addDeviceToGroupOk(staticGroupId, deviceUuid)
 
     // Make the device show up for a dynamic group
-    val expression = GroupExpression(s"deviceid contains ${deviceT.deviceId.show.substring(1, 5)}").right.get
+    val expression = GroupExpression.from(s"deviceid contains ${deviceT.deviceId.show.substring(1, 5)}").right.get
     val dynamicGroupId = createDynamicGroupOk(expression)
 
     getGroupsOfDevice(deviceUuid) ~> route ~> check {
