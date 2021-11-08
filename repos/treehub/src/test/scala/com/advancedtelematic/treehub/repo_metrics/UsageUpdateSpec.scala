@@ -1,15 +1,12 @@
 package com.advancedtelematic.treehub.repo_metrics
 
 import java.nio.file.{Files, Paths}
-
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.testkit.TestKitBase
 import com.advancedtelematic.libats.messaging.MessageBus
-import com.advancedtelematic.libats.test.DatabaseSpec
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, ObjectStore}
-import com.advancedtelematic.util.TreeHubSpec
+import com.advancedtelematic.util.{DatabaseSpec, TreeHubSpec}
 import com.typesafe.config.ConfigFactory
 
 trait UsageUpdateSpec extends DatabaseSpec with ObjectRepositorySupport with TestKitBase {
@@ -18,8 +15,6 @@ trait UsageUpdateSpec extends DatabaseSpec with ObjectRepositorySupport with Tes
   override implicit lazy val system: ActorSystem = ActorSystem(this.getClass.getSimpleName)
 
   import system.dispatcher
-
-  implicit val mat = ActorMaterializer()
 
   lazy val localFsDir = Files.createTempDirectory(this.getClass.getSimpleName)
 

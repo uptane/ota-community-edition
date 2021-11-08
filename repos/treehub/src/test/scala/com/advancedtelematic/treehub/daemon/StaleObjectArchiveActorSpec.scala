@@ -4,18 +4,16 @@ import java.nio.file.Files
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
-import akka.stream.ActorMaterializer
 import akka.testkit.{ImplicitSender, TestKitBase}
 import com.advancedtelematic.data.DataType.{ObjectStatus, TObject}
-import com.advancedtelematic.libats.test.{DatabaseSpec, LongTest}
+import com.advancedtelematic.util.LongTest
 import com.advancedtelematic.treehub.daemon.StaleObjectArchiveActor.{Done, Tick}
 import com.advancedtelematic.treehub.db.{ArchivedObjectRepositorySupport, ObjectRepositorySupport}
 import com.advancedtelematic.treehub.http.Errors
 import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, S3BlobStore}
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
-import com.advancedtelematic.util.TreeHubSpec
+import com.advancedtelematic.util.{DatabaseSpec, TreeHubSpec}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
@@ -26,8 +24,6 @@ protected abstract class StaleObjectArchiveActorSpecUtil extends TreeHubSpec wit
   with ObjectRepositorySupport with Eventually with LongTest with BeforeAndAfterEach {
 
   override implicit lazy val system: ActorSystem = ActorSystem(this.getClass.getSimpleName)
-
-  implicit lazy val mat = ActorMaterializer()
 
   val subject: ActorRef
 

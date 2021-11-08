@@ -1,7 +1,6 @@
 package com.advancedtelematic.treehub.object_store
 
 import java.nio.file.Files
-
 import cats.syntax.either._
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
@@ -9,9 +8,8 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.test.DatabaseSpec
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
-import com.advancedtelematic.util.TreeHubSpec
+import com.advancedtelematic.util.{DatabaseSpec, TreeHubSpec}
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.time.{Seconds, Span}
 
@@ -22,7 +20,6 @@ class ObjectStoreSpec extends TreeHubSpec with DatabaseSpec with ObjectRepositor
 
   implicit val ec = ExecutionContext.global
   implicit val system = ActorSystem("ObjectStoreSpecSystem")
-  implicit val mat = ActorMaterializer()
 
   override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(3, Seconds))
 

@@ -20,8 +20,6 @@ class S3BlobStoreIntegrationSpec extends TreeHubSpec {
 
   implicit lazy val system = ActorSystem("S3BlobStoreSpec")
 
-  implicit lazy val mat = ActorMaterializer()
-
   val ns = Namespace("S3BlobStoreIntegrationSpec")
 
   val s3BlobStore = S3BlobStore(s3Credentials, allowRedirects = false)

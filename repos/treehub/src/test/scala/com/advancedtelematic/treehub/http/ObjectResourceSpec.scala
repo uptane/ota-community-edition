@@ -11,11 +11,11 @@ import com.advancedtelematic.libats.http.Errors.MissingEntity
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.util.FakeUsageUpdate.{CurrentBandwith, CurrentStorage}
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
-import com.advancedtelematic.util.{ResourceSpec, TreeHubSpec}
+import com.advancedtelematic.util.{LongHttpRequest, LongTest, ResourceSpec, TreeHubSpec}
 
 import scala.concurrent.duration._
 
-class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with ObjectRepositorySupport {
+class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRequest with LongTest with ObjectRepositorySupport {
 
   test("POST creates a new blob when uploading form with `file` field") {
     val obj = new ClientTObject()
