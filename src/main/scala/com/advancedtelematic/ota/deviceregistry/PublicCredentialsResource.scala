@@ -16,6 +16,7 @@ import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.util.FastFuture
 import akka.stream.Materializer
+import com.advancedtelematic.libats.auth.{AuthedNamespaceScope, Scopes}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.ota.deviceregistry.common.Errors
@@ -37,7 +38,7 @@ object PublicCredentialsResource {
 }
 
 class PublicCredentialsResource(
-    authNamespace: Directive1[Namespace],
+    authNamespace: Directive1[AuthedNamespaceScope],
     messageBus: MessageBusPublisher,
     deviceNamespaceAuthorizer: Directive1[DeviceId]
 )(implicit db: Database, mat: Materializer, ec: ExecutionContext) {
@@ -79,14 +80,15 @@ class PublicCredentialsResource(
 
   def api: Route =
     (pathPrefix("devices") & authNamespace) { ns =>
+      val scope = Scopes.devices(ns)
       pathEnd {
-        (put & entity(as[DeviceT])) { devT =>
-          createDeviceWithPublicCredentials(ns, devT)
+        (scope.put & entity(as[DeviceT])) { devT =>
+          createDeviceWithPublicCredentials(ns.namespace, devT)
         }
       } ~
       deviceNamespaceAuthorizer { uuid =>
         path("public_credentials") {
-          get {
+          scope.get {
             fetchPublicCredentials(uuid)
           }
         }

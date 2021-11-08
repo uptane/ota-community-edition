@@ -11,6 +11,7 @@ package com.advancedtelematic.ota.deviceregistry.db
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+
 import akka.http.scaladsl.model.StatusCodes
 import cats.syntax.option._
 import com.advancedtelematic.libats.codecs.CirceCodecs._
@@ -29,7 +30,6 @@ import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.time.SpanSugar._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import org.scalatest.time.{Millis, Seconds, Span}
 
 object EventJournalSpec {
   private[EventJournalSpec] final case class EventPayload(id: UUID,
@@ -53,9 +53,6 @@ object EventJournalSpec {
 class EventJournalSpec extends ResourcePropSpec with ScalaFutures with Eventually with ArbitraryInstances {
   import com.advancedtelematic.ota.deviceregistry.data.GeneratorOps._
   import io.circe.syntax._
-
-  implicit override val patienceConfig =
-    PatienceConfig(timeout = Span(30, Seconds), interval = Span(100, Millis))
 
   private[this] val InstantGen: Gen[Instant] = Gen
     .chooseNum(0, 2 * 365 * 24 * 60)

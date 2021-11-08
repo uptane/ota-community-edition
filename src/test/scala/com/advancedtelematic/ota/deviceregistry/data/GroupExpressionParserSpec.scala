@@ -14,14 +14,11 @@ import com.advancedtelematic.ota.deviceregistry.db.TaggedDeviceRepository.tagDev
 import org.scalatest.EitherValues._
 import org.scalatest.OptionValues._
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.time.{Millis, Span}
+import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.MySQLProfile.api._
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 
-class GroupExpressionParserSpec extends AnyFunSuite with Matchers {
+class GroupExpressionParserSpec extends FunSuite with Matchers {
 
   def runParserUnchecked(str: String) = GroupExpressionParser.parse(str)
 
@@ -210,8 +207,8 @@ class GroupExpressionParserSpec extends AnyFunSuite with Matchers {
   }
 
   test("removes device tag from expressions") {
-    val country = TagId.from("country").valueOr(throw _)
-    val land = TagId.from("land").valueOr(throw _)
+    val country = TagId("country").valueOr(throw _)
+    val land = TagId("land").valueOr(throw _)
     TagContains(country, "abc").dropDeviceTag(country) shouldBe None
     TagCharAt(country, 'a', 0).dropDeviceTag(country) shouldBe None
     TagContains(land, "abc").dropDeviceTag(country).value shouldBe TagContains(land, "abc")
@@ -230,12 +227,12 @@ class GroupExpressionParserSpec extends AnyFunSuite with Matchers {
 
 }
 
-class GroupExpressionRunSpec extends AnyFunSuite with Matchers with DatabaseSpec with ScalaFutures {
+class GroupExpressionRunSpec extends FunSuite with Matchers with DatabaseSpec with ScalaFutures {
 
   val ns = Namespace("group-exp")
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(3, Seconds), interval = Span(30, Millis))
+  override implicit def patienceConfig: PatienceConfig = PatienceConfig(timeout = Span(300, Millis), interval = Span(30, Millis))
 
   private implicit def stringToTagString(s: String): TagId =
     TagId.validatedTagId.from(s).valueOr(throw _)
@@ -265,7 +262,7 @@ class GroupExpressionRunSpec extends AnyFunSuite with Matchers with DatabaseSpec
   }
 
   def runGroupExpression(strExp: String) = {
-    val exp = GroupExpression.from(strExp).right.get
+    val exp = GroupExpression(strExp).right.get
     db.run(DeviceRepository.searchByExpression(ns, exp)).futureValue
   }
 

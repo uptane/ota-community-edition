@@ -1,11 +1,13 @@
 package com.advancedtelematic.ota.deviceregistry
 
-import com.advancedtelematic.libats.test.MysqlDatabaseSpec
+import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.scalatest.Suite
 
-trait DatabaseSpec extends MysqlDatabaseSpec {
+trait DatabaseSpec extends com.advancedtelematic.libats.test.DatabaseSpec {
   self: Suite =>
 
-  override val testDbConfig = ConfigFactory.load().getConfig("ats.device-registry.database")
+  override protected def testDbConfig: Config =
+    ConfigFactory.load().getConfig("ats.deviceregistry.database")
 }
+

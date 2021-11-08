@@ -10,13 +10,14 @@ package com.advancedtelematic.ota.deviceregistry.data
 
 import java.time.{Instant, OffsetDateTime}
 import java.util.UUID
+
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import cats.Show
 import cats.syntax.show._
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.ota.deviceregistry.data.Device.{DeviceOemId, DeviceType}
 import com.advancedtelematic.ota.deviceregistry.data.DeviceStatus._
-import io.circe.{Codec, Decoder, Encoder}
+import io.circe.{Decoder, Encoder}
 
 final case class Device(namespace: Namespace,
                         uuid: DeviceId,
@@ -62,12 +63,10 @@ object Device {
 
   implicit val EncoderInstance = {
     import com.advancedtelematic.libats.codecs.CirceCodecs._
-    import Codecs.deviceOemIdEncoder
     io.circe.generic.semiauto.deriveEncoder[Device]
   }
   implicit val DecoderInstance = {
     import com.advancedtelematic.libats.codecs.CirceCodecs._
-    import Codecs.deviceOemIdDecoder
     io.circe.generic.semiauto.deriveDecoder[Device]
   }
 

@@ -9,6 +9,7 @@
 package com.advancedtelematic.ota.deviceregistry
 
 import java.time.Instant
+
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
@@ -18,6 +19,7 @@ import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import cats.syntax.option._
 import cats.syntax.show._
+import com.advancedtelematic.libats.auth.{AuthedNamespaceScope, Scopes}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.http.Errors.RawError
 import com.advancedtelematic.libats.http.UUIDKeyAkka._
@@ -25,7 +27,6 @@ import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.messaging_datatype.Messages.{AktualizrConfigChanged, DeviceSystemInfoChanged}
 import com.advancedtelematic.ota.deviceregistry.common.Errors.{Codes, MissingSystemInfo}
-import com.advancedtelematic.ota.deviceregistry.data.DataType.DeviceUuids
 import com.advancedtelematic.ota.deviceregistry.db.SystemInfoRepository
 import com.advancedtelematic.ota.deviceregistry.db.SystemInfoRepository.NetworkInfo
 import com.advancedtelematic.ota.deviceregistry.http.`application/toml`
@@ -54,7 +55,7 @@ object SystemInfoResource {
 }
 class SystemInfoResource(
     messageBus: MessageBusPublisher,
-    authNamespace: Directive1[Namespace],
+    authNamespace: Directive1[AuthedNamespaceScope],
     deviceNamespaceAuthorizer: Directive1[DeviceId]
 )(implicit db: Database, actorSystem: ActorSystem, ec: ExecutionContext) {
   import SystemInfoResource._
@@ -115,21 +116,21 @@ class SystemInfoResource(
 
   def api: Route =
     (pathPrefix("devices") & authNamespace) { ns =>
-
+      val scope = Scopes.devices(ns)
       deviceNamespaceAuthorizer { uuid =>
         pathPrefix("system_info") {
           pathEnd {
-            get {
+            scope.get {
               fetchSystemInfo(uuid)
             } ~
-            post {
+            scope.post {
               entity(as[Json]) { body =>
-                createSystemInfo(ns, uuid, body)
+                createSystemInfo(ns.namespace, uuid, body)
               }
             } ~
-            put {
+            scope.put {
               entity(as[Json]) { body =>
-                updateSystemInfo(ns, uuid, body)
+                updateSystemInfo(ns.namespace, uuid, body)
               }
             }
           } ~
@@ -148,7 +149,7 @@ class SystemInfoResource(
                 .run(SystemInfoRepository.setNetworkInfo(payload(uuid)))
                 .andThen {
                   case scala.util.Success(Done) =>
-                    messageBus.publish(DeviceSystemInfoChanged(ns, uuid, None))
+                    messageBus.publish(DeviceSystemInfoChanged(ns.namespace, uuid, None))
                 }
               complete(NoContent -> result)
             }
@@ -157,7 +158,7 @@ class SystemInfoResource(
             pathEnd {
               post {
                 entity(as[AktualizrConfig]) { config =>
-                  val result = messageBus.publish(AktualizrConfigChanged(ns, uuid, config.uptane.polling_sec,
+                  val result = messageBus.publish(AktualizrConfigChanged(ns.namespace, uuid, config.uptane.polling_sec,
                                                                          config.uptane.secondary_preinstall_wait_sec,
                                                                          config.uptane.force_install_completion,
                                                                          config.pacman.`type`, Instant.now))
@@ -170,11 +171,11 @@ class SystemInfoResource(
       }
     }
 
-  def mydeviceRoutes: Route = authNamespace { authedNs =>
+  def mydeviceRoutes: Route = authNamespace { authedNs => // don't use this as a namespace
     pathPrefix("mydevice" / DeviceId.Path) { uuid =>
-      (put & path("system_info")) {
+      (put & path("system_info") & authedNs.oauthScope(s"ota-core.${uuid.show}.write")) {
         entity(as[Json]) { body =>
-          updateSystemInfo(authedNs, uuid, body)
+          updateSystemInfo(authedNs.namespace, uuid, body)
         }
       }
     }

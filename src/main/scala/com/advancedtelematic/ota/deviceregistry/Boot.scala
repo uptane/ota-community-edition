@@ -14,6 +14,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.settings.{ParserSettings, ServerSettings}
+import com.advancedtelematic.libats.auth.NamespaceDirectives
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.http._
 import com.advancedtelematic.libats.http.tracing.Tracing
@@ -33,21 +34,18 @@ import scala.concurrent.Future
 import scala.util.Try
 
 trait Settings {
-  private lazy val _config = ConfigFactory.load().getConfig("ats.device-registry")
+  private lazy val _config = ConfigFactory.load().getConfig("ats.deviceregistry")
 
-  val directorUri = Uri(_config.getString("http.client.director.uri"))
+  lazy val directorUri = Uri(_config.getString("http.client.director.uri"))
 
-  val host = _config.getString("http.server.host")
-  val port = _config.getInt("http.server.port")
-
-  val daemonPort = if(_config.hasPath("http.server.daemon-port")) _config.getInt("http.server.daemon-port") else port
+  lazy val host = _config.getString("http.server.host")
+  lazy val port = _config.getInt("http.server.port")
 }
 
-class DeviceRegistryBoot(override val globalConfig: Config,
+class DeviceRegistryBoot(override val appConfig: Config,
                          override val dbConfig: Config,
                          override val metricRegistry: MetricRegistry)
-                        (implicit override val system: ActorSystem) extends BootApp
-  with AkkaHttpRequestMetrics
+                        (implicit override val system: ActorSystem) extends BootApp with AkkaHttpRequestMetrics
   with AkkaHttpConnectionMetrics
   with CheckMigrations
   with DatabaseSupport
@@ -61,46 +59,44 @@ class DeviceRegistryBoot(override val globalConfig: Config,
 
   import VersionDirectives._
 
-  lazy val authNamespace = NamespaceDirectives.fromConfig()
-
   private lazy val log = LoggerFactory.getLogger(this.getClass)
 
   import system.dispatcher
 
   def bind(): Future[ServerBinding] = {
-    lazy val messageBus = MessageBus.publisher(system, globalConfig)
-
-    lazy val namespaceAuthorizer = AllowUUIDPath.deviceUUID(authNamespace, deviceAllowed)
+    val authNamespace = NamespaceDirectives.fromConfig()
 
     def deviceAllowed(deviceId: DeviceId): Future[Namespace] =
       db.run(DeviceRepository.deviceNamespace(deviceId))
 
-    val tracing = Tracing.fromConfig(globalConfig, projectName)
+    val namespaceAuthorizer = AllowUUIDPath.deviceUUID(authNamespace, deviceAllowed)
+
+    lazy val messageBus = MessageBus.publisher(system, appConfig)
+
+    val tracing = Tracing.fromConfig(appConfig, projectName)
 
     val routes: Route =
-      (LogDirectives.logResponseMetrics("device-registry") & requestMetrics(metricRegistry) & versionHeaders(version)) {
+      (LogDirectives.logResponseMetrics("device-registry") & requestMetrics(metricRegistry) & versionHeaders(nameVersion)) {
         prometheusMetricsRoutes ~
           tracing.traceRequests { implicit serverRequestTracing =>
             new DeviceRegistryRoutes(authNamespace, namespaceAuthorizer, messageBus).route
-          }
-      } ~ DbHealthResource(versionMap, healthMetrics = Seq(new BusListenerMetrics(metricRegistry))).route
+          } ~ DbHealthResource(versionMap, healthMetrics = Seq(new BusListenerMetrics(metricRegistry)), metricRegistry = metricRegistry).route
+      }
 
-    val parserSettings = ParserSettings.forServer(system).withCustomMediaTypes(`application/toml`.mediaType)
+    val parserSettings = ParserSettings(system).withCustomMediaTypes(`application/toml`.mediaType)
     val serverSettings = ServerSettings(system).withParserSettings(parserSettings)
 
-    log.info(s"device registry started at http://$host:$port/")
+    log.info(s"${nameVersion} started at http://$host:$port/")
 
     sys.addShutdownHook {
       Try(db.close())
       Try(system.terminate())
     }
 
-    Http().newServerAt(host, port).withSettings(serverSettings).bindFlow(withConnectionMetrics(routes, metricRegistry))
+    Http().bindAndHandle(withConnectionMetrics(routes, metricRegistry), host, port, settings = serverSettings)
   }
 }
 
-object Boot extends BootAppDefaultConfig with VersionInfo with BootAppDatabaseConfig {
-  def main(args: Array[String]): Unit = {
-    new DeviceRegistryBoot(globalConfig, dbConfig, MetricsSupport.metricRegistry).bind()
-  }
+object Boot extends BootApp with BootAppDefaultConfig with BootAppDatabaseConfig with VersionInfo {
+  new DeviceRegistryBoot(appConfig, dbConfig, MetricsSupport.metricRegistry).bind()
 }

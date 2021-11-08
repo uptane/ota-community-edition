@@ -10,26 +10,21 @@ package com.advancedtelematic.ota.deviceregistry
 
 import akka.http.scaladsl.model.Uri.Query
 import com.advancedtelematic.ota.deviceregistry.data.Group.GroupId
-import com.advancedtelematic.ota.deviceregistry.data.{Group, GroupExpression, GroupName, SortBy}
+import com.advancedtelematic.ota.deviceregistry.data.{Group, GroupName, SortBy}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
 import akka.http.scaladsl.model.StatusCodes._
-import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation, PaginationResult}
+import com.advancedtelematic.libats.data.{ErrorRepresentation, PaginationResult}
 import com.advancedtelematic.ota.deviceregistry.common.Errors.Codes.MalformedInput
 import com.advancedtelematic.ota.deviceregistry.data.Device.DeviceOemId
+import org.scalatest.FunSuite
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.EitherValues._
-import org.scalatest.time.{Millis, Seconds, Span}
 
-class GroupsResourceSpec extends AnyFunSuite with ResourceSpec with ScalaFutures {
+class GroupsResourceSpec extends FunSuite with ResourceSpec with ScalaFutures {
   import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
   private val limit = 30
-
-  implicit override val patienceConfig =
-    PatienceConfig(timeout = Span(15, Seconds), interval = Span(15, Millis))
 
   test("gets all existing groups") {
     //TODO: PRO-1182 turn this back into a property when we can delete groups
@@ -58,50 +53,6 @@ class GroupsResourceSpec extends AnyFunSuite with ResourceSpec with ScalaFutures
     }
   }
 
-  import com.advancedtelematic.ota.deviceregistry.data.GeneratorOps._
-
-  test("DELETE deletes a static group and its members") {
-    val groupId = createStaticGroupOk()
-    val device = genDeviceT.generate
-
-    val deviceId = createDeviceOk(device)
-
-    addDeviceToGroupOk(groupId, deviceId)
-
-    countDevicesInGroup(groupId) ~> route ~> check {
-      status shouldBe OK
-      responseAs[Long] shouldBe 1
-    }
-
-    deleteGroup(groupId) ~> route ~> check {
-      status shouldBe NoContent
-    }
-
-    countDevicesInGroup(groupId) ~> route ~> check {
-      status shouldBe NotFound
-    }
-  }
-
-  test("DELETE deletes a dynamic group") {
-    val device = genDeviceT.generate
-    val groupId = createDynamicGroupOk(GroupExpression.from(s"deviceid contains ${device.deviceId.underlying}").value)
-
-    createDeviceOk(device)
-
-    countDevicesInGroup(groupId) ~> route ~> check {
-      status shouldBe OK
-      responseAs[Long] shouldBe 1
-    }
-
-    deleteGroup(groupId) ~> route ~> check {
-      status shouldBe NoContent
-    }
-
-    countDevicesInGroup(groupId) ~> route ~> check {
-      status shouldBe NotFound
-    }
-  }
-
   test("gets all existing groups sorted by creation time") {
     val groupIds = (1 to 20).map(_ => createGroupOk())
 
@@ -121,7 +72,7 @@ class GroupsResourceSpec extends AnyFunSuite with ResourceSpec with ScalaFutures
 
   test("gets all existing groups that contain a string") {
     val names = Seq("aabb", "baaxbc", "a123ba", "cba3b")
-    val groupNames = names.map(GroupName.from(_).right.get)
+    val groupNames = names.map(GroupName(_).right.get)
     groupNames.foreach(n => createGroupOk(n))
 
     val tests = Map("" -> names, "a1" -> Seq("a123ba"), "aa" -> Seq("aabb", "baaxbc"), "3b" -> Seq("a123ba", "cba3b"), "3" -> Seq("a123ba", "cba3b"))
@@ -171,28 +122,6 @@ class GroupsResourceSpec extends AnyFunSuite with ResourceSpec with ScalaFutures
       val result = responseAs[PaginationResult[DeviceId]]
       result.values.length shouldBe limit
       allDevices.slice(offset, offset + limit) shouldEqual result.values
-    }
-  }
-
-  test("lists devices with negative pagination limit fails") {
-    val groupId = createStaticGroupOk()
-
-    listDevicesInGroup(groupId, limit = Some(-1)) ~> route ~> check {
-      status shouldBe BadRequest
-      val res = responseAs[ErrorRepresentation]
-      res.code shouldBe ErrorCodes.InvalidEntity
-      res.description should include("The query parameter 'limit' was malformed")
-    }
-  }
-
-  test("lists devices with negative pagination offset fails") {
-    val groupId = createStaticGroupOk()
-
-    listDevicesInGroup(groupId, offset = Some(-1)) ~> route ~> check {
-      status shouldBe BadRequest
-      val res = responseAs[ErrorRepresentation]
-      res.code shouldBe ErrorCodes.InvalidEntity
-      res.description should include("The query parameter 'offset' was malformed")
     }
   }
 
