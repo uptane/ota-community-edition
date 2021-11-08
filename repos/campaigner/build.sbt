@@ -2,6 +2,9 @@ name := "campaigner"
 organization := "com.advancedtelematic"
 scalaVersion := "2.12.10"
 
+resolvers += "sonatype-releases" at "https://s01.oss.sonatype.org/content/repositories/releases"
+resolvers += "sonatype-snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+
 scalacOptions := Seq(
   "-feature",
   "-unchecked",
@@ -18,15 +21,11 @@ scalacOptions := Seq(
 // allow imports in the console on a single line
 scalacOptions in (Compile, console) ~= (_ filterNot (_ == "-Ywarn-unused-import"))
 
-resolvers += "ATS Releases" at "https://nexus.ota.here.com/content/repositories/releases"
-
-resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots"
-
 libraryDependencies ++= {
-  val akkaV = "2.6.5"
-  val akkaHttpV = "10.1.12"
-  val libatsV = "0.4.0-8-g8c1c7f3"
-  val libtufV = "0.7.1-6-gd36661d"
+  val akkaV = "2.6.17"
+  val akkaHttpV = "10.2.6"
+  val libatsV = "2.0.3"
+  val libtufV = "1.0.0"
   val scalaTestV = "3.0.8"
   val slickV = "3.2.0"
 
@@ -41,50 +40,38 @@ libraryDependencies ++= {
     "com.typesafe.slick" %% "slick" % slickV,
     "com.typesafe.slick" %% "slick-hikaricp" % slickV,
     "org.mariadb.jdbc" % "mariadb-java-client" % "2.4.4",
-    "com.advancedtelematic" %% "libats" % libatsV,
-    "com.advancedtelematic" %% "libats-http" % libatsV,
-    "com.advancedtelematic" %% "libats-http-tracing" % libatsV,
-    "com.advancedtelematic" %% "libats-auth" % libatsV,
-    "com.advancedtelematic" %% "libats-messaging" % libatsV,
-    "com.advancedtelematic" %% "libats-messaging-datatype" % libatsV,
-    "com.advancedtelematic" %% "libats-metrics" % libatsV,
-    "com.advancedtelematic" %% "libats-metrics-akka" % libatsV,
-    "com.advancedtelematic" %% "libats-metrics-kafka" % libatsV,
-    "com.advancedtelematic" %% "libats-metrics-prometheus" % libatsV,
-    "com.advancedtelematic" %% "libats-slick" % libatsV,
-    "com.advancedtelematic" %% "libats-logging" % libatsV,
-    "com.advancedtelematic" %% "libtuf" % libtufV,
-    "com.advancedtelematic" %% "libtuf-server" % libtufV,
+    "io.github.uptane" %% "libats" % libatsV,
+    "io.github.uptane" %% "libats-http" % libatsV,
+    "io.github.uptane" %% "libats-http-tracing" % libatsV,
+    "io.github.uptane" %% "libats-messaging" % libatsV,
+    "io.github.uptane" %% "libats-messaging-datatype" % libatsV,
+    "io.github.uptane" %% "libats-metrics" % libatsV,
+    "io.github.uptane" %% "libats-metrics-akka" % libatsV,
+    "io.github.uptane" %% "libats-metrics-prometheus" % libatsV,
+    "io.github.uptane" %% "libats-slick" % libatsV,
+    "io.github.uptane" %% "libats-logging" % libatsV,
+    "io.github.uptane" %% "libtuf" % libtufV,
+    "io.github.uptane" %% "libtuf-server" % libtufV,
     "org.scalacheck" %% "scalacheck" % "1.14.1" % Test,
     "org.scalatest" %% "scalatest" % scalaTestV % Test,
     "com.typesafe.akka" %% "akka-testkit" % akkaV % Test
   )
 }
 
-sonarProperties ++= Map(
-  "sonar.projectName" -> "OTA Connect Campaigner",
-  "sonar.projectKey" -> "ota-connect-campaigner",
-  "sonar.host.url" -> "http://sonar.in.here.com",
-  "sonar.links.issue" -> "https://saeljira.it.here.com/projects/OTA/issues",
-  "sonar.links.scm" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/campaigner",
-  "sonar.links.ci" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/campaigner/pipelines",
-  "sonar.projectVersion" -> version.value,
-  "sonar.language" -> "scala")
-
-
-enablePlugins(BuildInfoPlugin)
 
 buildInfoOptions += BuildInfoOption.ToMap
-
 buildInfoOptions += BuildInfoOption.BuildTime
+buildInfoObject := "AppBuildInfo"
+buildInfoPackage := "com.advancedtelematic.campaigner"
+buildInfoOptions += BuildInfoOption.Traits("com.advancedtelematic.libats.boot.VersionInfoProvider")
 
-mainClass in Compile := Some("com.advancedtelematic.campaigner.Boot")
+Compile / mainClass := Some("com.advancedtelematic.campaigner.Boot")
 
 import com.typesafe.sbt.packager.docker._
 
 dockerRepository := Some("advancedtelematic")
 
-packageName in Docker := packageName.value
+Docker / packageName := packageName.value
 
 dockerUpdateLatest := true
 
@@ -103,5 +90,5 @@ dockerCommands := Seq(
   Cmd("USER", "daemon")
 )
 
-enablePlugins(JavaAppPackaging, GitVersioning)
+enablePlugins(JavaAppPackaging, GitVersioning, BuildInfoPlugin)
 

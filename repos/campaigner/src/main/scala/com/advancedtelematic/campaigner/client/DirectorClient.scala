@@ -8,13 +8,13 @@ import com.advancedtelematic.campaigner.data.DataType.ExternalUpdateId
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, MultiTargetUpdateId, Namespace}
 import com.advancedtelematic.libats.http.HttpOps.HttpRequestOps
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import com.advancedtelematic.libats.codecs.CirceAnyVal._
 import java.util.UUID
 
 import com.advancedtelematic.libats.http.tracing.Tracing.ServerRequestTracing
 import com.advancedtelematic.libats.http.tracing.TracingHttpClient
 import io.circe._
 import io.circe.generic.semiauto._
+import com.advancedtelematic.campaigner.data.Codecs._
 
 import scala.concurrent.Future
 
@@ -53,7 +53,7 @@ trait DirectorClient {
 }
 
 class DirectorHttpClient(uri: Uri, httpClient: HttpRequest => Future[HttpResponse])
-    (implicit system: ActorSystem, mat: Materializer, tracing: ServerRequestTracing)
+    (implicit system: ActorSystem, tracing: ServerRequestTracing)
     extends TracingHttpClient(httpClient, "director") with DirectorClient {
 
   import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._

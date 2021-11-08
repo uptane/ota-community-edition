@@ -16,7 +16,6 @@ import com.advancedtelematic.campaigner.data.DataType.CampaignStatus.CampaignSta
 import com.advancedtelematic.campaigner.data.DataType.SortBy.SortBy
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.db.Campaigns
-import com.advancedtelematic.libats.auth.AuthedNamespaceScope
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace, ResultCode, ResultDescription}
 import com.advancedtelematic.libats.http.UUIDKeyAkka._
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
@@ -24,7 +23,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CampaignResource(extractAuth: Directive1[AuthedNamespaceScope],
+class CampaignResource(extractNs: Directive1[Namespace],
                        deviceRegistry: DeviceRegistryClient,
                        campaigns: Campaigns)
                       (implicit ec: ExecutionContext) extends Settings {
@@ -43,13 +42,13 @@ class CampaignResource(extractAuth: Directive1[AuthedNamespaceScope],
   }
 
   def searchCampaigns(ns: Namespace): Route =
-    parameters((
+    parameters(
       'status.as[CampaignStatus].?,
       'nameContains.as[String].?,
       'withErrors.as[Boolean].?,
       'sortBy.as[SortBy] ? (SortBy.CreatedAt : SortBy),
       'offset.as(nonNegativeLongUnmarshaller) ? 0L,
-      'limit.as(nonNegativeLongUnmarshaller) ? 50L)).as(SearchCampaignParams) { params: SearchCampaignParams =>
+      'limit.as(nonNegativeLongUnmarshaller) ? 50L).as(SearchCampaignParams) { params: SearchCampaignParams =>
       val f = params.withErrors match {
         case Some(true) =>
           campaigns.findCampaignsWithErrors(ns, params.sortBy, params.offset, params.limit)
@@ -112,8 +111,7 @@ class CampaignResource(extractAuth: Directive1[AuthedNamespaceScope],
       campaigns.cancelDevices(campaign.id, Seq(deviceId))
 
   val route: Route =
-    extractAuth { auth =>
-      val ns = auth.namespace
+    extractNs { ns =>
       pathPrefix("campaigns") {
         path("count") {
           complete(campaigns.countByStatus)

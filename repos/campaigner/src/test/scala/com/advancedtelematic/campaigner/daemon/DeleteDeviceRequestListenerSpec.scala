@@ -7,7 +7,7 @@ import com.advancedtelematic.campaigner.util.{CampaignerSpec, DatabaseUpdateSpec
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeleteDeviceRequest
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.campaigner.util.DatabaseSpec
 import org.scalacheck.Arbitrary._
 
 import java.time.Instant

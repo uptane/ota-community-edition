@@ -28,7 +28,7 @@ object UserProfileClient {
 }
 
 class UserProfileHttpClient(uri: Uri, httpClient: HttpRequest => Future[HttpResponse])
-                           (implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer, tracing: ServerRequestTracing)
+                           (implicit ec: ExecutionContext, system: ActorSystem, tracing: ServerRequestTracing)
   extends TracingHttpClient(httpClient, "user-profile") with UserProfileClient {
 
   import com.advancedtelematic.libats.http.ServiceHttpClient._

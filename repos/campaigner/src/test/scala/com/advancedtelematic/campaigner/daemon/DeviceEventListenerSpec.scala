@@ -11,7 +11,7 @@ import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Event, EventType}
 import com.advancedtelematic.libats.messaging_datatype.Messages
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceEventMessage
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.campaigner.util.DatabaseSpec
 import io.circe.Json
 import io.circe.syntax._
 import org.scalacheck.Arbitrary._

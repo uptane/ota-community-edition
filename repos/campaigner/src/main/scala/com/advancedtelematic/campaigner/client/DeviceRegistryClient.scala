@@ -3,7 +3,6 @@ package com.advancedtelematic.campaigner.client
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.util.FastFuture
-import akka.stream.Materializer
 import cats.syntax.show._
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -48,7 +47,7 @@ trait DeviceRegistryClient {
 }
 
 class DeviceRegistryHttpClient(uri: Uri, httpClient: HttpRequest => Future[HttpResponse])
-    (implicit system: ActorSystem, mat: Materializer, tracing: ServerRequestTracing)
+    (implicit system: ActorSystem, tracing: ServerRequestTracing)
     extends TracingHttpClient(httpClient, "device-registry") with DeviceRegistryClient {
 
   import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
