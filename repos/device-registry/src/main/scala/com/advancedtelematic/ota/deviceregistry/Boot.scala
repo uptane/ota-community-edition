@@ -19,7 +19,7 @@ import com.advancedtelematic.libats.http._
 import com.advancedtelematic.libats.http.tracing.Tracing
 import com.advancedtelematic.libats.messaging._
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import com.advancedtelematic.libats.slick.db.{CheckMigrations, DatabaseSupport}
+import com.advancedtelematic.libats.slick.db.{BootMigrations, CheckMigrations, DatabaseSupport}
 import com.advancedtelematic.libats.slick.monitoring.{DatabaseMetrics, DbHealthResource}
 import com.advancedtelematic.metrics.prometheus.PrometheusMetricsSupport
 import com.advancedtelematic.metrics.{AkkaHttpConnectionMetrics, AkkaHttpRequestMetrics, MetricsSupport}
@@ -49,7 +49,7 @@ class DeviceRegistryBoot(override val globalConfig: Config,
                         (implicit override val system: ActorSystem) extends BootApp
   with AkkaHttpRequestMetrics
   with AkkaHttpConnectionMetrics
-  with CheckMigrations
+  with BootMigrations
   with DatabaseSupport
   with DatabaseMetrics
   with Directives
@@ -88,7 +88,7 @@ class DeviceRegistryBoot(override val globalConfig: Config,
     val parserSettings = ParserSettings.forServer(system).withCustomMediaTypes(`application/toml`.mediaType)
     val serverSettings = ServerSettings(system).withParserSettings(parserSettings)
 
-    log.info(s"device registry started at http://$host:$port/")
+    log.info(s"device ${nameVersion} at http://$host:$port/")
 
     sys.addShutdownHook {
       Try(db.close())

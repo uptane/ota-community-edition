@@ -27,7 +27,6 @@ class DeviceRegistryDaemon(override val globalConfig: Config,
                           (implicit override val system: ActorSystem) extends BootApp
   with DatabaseSupport
   with BootMigrations
-  with CheckMigrations
   with MessageListenerSupport
   with MonitoredBusListenerSupport
   with MetricsSupport
