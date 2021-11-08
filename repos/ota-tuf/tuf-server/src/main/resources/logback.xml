@@ -1,0 +1,9 @@
+<configuration>
+    <include resource="logback-libats.xml"/>
+
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="com.advancedtelematic.libats.logging.AtsLayoutBase"/>
+        </encoder>
+    </appender>
+</configuration>
