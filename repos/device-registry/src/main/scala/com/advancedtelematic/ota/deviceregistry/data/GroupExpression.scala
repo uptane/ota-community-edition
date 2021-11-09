@@ -12,7 +12,7 @@ final case class GroupExpression private (value: String) extends AnyVal {
       .map(_.dropDeviceTag(tagId))
       .valueOr(throw _)
       .map(GroupExpressionAST.showExpression)
-      .map(GroupExpression(_))
+      .map(GroupExpression.from)
       .map(_.valueOr(throw _))
 }
 
@@ -20,15 +20,15 @@ object GroupExpression {
 
   implicit val validatedGroupExpression = new ValidatedGeneric[GroupExpression, String] {
     override def to(expression: GroupExpression): String                   = expression.value
-    override def from(s: String): Either[ValidationError, GroupExpression] = apply(s)
+    override def from(s: String): Either[ValidationError, GroupExpression] = GroupExpression.from(s)
   }
 
-  def apply(s: String): Either[ValidationError, GroupExpression] =
+  def from(s: String): Either[ValidationError, GroupExpression] =
     if (s.length < 1 || s.length > 200)
       Left(ValidationError("The expression is too small or too big."))
     else
       GroupExpressionParser.parse(s).fold(
-        e => Left(ValidationError(e.desc)),
+        e =>{ Left(ValidationError(e.desc))},
         _ => Right(new GroupExpression(s))
       )
 

@@ -246,7 +246,7 @@ class SystemInfoResourceSpec extends ResourcePropSpec {
         |
         |""".stripMargin
 
-    SystemInfoResource.parseAktualizrConfigToml(content).failed.get.getMessage shouldBe "toml.Value$Str cannot be cast to toml.Value$Tbl"
+    SystemInfoResource.parseAktualizrConfigToml(content).failed.get.getMessage should include("cannot be cast to")
   }
 
   property("missing section leads to error") {

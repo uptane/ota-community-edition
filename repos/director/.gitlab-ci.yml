@@ -11,7 +11,7 @@ variables:
   MYSQL_DATABASE: "director_test"
   MYSQL_USER: "director_v2"
   MYSQL_PASSWORD: "director_v2"
-  VAULT_ADDR: "http://vault.sit-ota.aws.in.here.com"
+  # VAULT_ADDR: defined in GitLab variables
   SERVICE_IMAGE: "advancedtelematic/director"
   # The same image have to be used by test and code coverage jobs:
   TEST_IMAGE: advancedtelematic/gitlab-jobs:0.2.5

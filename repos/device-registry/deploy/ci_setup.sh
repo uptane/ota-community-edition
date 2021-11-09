@@ -11,6 +11,9 @@ GRANT ALL PRIVILEGES ON \`device\_registry%\`.* TO 'device_registry'@'%';
 FLUSH PRIVILEGES;
 " > entrypoint.d/db_user.sql
 
+docker rm --force timescaledb || true
+docker run -d --name timescaledb -p 6543:5432 -e POSTGRES_PASSWORD=password timescale/timescaledb:2.3.0-pg12
+
 docker rm --force mariadb-device-registry || true
 docker run -d \
   --name mariadb-device-registry \

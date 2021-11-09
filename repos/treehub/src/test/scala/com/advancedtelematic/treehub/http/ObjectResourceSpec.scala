@@ -7,14 +7,15 @@ package com.advancedtelematic.treehub.http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers.byteArrayUnmarshaller
 import akka.pattern.ask
+import com.advancedtelematic.libats.http.Errors.MissingEntity
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.util.FakeUsageUpdate.{CurrentBandwith, CurrentStorage}
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
-import com.advancedtelematic.util.{ResourceSpec, TreeHubSpec}
+import com.advancedtelematic.util.{LongHttpRequest, LongTest, ResourceSpec, TreeHubSpec}
 
 import scala.concurrent.duration._
 
-class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with ObjectRepositorySupport {
+class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRequest with LongTest with ObjectRepositorySupport {
 
   test("POST creates a new blob when uploading form with `file` field") {
     val obj = new ClientTObject()
@@ -40,6 +41,71 @@ class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with ObjectReposi
     Get(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
       status shouldBe StatusCodes.OK
       responseAs[Array[Byte]] shouldBe obj.blob
+    }
+  }
+
+  test("DELETE removes object") {
+    val obj = new ClientTObject()
+
+    Post(apiUri(s"objects/${obj.prefixedObjectId}"), obj.blob) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    Delete(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    Get(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.NotFound
+    }
+  }
+
+  test("DELETE removes object from database and underlying storage") {
+    val obj = new ClientTObject()
+
+    Post(apiUri(s"objects/${obj.prefixedObjectId}"), obj.blob) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    Delete(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    objectRepository.find(defaultNs, obj.objectId).failed.futureValue shouldBe Errors.ObjectNotFound
+    objectStore.exists(defaultNs, obj.objectId).futureValue shouldBe false
+    localFsBlobStore.exists(defaultNs, obj.objectId).futureValue shouldBe false
+  }
+
+  test("DELETE keeps other objects intact") {
+    val obj = new ClientTObject()
+    val obj2 = new ClientTObject()
+
+    Post(apiUri(s"objects/${obj.prefixedObjectId}"), obj.blob) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    Post(apiUri(s"objects/${obj2.prefixedObjectId}"), obj.blob) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    Delete(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.NoContent
+    }
+
+    Get(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.NotFound
+    }
+
+    Get(apiUri(s"objects/${obj2.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+    }
+  }
+
+  test("DELETE returns 404 when object does not exist") {
+    val obj = new ClientTObject()
+
+    Delete(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
+      status shouldBe StatusCodes.NotFound
     }
   }
 

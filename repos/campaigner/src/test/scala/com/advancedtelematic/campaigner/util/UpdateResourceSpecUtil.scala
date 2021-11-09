@@ -4,9 +4,8 @@ import akka.http.scaladsl.model.StatusCodes._
 import com.advancedtelematic.campaigner.data.Codecs._
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{Campaigns, UpdateSupport}
+import com.advancedtelematic.campaigner.db.{Campaigns, Repositories}
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
-import com.advancedtelematic.campaigner.DatabaseSpec
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
@@ -20,6 +19,8 @@ import scala.concurrent.Future
 
 trait UpdateResourceSpecUtil {
   self: ResourceSpec with Matchers =>
+
+  val campaigns = Campaigns()
 
   def createUpdateOk(request: CreateUpdate): UpdateId = {
     Post(apiUri("updates"), request).withHeaders(header) ~> routes ~> check {
@@ -42,15 +43,16 @@ trait UpdateResourceSpecUtil {
 }
 
 trait DatabaseUpdateSpecUtil {
-  self: DatabaseSpec with ScalaFutures with UpdateSupport =>
+  self: DatabaseSpec with ScalaFutures =>
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val campaigns = Campaigns()
+  val repositories = Repositories()
+  val campaigns = new Campaigns(repositories)
 
   def createDbUpdate(updateId: UpdateId): Future[UpdateId] = {
     val update = genMultiTargetUpdate.generate.copy(uuid = updateId)
-    updateRepo.persist(update)
+    repositories.updateRepo.persist(update)
   }
 
   def createDbCampaign(namespace: Namespace, updateId: UpdateId, groups: NonEmptyList[GroupId]): Future[Campaign] = {

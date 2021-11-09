@@ -2,11 +2,13 @@ package com.advancedtelematic.director.http
 
 import akka.http.scaladsl.model.StatusCodes
 import cats.Show
+import com.advancedtelematic.director.data.DataType.AdminRoleName
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.{EcuIdentifier, ErrorCode}
 import com.advancedtelematic.libats.http.Errors.{Error, MissingEntityId, RawError}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libtuf.data.ClientDataType.TufRole
+import com.advancedtelematic.libtuf.data.TufDataType.{RepoId, TargetFilename}
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
 
 object ErrorCodes {
@@ -24,10 +26,18 @@ object ErrorCodes {
   val ReplaceEcuAssignmentExists = ErrorCode("replace_ecu_assignment_exists")
   val EcuReuseError = ErrorCode("ecu_reuse_not_allowed")
   val EcuReplacementDisabled = ErrorCode("ecu_replacement_disabled")
+
+  val MissingAdminRole = ErrorCode("missing_admin_role")
+
+  val MissingTarget = ErrorCode("missing_target")
 }
 
 object Errors {
   val PrimaryIsNotListedForDevice = RawError(ErrorCodes.PrimaryIsNotListedForDevice, StatusCodes.BadRequest, "The given primary ecu isn't part of ecus for the device")
+
+  case class MissingAdminRole(repoId: RepoId, name: AdminRoleName) extends Error(ErrorCodes.MissingAdminRole, StatusCodes.NotFound, s"admin role $repoId/$name not found")
+
+  case class MissingTarget(repoId: RepoId, name: TargetFilename) extends Error(ErrorCodes.MissingTarget, StatusCodes.NotFound, s"target role $repoId/$name not found")
 
   def DeviceMissingPrimaryEcu(deviceId: DeviceId) = RawError(ErrorCodes.DeviceMissingPrimaryEcu, StatusCodes.NotFound, s"This server does not have a primary ecu for $deviceId")
 

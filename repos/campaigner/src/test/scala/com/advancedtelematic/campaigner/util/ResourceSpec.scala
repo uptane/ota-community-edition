@@ -7,11 +7,11 @@ import akka.http.scaladsl.model.{HttpRequest, Uri}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import cats.syntax.show._
-import com.advancedtelematic.campaigner.DatabaseSpec
 import com.advancedtelematic.campaigner.data.Codecs._
 import com.advancedtelematic.campaigner.data.DataType.CampaignStatus.CampaignStatus
 import com.advancedtelematic.campaigner.data.DataType.SortBy.SortBy
 import com.advancedtelematic.campaigner.data.DataType._
+import com.advancedtelematic.campaigner.db.Campaigns
 import com.advancedtelematic.campaigner.http.Routes
 import com.advancedtelematic.libats.data.DataType.{Namespace, ResultCode}
 import com.advancedtelematic.libats.data.PaginationResult
@@ -43,7 +43,7 @@ trait ResourceSpec extends ScalatestRouteTest
   val fakeUserProfile = new FakeUserProfileClient
   val fakeResolver = new FakeResolverClient
 
-  lazy val routes: Route = new Routes(fakeRegistry, fakeResolver, fakeUserProfile).routes
+  lazy val routes: Route = new Routes(fakeRegistry, fakeResolver, fakeUserProfile, Campaigns()).routes
 
   def createCampaign(request: Json): HttpRequest =
     Post(apiUri("campaigns"), request).withHeaders(header)
@@ -76,12 +76,16 @@ trait ResourceSpec extends ScalatestRouteTest
                    nameContains: Option[String] = None,
                    sortBy: Option[SortBy] = None,
                    withErrors: Option[Boolean] = None,
+                   limit: Option[Long] = None,
+                   offset: Option[Long] = None
                   ): HttpRequest = {
     val m = Seq(
       "status" -> campaignStatus,
       "nameContains" -> nameContains,
       "sortBy" -> sortBy,
       "withErrors" -> withErrors,
+      "limit" -> limit,
+      "offset" -> offset
     ).collect { case (k, Some(v)) => k -> v.toString }.toMap
     Get(apiUri("campaigns").withQuery(Query(m))).withHeaders(header)
   }

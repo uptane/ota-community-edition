@@ -16,7 +16,6 @@ import com.advancedtelematic.campaigner.data.Codecs._
 import com.advancedtelematic.campaigner.data.DataType.CampaignStatus.CampaignStatus
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{CampaignSupport, Campaigns, DeviceUpdateSupport}
 import com.advancedtelematic.campaigner.util.{CampaignerSpec, ResourceSpec, UpdateResourceSpecUtil}
 import com.advancedtelematic.libats.data.DataType.{Namespace, ResultCode, ResultDescription}
 import com.advancedtelematic.libats.data.ErrorCodes.InvalidEntity
@@ -37,16 +36,15 @@ import scala.concurrent.Future
 class CampaignResourceSpec
     extends CampaignerSpec
     with ResourceSpec
-    with CampaignSupport
-    with DeviceUpdateSupport
     with UpdateResourceSpecUtil
     with Eventually
     with GivenWhenThen
     with ScalaCheckPropertyChecks {
 
+  import campaigns.repositories.deviceUpdateRepo
+
   implicit val defaultPatience = PatienceConfig(timeout = 5 seconds)
 
-  private val campaigns = Campaigns()
 
   def conductCampaign(campaignId: CampaignId, campaignCase: CampaignCase, failureCode: ResultCode): Future[Unit] = for {
     _ <- campaigns.scheduleDevices(campaignId, campaignCase.affectedDevices)
@@ -145,7 +143,7 @@ class CampaignResourceSpec
         Future.successful(response)
       }
     }
-    val routes = new Routes(testDeviceRegistry, fakeResolver, fakeUserProfile).routes
+    val routes = new Routes(testDeviceRegistry, fakeResolver, fakeUserProfile, campaigns).routes
 
     val request = genCreateCampaign().map(_.copy(update = updateId, groups = groupIds)).generate
     val id = createCampaign(request) ~> routes ~> check {
@@ -153,8 +151,7 @@ class CampaignResourceSpec
       responseAs[CampaignId]
     }
 
-    val campaigns = getCampaignsOk()
-    campaigns.values should contain (id)
+    getCampaignsOk().values should contain (id)
 
     val devices = deviceUpdateRepo.findAllByCampaign(id).futureValue
     devices shouldBe devicesInGroups.values.flatten.toSet
@@ -460,6 +457,20 @@ class CampaignResourceSpec
     getCampaigns(nameContains = Gen.some(Gen.alphaNumStr).generate, withErrors = Some(true)) ~> routes ~> check {
       status shouldBe BadRequest
       responseAs[ErrorRepresentation].description should include ("'nameContains' must be empty when searching by 'withErrors'")
+    }
+  }
+
+  "GET /campaigns?limit=<negativeLong>" should "fail with a BadRequest" in {
+    getCampaigns(limit = Some(-1)) ~> routes ~> check {
+      status shouldBe BadRequest
+      responseAs[ErrorRepresentation].description should include ("The query parameter 'limit' was malformed")
+    }
+  }
+
+  "GET /campaigns?offset=<negativeLong>" should "fail with a BadRequest" in {
+    getCampaigns(offset = Some(-1)) ~> routes ~> check {
+      status shouldBe BadRequest
+      responseAs[ErrorRepresentation].description should include ("The query parameter 'offset' was malformed")
     }
   }
 

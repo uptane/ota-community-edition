@@ -6,25 +6,24 @@ import akka.Done
 import com.advancedtelematic.campaigner.daemon.DeviceEventListener.AcceptedCampaign
 import com.advancedtelematic.campaigner.data.DataType.{Campaign, DeviceStatus, DeviceUpdate}
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{Campaigns, DeviceUpdateSupport, UpdateSupport}
 import com.advancedtelematic.campaigner.util.{CampaignerSpec, DatabaseUpdateSpecUtil, FakeDirectorClient}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Event, EventType}
 import com.advancedtelematic.libats.messaging_datatype.Messages
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceEventMessage
-import com.advancedtelematic.campaigner.DatabaseSpec
+import com.advancedtelematic.campaigner.util.DatabaseSpec
 import io.circe.Json
 import io.circe.syntax._
 import org.scalacheck.Arbitrary._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class DeviceEventListenerSpec extends CampaignerSpec with DatabaseSpec with DeviceUpdateSupport with UpdateSupport with DatabaseUpdateSpecUtil {
+class DeviceEventListenerSpec extends CampaignerSpec with DatabaseSpec with DatabaseUpdateSpecUtil {
+  import repositories.{updateRepo, deviceUpdateRepo}
+
   lazy val director = new FakeDirectorClient()
 
-  val listener = new DeviceEventListener(director)
-
-  val campaigns = Campaigns()
+  val listener = new DeviceEventListener(director, campaigns)
 
   private def mkDeviceEvent(campaign: Campaign, deviceId: DeviceId): DeviceEventMessage = {
     val payload = AcceptedCampaign(campaign.id)

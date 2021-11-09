@@ -3,23 +3,20 @@ package com.advancedtelematic.campaigner.daemon
 import akka.http.scaladsl.util.FastFuture
 import cats.syntax.show._
 import com.advancedtelematic.campaigner.data.DataType._
-import com.advancedtelematic.campaigner.db.{Campaigns, UpdateSupport}
+import com.advancedtelematic.campaigner.db.Campaigns
 import com.advancedtelematic.campaigner.http.Errors
 import com.advancedtelematic.libats.data.DataType.{CampaignId => CampaignCorrelationId}
 import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateCanceled, DeviceUpdateCompleted, DeviceUpdateEvent}
 import org.slf4j.LoggerFactory
-import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DeviceUpdateEventListener()(implicit db: Database, ec: ExecutionContext)
-  extends MsgOperation[DeviceUpdateEvent] with UpdateSupport {
+class DeviceUpdateEventListener(campaigns: Campaigns)(implicit ec: ExecutionContext)
+  extends MsgOperation[DeviceUpdateEvent] {
 
   private lazy val _log = LoggerFactory.getLogger(this.getClass)
-
-  val campaigns = Campaigns()
 
   def apply(event: DeviceUpdateEvent): Future[Unit] = event.correlationId match {
     case CampaignCorrelationId(uuid) => dispatch(CampaignId(uuid), event)
@@ -38,8 +35,8 @@ class DeviceUpdateEventListener()(implicit db: Database, ec: ExecutionContext)
 
 
   private def completedEventReceived(campaignId: CampaignId, deviceId: DeviceId): Future[Boolean] = {
-    campaigns.deviceUpdateRepo.findByDeviceCampaign(campaignId,deviceId).map {
-      case Some(d) if d.status == DeviceStatus.successful || d.status == DeviceStatus.cancelled => true
+    campaigns.repositories.deviceUpdateRepo.findUpdateStatusByDeviceCampaign(campaignId, deviceId).map {
+      case Some(status) if status == DeviceStatus.successful || status == DeviceStatus.cancelled => true
       case _ => false
     }
   }

@@ -1,9 +1,9 @@
 package com.advancedtelematic.director
 
 
-import java.security.Security
-
 import akka.actor.ActorSystem
+
+import java.security.Security
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.{Directives, Route}
@@ -27,50 +27,51 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
-class DirectorBoot(override val appConfig: Config, override val dbConfig: Config, override val metricRegistry: MetricRegistry)
-                  (implicit val system: ActorSystem)
-  extends BootApp with
-    Directives
-    with Settings
-    with VersionInfo
-    with DatabaseSupport
-    with MetricsSupport
-    with DatabaseMetrics
-    with AkkaHttpRequestMetrics
-    with AkkaHttpConnectionMetrics
-    with PrometheusMetricsSupport
-    with CheckMigrations {
+
+class DirectorBoot(override val globalConfig: Config,
+                   override val dbConfig: Config,
+                   override val metricRegistry: MetricRegistry)
+                  (implicit override val system: ActorSystem) extends BootApp
+  with Directives
+  with Settings
+  with VersionInfo
+  with DatabaseSupport
+  with MetricsSupport
+  with DatabaseMetrics
+  with AkkaHttpRequestMetrics
+  with AkkaHttpConnectionMetrics
+  with PrometheusMetricsSupport
+  with CheckMigrations {
+
+  implicit val _db = db
+  import system.dispatcher
 
   private lazy val log = LoggerFactory.getLogger(this.getClass)
 
-  import system.dispatcher
+  log.info(s"Starting $version on http://$host:$port")
+
+  lazy val tracing = Tracing.fromConfig(globalConfig, projectName)
+
+  def keyserverClient(implicit tracing: ServerRequestTracing) = KeyserverHttpClient(tufUri)
+  implicit val msgPublisher = MessageBus.publisher(system, globalConfig)
 
   def bind(): Future[ServerBinding] = {
-    log.info(s"Starting ${nameVersion} on http://$host:$port")
-
-    lazy val tracing = Tracing.fromConfig(appConfig, projectName)
-
-    def keyserverClient(implicit tracing: ServerRequestTracing) = KeyserverHttpClient(tufUri)
-
-    implicit val msgPublisher = MessageBus.publisher(system, appConfig)
-
     val routes: Route =
-      (logRequestResult("directorv2" -> requestLogLevel) & versionHeaders(nameVersion) & requestMetrics(metricRegistry) & logResponseMetrics(projectName)) {
-        DbHealthResource(versionMap, dependencies = Seq(new ServiceHealthCheck(tufUri)), metricRegistry = metricRegistry).route ~
-          tracing.traceRequests { implicit requestTracing =>
-            prometheusMetricsRoutes ~
-              new DirectorRoutes(keyserverClient, allowEcuReplacement).routes
-          }
-      }
+      DbHealthResource(versionMap, dependencies = Seq(new ServiceHealthCheck(tufUri))).route ~
+        (logRequestResult("directorv2-request-result" -> requestLogLevel) & versionHeaders(version) & requestMetrics(metricRegistry) & logResponseMetrics(projectName) & tracing.traceRequests) { implicit requestTracing =>
+          prometheusMetricsRoutes ~
+            new DirectorRoutes(keyserverClient, allowEcuReplacement).routes
+        }
 
-    Http().bindAndHandle(withConnectionMetrics(routes, metricRegistry), host, port)
+    Http().newServerAt(host, port).bindFlow(withConnectionMetrics(routes, metricRegistry))
   }
-
 }
-
 
 object Boot extends BootAppDefaultConfig with VersionInfo with BootAppDatabaseConfig {
-  Security.addProvider(new BouncyCastleProvider())
+  Security.addProvider(new BouncyCastleProvider)
 
-  new DirectorBoot(appConfig, dbConfig, MetricsSupport.metricRegistry).bind()
+  def main(args: Array[String]): Unit = {
+    new DirectorBoot(globalConfig, dbConfig, MetricsSupport.metricRegistry).bind()
+  }
 }
+

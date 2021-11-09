@@ -4,6 +4,7 @@ import java.io.File
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server._
+import akka.stream.Materializer
 import com.advancedtelematic.data.DataType
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -20,7 +21,7 @@ import scala.util.Success
 class ObjectResource(namespace: Directive1[Namespace],
                      objectStore: ObjectStore,
                      usageHandler: UsageMetricsRouter.HandlerRef)
-                    (implicit db: Database, ec: ExecutionContext) {
+                    (implicit db: Database, ec: ExecutionContext, mat: Materializer) {
   import akka.http.scaladsl.server.Directives._
 
   val PrefixedObjectId: PathMatcher1[ObjectId] = (Segment / Segment).tflatMap { case (oprefix, osuffix) =>
@@ -41,16 +42,11 @@ class ObjectResource(namespace: Directive1[Namespace],
 
   private val outOfBandStorageEnabled = validate(objectStore.outOfBandStorageEnabled, "Out of band storage not enabled")
 
-  def ensureNotExists(ns: Namespace, objectId: ObjectId): Directive0 = {
-    Directive.Empty.tflatMap { _ =>
-      val f = objectStore.exists(ns, objectId)
-
-      onSuccess(f).flatMap {
-        case false => pass
-        case true => failWith(ObjectExists(objectId))
-      }
+  def ensureNotExists(ns: Namespace, objectId: ObjectId): Directive0 =
+    onSuccess(objectStore.exists(ns, objectId)).flatMap {
+      case false => pass
+      case true => failWith(ObjectExists(objectId))
     }
-  }
 
   val route = namespace { ns =>
     path("objects" / PrefixedObjectId) { objectId =>
@@ -72,6 +68,9 @@ class ObjectResource(namespace: Directive1[Namespace],
             .map(_._2)
 
         complete(f)
+      } ~
+      (delete & hintNamespaceStorage(ns)) {
+        complete(objectStore.deleteObject(ns, objectId).map(_ => StatusCodes.NoContent))
       } ~
       (put & hintNamespaceStorage(ns)) {
         complete(objectStore.completeClientUpload(ns, objectId).map(_ => StatusCodes.NoContent))

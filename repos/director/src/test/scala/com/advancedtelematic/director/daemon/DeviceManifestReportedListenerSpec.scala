@@ -10,7 +10,7 @@ import com.advancedtelematic.director.db.DeviceManifestRepositorySupport
 import com.advancedtelematic.director.util.DirectorSpec
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.libats.test.MysqlDatabaseSpec
 import com.advancedtelematic.libtuf.data.TufCodecs._
 import com.advancedtelematic.libtuf.data.TufDataType.SignedPayload
 import io.circe.syntax._
@@ -19,7 +19,7 @@ import org.scalatest.OptionValues._
 import scala.concurrent.ExecutionContext
 
 class DeviceManifestReportedListenerSpec extends DirectorSpec
-  with DatabaseSpec
+  with MysqlDatabaseSpec
   with DeviceManifestRepositorySupport {
 
   val defaultNs = DataType.Namespace(this.getClass.getName)

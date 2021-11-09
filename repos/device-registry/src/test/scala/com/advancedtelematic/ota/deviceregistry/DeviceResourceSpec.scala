@@ -10,7 +10,6 @@ package com.advancedtelematic.ota.deviceregistry
 
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, OffsetDateTime}
-
 import akka.http.scaladsl.model.StatusCodes._
 import cats.syntax.either._
 import cats.syntax.option._
@@ -27,6 +26,7 @@ import com.advancedtelematic.ota.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.ota.deviceregistry.data.{Device, DeviceStatus, PackageId, _}
 import com.advancedtelematic.ota.deviceregistry.db.InstalledPackages.{DevicesCount, InstalledPackage}
 import com.advancedtelematic.ota.deviceregistry.db.{InstalledPackages, TaggedDeviceRepository}
+import io.circe.Json
 import io.circe.generic.auto._
 import org.scalacheck.Arbitrary._
 import org.scalacheck.{Gen, Shrink}
@@ -46,7 +46,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   private val publisher     = new DeviceSeenListener(MessageBusPublisher.ignore)
 
   implicit override val patienceConfig =
-    PatienceConfig(timeout = Span(5, Seconds), interval = Span(15, Millis))
+    PatienceConfig(timeout = Span(30, Seconds), interval = Span(100, Millis))
 
   implicit def noShrink[T]: Shrink[T] = Shrink.shrinkAny
 
@@ -65,7 +65,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
 
     deviceIds.take(4).foreach(addDeviceToGroupOk(staticGroup, _))
     val expr = deviceTs.slice(4, 8).map(_.deviceId.underlying.take(6)).map(n => s"deviceid contains $n").reduce(_ + " or " + _)
-    createDynamicGroupOk(GroupExpression(expr).right.get)
+    createDynamicGroupOk(GroupExpression.from(expr).right.get)
 
     Map("all" -> deviceIds, "groupedStatic" -> deviceIds.take(4),
       "groupedDynamic" -> deviceIds.slice(4, 8), "ungrouped" -> deviceIds.drop(8))
@@ -92,6 +92,45 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       }
     }
   }
+
+  property("uses correct codec for device") {
+    import org.scalatest.EitherValues._
+    import org.scalatest.OptionValues._
+    import io.circe.syntax._
+
+    forAll { (dt1: DeviceT) =>
+      val d1 = createDeviceInNamespaceOk(dt1, defaultNs)
+
+      listDevices() ~> route ~> check {
+        status shouldBe OK
+        val devicesJson = responseAs[PaginationResult[Json]].values
+
+        val createdDevice = devicesJson.find { d =>
+          d.hcursor.downField("uuid").as[DeviceId].value == d1
+        }.value
+
+        val createdAt = createdDevice.hcursor.downField("createdAt").as[String].value
+
+        val expected =
+          s"""
+            |{
+            |  "namespace" : "default",
+            |  "uuid" : "${d1.uuid.toString}",
+            |  "deviceName" : "${dt1.deviceName.value}",
+            |  "deviceId" : "${dt1.deviceId.underlying}",
+            |  "deviceType" : "${dt1.deviceType.toString}",
+            |  "lastSeen" : null,
+            |  "createdAt" : "$createdAt",
+            |  "activatedAt" : null,
+            |  "deviceStatus" : "NotSeen"
+            |}
+            |""".stripMargin
+
+        createdDevice shouldBe io.circe.parser.parse(expected).value
+      }
+    }
+  }
+
 
   property("GET request (for Id) after POST yields same device") {
     forAll { devicePre: DeviceT =>
@@ -394,6 +433,24 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     }
   }
 
+  property("list devices with negative pagination limit fails") {
+    searchDevice("", limit = -1) ~> route ~> check {
+      status shouldBe BadRequest
+      val res = responseAs[ErrorRepresentation]
+      res.code shouldBe ErrorCodes.InvalidEntity
+      res.description should include("The query parameter 'limit' was malformed")
+    }
+  }
+
+  property("list devices with negative pagination offset fails") {
+    searchDevice("", offset = -1) ~> route ~> check {
+      status shouldBe BadRequest
+      val res = responseAs[ErrorRepresentation]
+      res.code shouldBe ErrorCodes.InvalidEntity
+      res.description should include("The query parameter 'offset' was malformed")
+    }
+  }
+
   property("searching a device by 'nameContains' and 'deviceId' fails") {
     val deviceT = genDeviceT.sample.get
     createDeviceOk(deviceT)
@@ -482,7 +539,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     val originalDeviceName = genDeviceName.generate.value
     val deviceUuids =
       Seq(originalDeviceName, originalDeviceName.toLowerCase, originalDeviceName.toUpperCase)
-        .map(DeviceName(_).right.get)
+        .map(DeviceName.from(_).right.get)
         .map(deviceName => genDeviceT.generate.copy(deviceName = deviceName))
         .map(createDeviceOk)
 
@@ -515,7 +572,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     val deviceT2    = genDeviceTWith(Gen.const(validatedDeviceType.from("d2-xxyy-5678").right.get), Gen.const(DeviceOemId("d2-xxyy-5678"))).generate
     val deviceUuid1 = createDeviceOk(deviceT1)
     val deviceUuid2 = createDeviceOk(deviceT2)
-    createDynamicGroupOk(GroupExpression("deviceid contains xxyy").right.get)
+    createDynamicGroupOk(GroupExpression.from("deviceid contains xxyy").right.get)
 
     val nameContains = "1234"
     getDevicesByGrouping(grouped = true, GroupType.dynamic.some, nameContains.some) ~> route ~> check {
@@ -564,6 +621,24 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       packages.length shouldBe scala.math.min(limit, allPackages.length)
       packages shouldBe sorted
       packages shouldBe allPackages.slice(offset, offset + limit)
+    }
+  }
+
+  property("list installed packages for all devices with negative pagination limit fails") {
+    getInstalledForAllDevices(limit = -1) ~> route ~> check {
+      status shouldBe BadRequest
+      val res = responseAs[ErrorRepresentation]
+      res.code shouldBe ErrorCodes.InvalidEntity
+      res.description should include("The query parameter 'limit' was malformed")
+    }
+  }
+
+  property("list installed packages for all devices with negative pagination offset fails") {
+    getInstalledForAllDevices(offset = -1) ~> route ~> check {
+      status shouldBe BadRequest
+      val res = responseAs[ErrorRepresentation]
+      res.code shouldBe ErrorCodes.InvalidEntity
+      res.description should include("The query parameter 'offset' was malformed")
     }
   }
 
@@ -630,7 +705,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       listener.apply(DeleteDeviceRequest(defaultNs, uuid))
 
       import org.scalatest.time.SpanSugar._
-      eventually(timeout(5.seconds), interval(100.millis)) {
+      eventually {
         fetchByGroupId(groupId, offset = 0, limit = 10) ~> route ~> check {
           status shouldBe OK
           val devices = responseAs[PaginationResult[Device]]
@@ -664,7 +739,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     listener.apply(new DeleteDeviceRequest(defaultNs, uuid))
 
     import org.scalatest.time.SpanSugar._
-    eventually(timeout(5.seconds), interval(100.millis)) {
+    eventually {
       (0 until groupNumber).foreach { i =>
         fetchByGroupId(groupIds(i), offset = 0, limit = deviceNumber) ~> route ~> check {
           status shouldBe OK
@@ -727,7 +802,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       .map(_.sample.get)
       .map(createDeviceOk)
 
-    val expression: GroupExpression = GroupExpression("deviceid contains abc and deviceid position(5) is b and deviceid position(9) is 6").right.get
+    val expression: GroupExpression = GroupExpression.from("deviceid contains abc and deviceid position(5) is b and deviceid position(9) is 6").right.get
     countDevicesForExpression(expression.some) ~> route ~> check {
       status shouldBe OK
       responseAs[Int] shouldBe 1
@@ -817,8 +892,8 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
 
   property("finds dynamic group devices only once") {
     val deviceUuid = createDeviceOk(genDeviceT.generate.copy(deviceId = DeviceOemId("abcd-1234")))
-    createDynamicGroupOk(GroupExpression("deviceid contains abcd").right.get)
-    createDynamicGroupOk(GroupExpression("deviceid contains 1234").right.get)
+    createDynamicGroupOk(GroupExpression.from("deviceid contains abcd").right.get)
+    createDynamicGroupOk(GroupExpression.from("deviceid contains 1234").right.get)
 
     getDevicesByGrouping(grouped = true, Some(GroupType.dynamic)) ~> route ~> check {
       status shouldBe OK
@@ -829,7 +904,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
 
   property("finds grouped devices only once") {
     val deviceUuid = createDeviceOk(genDeviceT.generate.copy(deviceId = DeviceOemId("abcd")))
-    createDynamicGroupOk(GroupExpression("deviceid contains abcd").right.get)
+    createDynamicGroupOk(GroupExpression.from("deviceid contains abcd").right.get)
     val group = createStaticGroupOk()
     addDeviceToGroupOk(group, deviceUuid)
 
@@ -922,7 +997,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   property("tagging devices from a csv file adds the devices to existing groups") {
     val deviceT = genDeviceT.generate
     val duid = createDeviceOk(deviceT)
-    val expression = GroupExpression("tag(market) contains pain").valueOr(throw _)
+    val expression = GroupExpression.from("tag(market) contains pain").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
 
     val csvRows = Seq(
@@ -945,7 +1020,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     val deviceT2 = genDeviceT.generate
     val duid1 = createDeviceOk(deviceT1)
     val duid2 = createDeviceOk(deviceT2)
-    val expression = GroupExpression("tag(market) contains france").valueOr(throw _)
+    val expression = GroupExpression.from("tag(market) contains france").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
 
     val csvRows = Seq(
@@ -974,7 +1049,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   property("tagging devices from a csv file doesn't add devices to groups they were already in") {
     val deviceT = genDeviceT.generate
     val duid = createDeviceOk(deviceT)
-    val expression = GroupExpression("tag(market) contains Ita").valueOr(throw _)
+    val expression = GroupExpression.from("tag(market) contains Ita").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
 
     val csvRows = Seq(
@@ -1006,8 +1081,8 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       whenever(deviceTs.nonEmpty) {
         deviceTs.map(createDeviceOk)
         val csvRows = deviceTs.map(d => Seq(d.deviceId.underlying, "some tag value"))
-        val tagId = TagId("Market").valueOr(throw _)
-        val newTagId = TagId("Country").valueOr(throw _)
+        val tagId = TagId.from("Market").valueOr(throw _)
+        val newTagId = TagId.from("Country").valueOr(throw _)
 
         postDeviceTags(csvRows, Seq("DeviceID", tagId.value)) ~> route ~> check {
           status shouldBe NoContent
@@ -1033,10 +1108,10 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   property("renaming a device tag id also changes the tag in the dynamic group expressions") {
     val deviceT = genDeviceT.generate
     val duid = createDeviceOk(deviceT)
-    val expression = GroupExpression("tag(colour) contains ue").valueOr(throw _)
+    val expression = GroupExpression.from("tag(colour) contains ue").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
-    val tagId = TagId("colour").valueOr(throw _)
-    val newTagId = TagId("chromatic spectrum").valueOr(throw _)
+    val tagId = TagId.from("colour").valueOr(throw _)
+    val newTagId = TagId.from("chromatic spectrum").valueOr(throw _)
 
     val csvRows = Seq(Seq(deviceT.deviceId.underlying, "Blue"))
 
@@ -1060,12 +1135,12 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
 
     getGroupDetails(groupId) ~> route ~> check {
       status shouldBe OK
-      responseAs[Group].expression shouldBe GroupExpression(s"tag(${newTagId.value}) contains ue").toOption
+      responseAs[Group].expression shouldBe GroupExpression.from(s"tag(${newTagId.value}) contains ue").toOption
     }
   }
 
   property("fails to rename a device tag id if the current tag is invalid") {
-    val newTagId = TagId("Country").valueOr(throw _)
+    val newTagId = TagId.from("Country").valueOr(throw _)
 
     Put(Resource.uri("device_tags", "in+valid*"), RenameTagId(newTagId)) ~> route ~> check {
       status shouldBe NotFound
@@ -1080,7 +1155,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     val deviceT = genDeviceT.generate
     createDeviceOk(deviceT)
     val csvRows = Seq(Seq(deviceT.deviceId.underlying, "Monday", "Morning"))
-    val tagId = TagId("market").valueOr(throw _)
+    val tagId = TagId.from("market").valueOr(throw _)
 
     postDeviceTagsOk(csvRows)
     getDeviceTagsOk should contain (tagId)
@@ -1097,8 +1172,8 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     val deviceT = genDeviceT.generate
     createDeviceOk(deviceT)
     val csvRows = Seq(Seq(deviceT.deviceId.underlying, "Monday", "Morning"))
-    val tagId = TagId("market").valueOr(throw _)
-    val newTagId = TagId("trim").valueOr(throw _)
+    val tagId = TagId.from("market").valueOr(throw _)
+    val newTagId = TagId.from("trim").valueOr(throw _)
 
     postDeviceTagsOk(csvRows)
     getDeviceTagsOk should contain (tagId)
@@ -1115,9 +1190,9 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
     val deviceT2 = genDeviceT.generate
     val duid1 = createDeviceOk(deviceT1)
     val duid2 = createDeviceOk(deviceT2)
-    val expression = GroupExpression("tag(country) contains Ita").valueOr(throw _)
+    val expression = GroupExpression.from("tag(country) contains Ita").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
-    val tagId = TagId("country").right.get
+    val tagId = TagId.from("country").right.get
 
     val csvRows = Seq(
       Seq(deviceT1.deviceId.underlying, "Italy"),
@@ -1146,7 +1221,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   property("updating a device tag value for a non-existing tagId has no effect") {
     val deviceT = genDeviceT.generate
     val duid = createDeviceOk(deviceT)
-    val expression = GroupExpression("tag(land) contains Ita").valueOr(throw _)
+    val expression = GroupExpression.from("tag(land) contains Ita").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
     val tagId = "land"
 
@@ -1160,7 +1235,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       responseAs[PaginationResult[DeviceId]].values should contain only duid
     }
 
-    val updatedTags = updateDeviceTagOk(duid, TagId("nonsense").right.get, "NotItaly")
+    val updatedTags = updateDeviceTagOk(duid, TagId.from("nonsense").right.get, "NotItaly")
     updatedTags should contain only "land" -> "Italy"
 
     listDevicesInGroup(groupId) ~> route ~> check {
@@ -1172,9 +1247,9 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   property("deleting a device tag updates the groups' expression and members") {
     val deviceT = genDeviceT.generate
     val duid = createDeviceOk(deviceT)
-    val expression = GroupExpression("tag(pais) contains Ita or deviceid contains nonsense").valueOr(throw _)
+    val expression = GroupExpression.from("tag(pais) contains Ita or deviceid contains nonsense").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
-    val tagId = TagId("pais").valueOr(throw _)
+    val tagId = TagId.from("pais").valueOr(throw _)
 
     val csvRows = Seq(Seq(deviceT.deviceId.underlying, "Italy"))
     postDeviceTags(csvRows, Seq("DeviceID", tagId.value)) ~> route ~> check {
@@ -1187,7 +1262,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
 
     getGroupDetails(groupId) ~> route ~> check {
       status shouldBe OK
-      responseAs[Group].expression shouldBe GroupExpression("deviceid contains nonsense").toOption
+      responseAs[Group].expression shouldBe GroupExpression.from("deviceid contains nonsense").toOption
     }
 
     listDevicesInGroup(groupId) ~> route ~> check {
@@ -1199,7 +1274,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
   property("fails to delete a device tag if there is at least one smart group that uses only that tag in the expression") {
     val deviceT = genDeviceT.generate
     val duid = createDeviceOk(deviceT)
-    val expression = GroupExpression("tag(paese) contains Ita").valueOr(throw _)
+    val expression = GroupExpression.from("tag(paese) contains Ita").valueOr(throw _)
     val groupId = createDynamicGroupOk(expression = expression)
     val tagId = "paese"
 
@@ -1234,17 +1309,17 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
 
     // Delible expressions
     Seq(
-      GroupExpression("tag(1) contains ha-ha or deviceid contains abc").valueOr(throw _),
-      GroupExpression("tag(2) contains ha-ha or (deviceid contains abc and tag(2) position(4) is h)").valueOr(throw _),
-      GroupExpression("tag(3) contains ha-ha and tag(4) position(1) is h").valueOr(throw _),
-      GroupExpression("tag(3) contains ha-ha and tag(4) position(4) is h or tag(3) contains ha-ha and tag(4) position(4) is h").valueOr(throw _),
+      GroupExpression.from("tag(1) contains ha-ha or deviceid contains abc").valueOr(throw _),
+      GroupExpression.from("tag(2) contains ha-ha or (deviceid contains abc and tag(2) position(4) is h)").valueOr(throw _),
+      GroupExpression.from("tag(3) contains ha-ha and tag(4) position(1) is h").valueOr(throw _),
+      GroupExpression.from("tag(3) contains ha-ha and tag(4) position(4) is h or tag(3) contains ha-ha and tag(4) position(4) is h").valueOr(throw _),
     ).map(createDynamicGroupOk(_))
     // Indelible expressions
     Seq(
-      GroupExpression("tag(5) contains ha-ha").valueOr(throw _),
-      GroupExpression("tag(6) position(4) is h").valueOr(throw _),
-      GroupExpression("tag(7) contains ha-ha and tag(7) position(4) is h").valueOr(throw _),
-      GroupExpression("tag(8) contains ha-ha or (tag(8) contains ha-ha and tag(8) position(4) is h)").valueOr(throw _),
+      GroupExpression.from("tag(5) contains ha-ha").valueOr(throw _),
+      GroupExpression.from("tag(6) position(4) is h").valueOr(throw _),
+      GroupExpression.from("tag(7) contains ha-ha and tag(7) position(4) is h").valueOr(throw _),
+      GroupExpression.from("tag(8) contains ha-ha or (tag(8) contains ha-ha and tag(8) position(4) is h)").valueOr(throw _),
     ).map(createDynamicGroupOk(_))
 
     Get(Resource.uri("device_tags")) ~> route ~> check {
@@ -1263,7 +1338,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       status shouldBe NoContent
     }
 
-    val expression = GroupExpression("tag(10) position(2) is h and tag(11) contains ha-ha").valueOr(throw _)
+    val expression = GroupExpression.from("tag(10) position(2) is h and tag(11) contains ha-ha").valueOr(throw _)
     createDynamicGroupOk(expression)
 
     Get(Resource.uri("device_tags")) ~> route ~> check {
@@ -1272,7 +1347,7 @@ class DeviceResourceSpec extends ResourcePropSpec with ScalaFutures with Eventua
       result should contain allOf ("10" -> true, "11" -> true)
     }
 
-    deleteDeviceTagOk(TagId("10").valueOr(throw _))
+    deleteDeviceTagOk(TagId.from("10").valueOr(throw _))
 
     Get(Resource.uri("device_tags")) ~> route ~> check {
       status shouldBe OK

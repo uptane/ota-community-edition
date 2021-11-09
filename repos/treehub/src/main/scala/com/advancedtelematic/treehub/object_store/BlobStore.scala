@@ -1,5 +1,6 @@
 package com.advancedtelematic.treehub.object_store
 
+import akka.Done
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -16,6 +17,8 @@ object BlobStore {
 }
 
 trait BlobStore {
+  def deleteObject(ns: Namespace, objectId: ObjectId): Future[Done]
+
   def storeStream(namespace: Namespace, id: ObjectId, size: Long, blob: Source[ByteString, _]): Future[Long]
 
   val supportsOutOfBandStorage: Boolean

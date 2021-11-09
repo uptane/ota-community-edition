@@ -5,7 +5,7 @@ import com.advancedtelematic.director.client.FakeKeyserverClient
 import com.advancedtelematic.director.http.DirectorRoutes
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
-import com.advancedtelematic.libats.test.DatabaseSpec
+import com.advancedtelematic.libats.test.MysqlDatabaseSpec
 import com.advancedtelematic.libtuf.crypt.TufCrypto
 import com.advancedtelematic.libtuf.data.TufDataType.{SignedPayload, TufKeyPair}
 import io.circe.Encoder
@@ -19,8 +19,9 @@ import com.advancedtelematic.director.data.DeviceRequest.{DeviceManifest, EcuMan
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.director.data.Codecs._
 import com.advancedtelematic.director.data.UptaneDataType.Image
+import com.typesafe.config.{Config, ConfigFactory}
 
-trait ResourceSpec extends ScalatestRouteTest with DatabaseSpec with Settings {
+trait ResourceSpec extends ScalatestRouteTest with MysqlDatabaseSpec with Settings {
   self: Suite =>
 
   def apiUri(path: String): String = "/api/v1/" + path

@@ -4,6 +4,7 @@ import java.time.Instant
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directive1
+import akka.stream.Materializer
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
@@ -22,7 +23,7 @@ import scala.util.Success
 
 class ManifestResource(namespace: Directive1[Namespace],
                        messageBus: MessageBusPublisher)
-                      (implicit db: Database, ec: ExecutionContext) extends ManifestRepositorySupport {
+                      (implicit db: Database, ec: ExecutionContext, mat: Materializer) extends ManifestRepositorySupport {
 
   import akka.http.scaladsl.server.Directives._
 

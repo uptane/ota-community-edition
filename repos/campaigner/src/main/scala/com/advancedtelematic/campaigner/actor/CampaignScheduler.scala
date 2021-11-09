@@ -8,7 +8,6 @@ import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.db.DeviceUpdateProcess.{CampaignCancelled, StartUpdateResult, Started}
 import com.advancedtelematic.campaigner.db.{Campaigns, DeviceUpdateProcess}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -21,27 +20,25 @@ object CampaignScheduler {
   final case class CampaignComplete(campaign: CampaignId)
 
   def props(director: DirectorClient,
+            campaigns: Campaigns,
             campaign: Campaign,
             delay: FiniteDuration,
-            batchSize: Int)
-           (implicit db: Database): Props =
-    Props(new CampaignScheduler(director, campaign, delay, batchSize))
+            batchSize: Int): Props =
+    Props(new CampaignScheduler(director, campaigns, campaign, delay, batchSize))
 }
 
 class CampaignScheduler(director: DirectorClient,
+                        campaigns: Campaigns,
                         campaign: Campaign,
                         delay: FiniteDuration,
-                        batchSize: Int)
-                       (implicit db: Database) extends Actor
-  with ActorLogging {
+                        batchSize: Int) extends Actor with ActorLogging {
 
   import CampaignScheduler._
   import akka.pattern.pipe
   import context._
 
   private val scheduler = system.scheduler
-  private val campaigns = Campaigns()
-  private val deviceUpdateProcess = new DeviceUpdateProcess(director)
+  private val deviceUpdateProcess = new DeviceUpdateProcess(director, campaigns)
 
   implicit val materializer = ActorMaterializer.create(context)
 

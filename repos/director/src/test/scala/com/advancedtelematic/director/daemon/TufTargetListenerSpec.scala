@@ -11,6 +11,7 @@ import com.advancedtelematic.libats.data.DataType.AutoUpdateId
 import com.advancedtelematic.libtuf.data.ClientDataType.TargetCustom
 import com.advancedtelematic.libtuf.data.TufDataType.{TargetName, TargetVersion}
 import com.advancedtelematic.libtuf_server.data.Messages.TufTargetAdded
+import org.scalatest.LoneElement._
 
 class TufTargetListenerSpec extends DirectorSpec
   with RouteResourceSpec
@@ -35,7 +36,7 @@ class TufTargetListenerSpec extends DirectorSpec
 
     listener.apply(msg).futureValue
 
-    val queue = getDeviceAssignmentOk(dev.deviceId).head
+    val queue = getDeviceAssignmentOk(dev.deviceId).loneElement
 
     queue.correlationId shouldBe AutoUpdateId(autoUpdateId.uuid)
     queue.targets(dev.primary.ecuSerial).image.filepath shouldBe filename

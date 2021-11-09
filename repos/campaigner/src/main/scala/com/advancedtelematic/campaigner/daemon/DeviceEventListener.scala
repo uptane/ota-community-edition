@@ -4,12 +4,11 @@ import akka.Done
 import akka.http.scaladsl.util.FastFuture
 import com.advancedtelematic.campaigner.client.DirectorClient
 import com.advancedtelematic.campaigner.data.DataType.CampaignId
-import com.advancedtelematic.campaigner.db.{CampaignSupport, Campaigns, DeviceUpdateProcess}
+import com.advancedtelematic.campaigner.db.{Campaigns, DeviceUpdateProcess}
 import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.DataType.EventType
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceEventMessage
 import org.slf4j.LoggerFactory
-import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -25,16 +24,14 @@ object DeviceEventListener {
   implicit val acceptedCampaignDecoder: Decoder[AcceptedCampaign] = deriveDecoder
 }
 
-class DeviceEventListener(directorClient: DirectorClient)(implicit db: Database, ec: ExecutionContext)
-  extends MsgOperation[DeviceEventMessage] with CampaignSupport {
+class DeviceEventListener(directorClient: DirectorClient, campaigns: Campaigns)(implicit ec: ExecutionContext)
+  extends MsgOperation[DeviceEventMessage] {
 
   import DeviceEventListener._
 
   private val _logger = LoggerFactory.getLogger(this.getClass)
 
-  val campaigns = Campaigns()
-
-  def deviceUpdateProcess = new DeviceUpdateProcess(directorClient)
+  def deviceUpdateProcess = new DeviceUpdateProcess(directorClient, campaigns)
 
   def apply(msg: DeviceEventMessage): Future[Done] =
     msg.event.eventType match {

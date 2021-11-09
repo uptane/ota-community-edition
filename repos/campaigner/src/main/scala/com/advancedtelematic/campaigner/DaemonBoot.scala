@@ -7,24 +7,26 @@ import akka.http.scaladsl.server.Route
 import com.advancedtelematic.campaigner.actor._
 import com.advancedtelematic.campaigner.client._
 import com.advancedtelematic.campaigner.daemon._
+import com.advancedtelematic.campaigner.db.{Campaigns}
 import com.advancedtelematic.libats.http.tracing.NullServerRequestTracing
 import com.advancedtelematic.libats.http.{BootApp, BootAppDatabaseConfig, BootAppDefaultConfig, ServiceHttpClientSupport}
 import com.advancedtelematic.libats.messaging.MessageListenerSupport
-import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceEventMessage, DeviceUpdateEvent}
+import com.advancedtelematic.libats.messaging.metrics.MonitoredBusListenerSupport
+import com.advancedtelematic.libats.messaging_datatype.Messages.{DeleteDeviceRequest, DeviceEventMessage, DeviceUpdateEvent}
 import com.advancedtelematic.libats.slick.db.{BootMigrations, CheckMigrations, DatabaseSupport}
 import com.advancedtelematic.libats.slick.monitoring.{DatabaseMetrics, DbHealthResource}
-import com.advancedtelematic.metrics.{MetricsSupport, MonitoredBusListenerSupport}
 import com.advancedtelematic.metrics.prometheus.PrometheusMetricsSupport
+import com.advancedtelematic.metrics.MetricsSupport
 import com.codahale.metrics.MetricRegistry
 import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
-class CampaignerDaemon(override val appConfig: Config,
-                       override val dbConfig: Config,
-                       override val metricRegistry: MetricRegistry)
-                      (implicit override val system: ActorSystem) extends BootApp
+class CampaignerDaemonBoot(override val globalConfig: Config,
+                           override val dbConfig: Config,
+                           override val metricRegistry: MetricRegistry)
+                          (implicit override val system: ActorSystem) extends BootApp
   with Settings
   with VersionInfo
   with BootMigrations
@@ -44,33 +46,43 @@ class CampaignerDaemon(override val appConfig: Config,
 
   private lazy val log = LoggerFactory.getLogger(this.getClass)
 
+  log.info("Starting campaigner daemon")
+
+  implicit val tracing = new NullServerRequestTracing
+
+  val deviceRegistry = new DeviceRegistryHttpClient(deviceRegistryUri, defaultHttpClient)
+
+  val director = new DirectorHttpClient(directorUri, defaultHttpClient)
+
   def bind(): Future[ServerBinding] = {
-    log.info("Starting campaigner daemon")
-
-    implicit val tracing = new NullServerRequestTracing
-
-    val director = new DirectorHttpClient(directorUri, defaultHttpClient)
-    system.actorOf(CampaignSupervisor.props(
-      director,
-      schedulerPollingTimeout,
-      schedulerDelay,
-      schedulerBatchSize
-    ),
-      "campaign-supervisor"
-    )
-
-    startMonitoredListener[DeviceUpdateEvent](new DeviceUpdateEventListener)
-    startMonitoredListener[DeviceEventMessage](new DeviceEventListener(director), skipProcessingErrors = true)
 
     val routes: Route = (versionHeaders(version) & logResponseMetrics(projectName)) {
       prometheusMetricsRoutes ~
-        DbHealthResource(versionMap, metricRegistry = metricRegistry).route
+        DbHealthResource(versionMap).route
     }
 
-    Http().bindAndHandle(routes, host, port)
+    val campaigns = Campaigns()
+
+    val f = Http().newServerAt(host, port).bindFlow(routes)
+
+    system.actorOf(CampaignSupervisor.props(
+      director,
+      campaigns,
+      schedulerPollingTimeout,
+      schedulerDelay,
+      schedulerBatchSize
+    ), "campaign-supervisor")
+
+    startMonitoredListener[DeviceUpdateEvent](new DeviceUpdateEventListener(campaigns))
+    startMonitoredListener[DeviceEventMessage](new DeviceEventListener(director, campaigns), skipProcessingErrors = true)
+    startMonitoredListener[DeleteDeviceRequest](new DeleteDeviceRequestListener(director, campaigns))
+
+    f
   }
 }
 
-object DaemonBoot extends BootApp with BootAppDefaultConfig with BootAppDatabaseConfig with VersionInfo {
-    new CampaignerDaemon(appConfig, dbConfig, MetricsSupport.metricRegistry).bind()
+object DaemonBoot extends BootAppDefaultConfig with BootAppDatabaseConfig with VersionInfo {
+  def main(args: Array[String]): Unit = {
+    new CampaignerDaemonBoot(globalConfig, dbConfig, MetricsSupport.metricRegistry).bind()
+  }
 }

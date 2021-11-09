@@ -1,14 +1,15 @@
 package com.advancedtelematic.treehub.object_store
 
+import akka.Done
+
 import java.io.File
 import java.nio.file.Paths
 import java.time.temporal.ChronoUnit
 import java.time.{Duration, Instant}
 import java.util.Date
-
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
@@ -28,12 +29,12 @@ import scala.concurrent.{ExecutionContext, Future, blocking}
 
 object S3BlobStore {
   def apply(s3Credentials: S3Credentials, allowRedirects: Boolean)
-           (implicit ec: ExecutionContext, system: ActorSystem): S3BlobStore =
+           (implicit ec: ExecutionContext, mat: Materializer): S3BlobStore =
     new S3BlobStore(s3Credentials, S3Client(s3Credentials), allowRedirects)
 }
 
 class S3BlobStore(s3Credentials: S3Credentials, s3client: AmazonS3, allowRedirects: Boolean)
-                 (implicit ec: ExecutionContext, system: ActorSystem) extends BlobStore {
+                 (implicit ec: ExecutionContext, mat: Materializer) extends BlobStore {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
@@ -144,6 +145,14 @@ class S3BlobStore(s3Credentials: S3Credentials, s3client: AmazonS3, allowRedirec
     objectId.path(Paths.get(namespaceDir(namespace))).toString
 
   override val supportsOutOfBandStorage: Boolean = true
+
+  override def deleteObject(ns: Namespace, objectId: ObjectId): Future[Done] =
+    Future {
+      blocking {
+        s3client.deleteObject(bucketId, objectFilename(ns, objectId))
+        Done
+      }
+    }
 }
 
 object S3Client {

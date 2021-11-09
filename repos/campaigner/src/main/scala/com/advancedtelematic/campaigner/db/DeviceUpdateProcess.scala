@@ -6,7 +6,6 @@ import com.advancedtelematic.campaigner.data.DataType.{Campaign, CampaignId, Upd
 import com.advancedtelematic.libats.data.DataType.{Namespace, ResultCode, ResultDescription, CampaignId => CampaignCorrelationId}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import org.slf4j.LoggerFactory
-import slick.jdbc.MySQLProfile.api._
 
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,13 +16,12 @@ object DeviceUpdateProcess {
   case object CampaignCancelled extends StartUpdateResult
 }
 
-class DeviceUpdateProcess(director: DirectorClient)(implicit db: Database, ec: ExecutionContext) extends UpdateSupport with CancelTaskSupport {
+class DeviceUpdateProcess(director: DirectorClient, campaigns: Campaigns)(implicit ec: ExecutionContext) {
 
   import DeviceUpdateProcess._
+  import campaigns.repositories._
 
   private val _logger = LoggerFactory.getLogger(this.getClass)
-
-  val campaigns = Campaigns()
 
   def startUpdateFor(devices: Set[DeviceId], campaign: Campaign): Future[StartUpdateResult] = {
     updateRepo.findById(campaign.updateId).zip(cancelTaskRepo.isCancelled(campaign.id)).flatMap { case (update, cancelled) =>

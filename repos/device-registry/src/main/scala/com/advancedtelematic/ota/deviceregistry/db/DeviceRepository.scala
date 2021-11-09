@@ -250,7 +250,7 @@ object DeviceRepository {
       device <- exists(ns, uuid)
       _ <- EventJournal.archiveIndexedEvents(uuid)
       _ <- EventJournal.deleteEvents(uuid)
-      _ <- GroupMemberRepository.removeGroupMemberAll(uuid)
+      _ <- GroupMemberRepository.removeDeviceFromAllGroups(uuid)
       _ <- PublicCredentialsRepository.delete(uuid)
       _ <- SystemInfoRepository.delete(uuid)
       _ <- TaggedDeviceRepository.delete(uuid)

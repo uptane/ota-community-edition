@@ -5,15 +5,15 @@ import com.advancedtelematic.libats.messaging.test.MockMessageBus
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeleteDeviceRequest
 import com.advancedtelematic.ota.deviceregistry.data.GeneratorOps.GenSample
 import com.advancedtelematic.ota.deviceregistry.{DeviceRequests, ResourceSpec}
-import org.scalatest.FunSuite
 import cats.syntax.show._
 import org.scalatest.OptionValues._
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.funsuite.AnyFunSuite
 
 
-class DeletedDevicePublisherSpec extends FunSuite with ResourceSpec with DeviceRequests with ScalaFutures {
+class DeletedDevicePublisherSpec extends AnyFunSuite with ResourceSpec with DeviceRequests with ScalaFutures {
 
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(15, Millis))

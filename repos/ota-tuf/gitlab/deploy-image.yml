@@ -1,0 +1,12 @@
+# variable that needs to be set
+#
+# $SERVICE - name as found in deploy-env/envs/$ENV/$SERVICE.dhall
+#
+
+stages:
+  - deploy
+
+include:
+  - project: 'rd/platform/deploy-env'
+    ref: 'master'
+    file: '/gitlab/deploy-core-service.yml'

@@ -6,7 +6,6 @@ import akka.testkit.TestProbe
 import com.advancedtelematic.campaigner.client.DirectorClient
 import com.advancedtelematic.campaigner.data.DataType.DeviceStatus
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{Campaigns, DeviceUpdateSupport, UpdateSupport}
 import com.advancedtelematic.campaigner.util.{ActorSpec, CampaignerSpec, DatabaseUpdateSpecUtil, FakeDirectorClient}
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
@@ -16,11 +15,9 @@ import org.scalatest.Inspectors
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-class CampaignCancelerSpec extends ActorSpec[CampaignCancelerSpec] with CampaignerSpec with UpdateSupport
-    with DeviceUpdateSupport
+class CampaignCancelerSpec extends ActorSpec[CampaignCancelerSpec] with CampaignerSpec
     with DatabaseUpdateSpecUtil with Inspectors {
-
-  val campaigns = Campaigns()
+  import repositories.deviceUpdateRepo
 
   lazy val directorWithoutAffectedDevicesOnCancel: DirectorClient = new FakeDirectorClient() {
     override def cancelUpdate(ns: DataType.Namespace, devices: Seq[DeviceId]): Future[Seq[DeviceId]] =
@@ -36,7 +33,7 @@ class CampaignCancelerSpec extends ActorSpec[CampaignCancelerSpec] with Campaign
 
     campaigns.cancel(campaign.id).futureValue
 
-    val canceler = parent.childActorOf(CampaignCanceler.props(director, campaign.id, campaign.namespace, 10))
+    val canceler = parent.childActorOf(CampaignCanceler.props(director, campaigns, campaign.id, campaign.namespace, 10))
 
     parent.watch(canceler)
 
@@ -59,7 +56,7 @@ class CampaignCancelerSpec extends ActorSpec[CampaignCancelerSpec] with Campaign
 
     campaigns.cancel(campaign.id).futureValue
 
-    val canceler = parent.childActorOf(CampaignCanceler.props(directorWithoutAffectedDevicesOnCancel, campaign.id, campaign.namespace, 10))
+    val canceler = parent.childActorOf(CampaignCanceler.props(directorWithoutAffectedDevicesOnCancel, campaigns, campaign.id, campaign.namespace, 10))
 
     parent.watch(canceler)
 
@@ -82,7 +79,7 @@ class CampaignCancelerSpec extends ActorSpec[CampaignCancelerSpec] with Campaign
 
     campaigns.cancel(campaign.id).futureValue
 
-    val canceler = parent.childActorOf(CampaignCanceler.props(directorWithoutAffectedDevicesOnCancel, campaign.id, campaign.namespace, 10))
+    val canceler = parent.childActorOf(CampaignCanceler.props(directorWithoutAffectedDevicesOnCancel, campaigns, campaign.id, campaign.namespace, 10))
 
     parent.watch(canceler)
 

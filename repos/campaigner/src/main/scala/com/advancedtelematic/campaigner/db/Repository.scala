@@ -19,42 +19,39 @@ import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Updat
 import com.advancedtelematic.libats.slick.db.SlickAnyVal._
 import com.advancedtelematic.libats.slick.db.SlickExtensions._
 import com.advancedtelematic.libats.slick.db.SlickUUIDKey._
-import java.util.UUID
 
+import java.util.UUID
 import slick.jdbc.MySQLProfile.api._
 import slick.jdbc.GetResult
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Failure
 
-trait CampaignSupport {
-  def campaignRepo(implicit db: Database, ec: ExecutionContext) = new CampaignRepository()
+case class Repositories(campaignRepo: CampaignRepository,
+                        deviceUpdateRepo: DeviceUpdateRepository,
+                        cancelTaskRepo: CancelTaskRepository,
+                        updateRepo: UpdateRepository,
+                        campaignMetadataRepo: CampaignMetadataRepository)
+
+object Repositories {
+  def apply()(implicit db: Database, ec: ExecutionContext): Repositories =
+    Repositories(
+      new CampaignRepository(),
+      new DeviceUpdateRepository(),
+      new CancelTaskRepository(),
+      new UpdateRepository(),
+      new CampaignMetadataRepository()
+    )
 }
 
-trait DeviceUpdateSupport {
-  def deviceUpdateRepo(implicit db: Database, ec: ExecutionContext) = new DeviceUpdateRepository()
-}
-
-trait CancelTaskSupport {
-  def cancelTaskRepo(implicit db: Database, ec: ExecutionContext) = new CancelTaskRepository()
-}
-
-trait UpdateSupport {
-  def updateRepo(implicit db: Database, ec: ExecutionContext) = new UpdateRepository()
-}
-
-trait CampaignMetadataSupport {
-  def campaignMetadataRepo(implicit db: Database) = new CampaignMetadataRepository()
-}
-
-protected [db] class CampaignMetadataRepository()(implicit db: Database) {
+class CampaignMetadataRepository()(implicit db: Database) {
   def findFor(campaign: CampaignId): Future[Seq[CampaignMetadata]] = db.run {
     Schema.campaignMetadata.filter(_.campaignId === campaign).result
   }
 }
 
 
-protected [db] class DeviceUpdateRepository()(implicit db: Database, ec: ExecutionContext) {
+class DeviceUpdateRepository()(implicit db: Database, ec: ExecutionContext) {
 
   def findDeviceCampaigns(deviceId: DeviceId, status: DeviceStatus*): Future[Seq[(Campaign, Option[CampaignMetadata])]] = db.run {
     assert(status.nonEmpty)
@@ -73,8 +70,16 @@ protected [db] class DeviceUpdateRepository()(implicit db: Database, ec: Executi
   def findByCampaign(campaign: CampaignId, status: DeviceStatus): Future[Set[DeviceId]] =
     db.run(findByCampaignAction(campaign, status))
 
-  def findByDeviceCampaign(campaign: CampaignId, deviceId: DeviceId): Future[Option[DeviceUpdate]] =
-    db.run(Schema.deviceUpdates.filter(_.campaignId === campaign).filter(_.deviceId === deviceId).result.headOption)
+  private val findUpdateStatusByDeviceCampaignQuery =
+    Compiled { (campaignId: Rep[CampaignId], deviceId: Rep[DeviceId]) =>
+      Schema.deviceUpdates
+        .filter(_.campaignId === campaignId)
+        .filter(_.deviceId === deviceId)
+        .map(_.status)
+  }
+
+  def findUpdateStatusByDeviceCampaign(campaign: CampaignId, deviceId: DeviceId): Future[Option[DeviceStatus]] =
+    db.run(findUpdateStatusByDeviceCampaignQuery((campaign, deviceId)).result.headOption)
 
   protected[db] def findByCampaignAction(campaign: CampaignId, status: DeviceStatus): DBIO[Set[DeviceId]] =
     Schema.deviceUpdates
@@ -145,7 +150,7 @@ protected [db] class DeviceUpdateRepository()(implicit db: Database, ec: Executi
   }
 }
 
-protected class CampaignRepository()(implicit db: Database, ec: ExecutionContext) {
+class CampaignRepository()(implicit db: Database, ec: ExecutionContext) {
   import com.advancedtelematic.libats.slick.db.SlickAnyVal._
 
   def persist(campaign: Campaign, groups: Set[GroupId], devices: Set[DeviceId], metadata: Seq[CampaignMetadata]): Future[CampaignId] = db.run {
@@ -161,6 +166,11 @@ protected class CampaignRepository()(implicit db: Database, ec: ExecutionContext
 
     f.transactionally
   }
+
+  val findCampaignStatusQuery = Compiled((id: Rep[CampaignId]) => Schema.campaigns.filter(_.id === id).map(_.status))
+
+  protected[db] def findCampaignStatusAction(campaignId: CampaignId): DBIO[CampaignStatus] =
+    findCampaignStatusQuery(campaignId).result.failIfNotSingle(CampaignMissing)
 
   protected[db] def findAction(campaign: CampaignId, ns: Option[Namespace] = None): DBIO[Campaign] =
     Schema.campaigns
@@ -277,16 +287,18 @@ protected class CampaignRepository()(implicit db: Database, ec: ExecutionContext
 }
 
 
-protected class CancelTaskRepository()(implicit db: Database, ec: ExecutionContext) {
+class CancelTaskRepository()(implicit db: Database, ec: ExecutionContext) {
   protected [db] def cancelAction(campaign: CampaignId): DBIO[CancelTask] = {
     val cancel = CancelTask(campaign, CancelTaskStatus.pending)
     (Schema.cancelTasks += cancel)
       .map(_ => cancel)
   }
 
-  def isCancelled(campaignId: CampaignId): Future[Boolean] = db.run {
-    Schema.cancelTasks.filter(_.campaignId === campaignId).exists.result
-  }
+  private val cancelTaskExistsQuery =
+    Compiled((campaignId: Rep[CampaignId]) => Schema.cancelTasks.filter(_.campaignId === campaignId).exists)
+
+  def isCancelled(campaignId: CampaignId): Future[Boolean] =
+    db.run(cancelTaskExistsQuery(campaignId).result)
 
   def setStatus(campaign: CampaignId, status: CancelTaskStatus): Future[Done] = db.run {
     Schema.cancelTasks
@@ -314,7 +326,7 @@ protected class CancelTaskRepository()(implicit db: Database, ec: ExecutionConte
   }
 }
 
-protected class UpdateRepository()(implicit db: Database, ec: ExecutionContext) {
+class UpdateRepository()(implicit db: Database, ec: ExecutionContext) {
   import com.advancedtelematic.libats.slick.db.SlickPagination._
 
   def persist(update: Update): Future[UpdateId] = db.run {

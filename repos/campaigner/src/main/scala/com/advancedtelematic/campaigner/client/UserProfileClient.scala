@@ -28,7 +28,7 @@ object UserProfileClient {
 }
 
 class UserProfileHttpClient(uri: Uri, httpClient: HttpRequest => Future[HttpResponse])
-                           (implicit ec: ExecutionContext, system: ActorSystem, mat: Materializer, tracing: ServerRequestTracing)
+                           (implicit ec: ExecutionContext, system: ActorSystem, tracing: ServerRequestTracing)
   extends TracingHttpClient(httpClient, "user-profile") with UserProfileClient {
 
   import com.advancedtelematic.libats.http.ServiceHttpClient._
@@ -37,9 +37,12 @@ class UserProfileHttpClient(uri: Uri, httpClient: HttpRequest => Future[HttpResp
     val path = uri.path / "api" / "v1" / "namespace_settings" / ns.get
     val request = HttpRequest(HttpMethods.GET, uri.withPath(path)).withNs(ns)
 
-    execHttpUnmarshalled[UserProfileClient.NsSettings](request).map {
-      case Left(err) if err.status == StatusCodes.NotFound => None
-      case Right(s) => s.resolverUri
+    val errorHandler: PartialFunction[RemoteServiceError, Future[Option[Uri]]] = {
+      case e if e.status == StatusCodes.NotFound => FastFuture.successful(None)
     }
+
+    execHttpUnmarshalled[UserProfileClient.NsSettings](request)
+      .map(_.map(_.resolverUri))
+      .handleErrors(errorHandler)
   }
 }

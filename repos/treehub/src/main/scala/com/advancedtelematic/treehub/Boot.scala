@@ -4,8 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.{Directives, Route}
-import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.http.{BootApp, BootAppDatabaseConfig, BootAppDefaultConfig}
+import com.advancedtelematic.libats.http.{BootApp, BootAppDatabaseConfig, BootAppDefaultConfig, NamespaceDirectives}
 import com.advancedtelematic.libats.http.LogDirectives._
 import com.advancedtelematic.libats.http.VersionDirectives._
 import com.advancedtelematic.libats.http.tracing.Tracing
@@ -14,10 +13,9 @@ import com.advancedtelematic.libats.slick.db.{BootMigrations, CheckMigrations, D
 import com.advancedtelematic.libats.slick.monitoring.DatabaseMetrics
 import com.advancedtelematic.metrics.prometheus.PrometheusMetricsSupport
 import com.advancedtelematic.metrics.{AkkaHttpRequestMetrics, MetricsSupport}
-import com.advancedtelematic.treehub.client._
 import com.advancedtelematic.treehub.daemon.StaleObjectArchiveActor
 import com.advancedtelematic.treehub.delta_store.{LocalDeltaStorage, S3DeltaStorage}
-import com.advancedtelematic.treehub.http.{TreeHubRoutes, Http => TreeHubHttp}
+import com.advancedtelematic.treehub.http.TreeHubRoutes
 import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, ObjectStore, S3BlobStore}
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter
 import com.codahale.metrics.MetricRegistry
@@ -26,20 +24,22 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
-class TreehubBoot(override val appConfig: Config,
+// BootApp with Directives with Settings with VersionInfo
+class TreehubBoot(override val globalConfig: Config,
                   override val dbConfig: Config,
                   override val metricRegistry: MetricRegistry)
-                 (implicit override val system: ActorSystem) extends BootApp
-  with BootMigrations
-  with DatabaseSupport
-  with MetricsSupport
-  with DatabaseMetrics
-  with AkkaHttpRequestMetrics
-  with PrometheusMetricsSupport
-  with CheckMigrations
-  with VersionInfo
-  with Directives
-  with Settings {
+                 (implicit override val system: ActorSystem)
+  extends BootApp
+    with BootMigrations
+    with DatabaseSupport
+    with MetricsSupport
+    with DatabaseMetrics
+    with AkkaHttpRequestMetrics
+    with PrometheusMetricsSupport
+    with CheckMigrations
+    with VersionInfo
+    with Directives
+    with Settings {
 
   private lazy val log = LoggerFactory.getLogger(this.getClass)
 
@@ -47,13 +47,9 @@ class TreehubBoot(override val appConfig: Config,
 
   def bind(): Future[ServerBinding] = {
 
-    log.info(s"Starting ${nameVersion} on http://$host:$port")
+    log.info(s"Starting $nameVersion on http://$host:$port")
 
-    val deviceRegistry = new DeviceRegistryHttpClient(deviceRegistryUri, deviceRegistryMyApi)
-
-    val tokenValidator = TreeHubHttp.tokenValidator
-    val namespaceExtractor = TreeHubHttp.extractNamespace.map(_.namespace.get).map(Namespace.apply)
-    val deviceNamespace = TreeHubHttp.deviceNamespace(deviceRegistry)
+    val namespaceExtractor = NamespaceDirectives.defaultNamespaceExtractor
 
     lazy val objectStorage = {
       if (useS3) {
@@ -76,8 +72,8 @@ class TreehubBoot(override val appConfig: Config,
     }
 
     val objectStore = new ObjectStore(objectStorage)
-    val msgPublisher = MessageBus.publisher(system, appConfig)
-    val tracing = Tracing.fromConfig(appConfig, projectName)
+    val msgPublisher = MessageBus.publisher(system, globalConfig)
+    val tracing = Tracing.fromConfig(globalConfig, projectName)
 
     val usageHandler = system.actorOf(UsageMetricsRouter(msgPublisher, objectStore), "usage-router")
 
@@ -86,19 +82,25 @@ class TreehubBoot(override val appConfig: Config,
     }
 
     val routes: Route =
-      (versionHeaders(nameVersion) & requestMetrics(metricRegistry) & logResponseMetrics(projectName)) {
+      (versionHeaders(version) & requestMetrics(metricRegistry) & logResponseMetrics(projectName)) {
         prometheusMetricsRoutes ~
           tracing.traceRequests { _ =>
-            new TreeHubRoutes(tokenValidator, namespaceExtractor,
-              deviceNamespace, msgPublisher,
-              objectStore, deltaStorage, usageHandler).routes
+            new TreeHubRoutes(
+              namespaceExtractor,
+              msgPublisher,
+              objectStore,
+              deltaStorage,
+              usageHandler
+            ).routes
           }
       }
 
-    Http().bindAndHandle(routes, host, port)
+    Http().newServerAt(host, port).bindFlow(routes)
   }
 }
 
 object Boot extends BootAppDefaultConfig with VersionInfo with BootAppDatabaseConfig {
-  new TreehubBoot(appConfig, dbConfig, MetricsSupport.metricRegistry).bind()
+
+  def main(args: Array[String]): Unit =
+    new TreehubBoot(globalConfig, dbConfig, MetricsSupport.metricRegistry).bind()
 }

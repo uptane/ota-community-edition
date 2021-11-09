@@ -1,9 +1,9 @@
 package com.advancedtelematic.campaigner.util
 
 import akka.actor.ActorSystem
+import akka.stream.Materializer
 import akka.testkit.TestKit
 import com.advancedtelematic.campaigner.Settings
-import com.advancedtelematic.campaigner.DatabaseSpec
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike}
 import scala.concurrent.ExecutionContext
 

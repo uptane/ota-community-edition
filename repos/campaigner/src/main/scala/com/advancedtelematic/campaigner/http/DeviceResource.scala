@@ -1,20 +1,22 @@
 package com.advancedtelematic.campaigner.http
 
 import akka.http.scaladsl.server.Directive1
-import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import com.advancedtelematic.libats.http.UUIDKeyAkka._
-import slick.jdbc.MySQLProfile.api._
-
-import scala.concurrent.ExecutionContext
 import akka.http.scaladsl.server.Directives._
 import com.advancedtelematic.campaigner.client.{ResolverClient, UserProfileClient}
+import com.advancedtelematic.campaigner.db.Repositories
+import com.advancedtelematic.libats.data.DataType.Namespace
+import com.advancedtelematic.libats.http.UUIDKeyAkka._
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
-class DeviceResource(userProfileClient: UserProfileClient, resolverClient: ResolverClient, extractNamespace: Directive1[Namespace])
-                    (implicit val db: Database, val ec: ExecutionContext) {
+import scala.concurrent.ExecutionContext
 
-  val deviceCampaigns = new DeviceCampaigns(userProfileClient, resolverClient)
+class DeviceResource(userProfileClient: UserProfileClient,
+                     resolverClient: ResolverClient,
+                     repositories: Repositories,
+                     extractNamespace: Directive1[Namespace])(implicit val ec: ExecutionContext) {
+
+  val deviceCampaigns = new DeviceCampaigns(userProfileClient, resolverClient, repositories)
 
   val route =
     extractNamespace { ns =>

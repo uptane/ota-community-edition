@@ -9,7 +9,7 @@ import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libtuf.data.ClientDataType.TufRole
 import com.advancedtelematic.libtuf.data.TufDataType.SignedPayload
-import io.circe.{Decoder, Encoder}
+import io.circe.{Codec, Decoder, Encoder}
 import org.scalactic.source.Position
 import com.advancedtelematic.director.data.Generators._
 import com.advancedtelematic.director.data.GeneratorOps._
@@ -60,7 +60,7 @@ trait DeviceResources {
     }
   }
 
-  def fetchRoleOk[T : Encoder : Decoder](deviceId: DeviceId)(implicit ns: Namespace, tufRole: TufRole[T]): SignedPayload[T] = {
+  def fetchRoleOk[T : Codec](deviceId: DeviceId)(implicit ns: Namespace, tufRole: TufRole[T]): SignedPayload[T] = {
     Get(apiUri(s"device/${deviceId.show}/${tufRole.metaPath}")).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.OK
       responseAs[SignedPayload[T]]

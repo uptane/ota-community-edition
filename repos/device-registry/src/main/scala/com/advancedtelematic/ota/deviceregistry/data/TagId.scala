@@ -10,10 +10,10 @@ object TagId {
 
   implicit val validatedTagId = new ValidatedGeneric[TagId, String] {
     override def to(expression: TagId): String = expression.value
-    override def from(s: String): Either[ValidationError, TagId] = apply(s)
+    override def from(s: String): Either[ValidationError, TagId] = TagId.from(s)
   }
 
-  def apply(s: String): Either[ValidationError, TagId] =
+  def from(s: String): Either[ValidationError, TagId] =
     if (s.length <= 20 && s.matches("[\\w\\-_ ]+"))
       Right(new TagId(s))
     else

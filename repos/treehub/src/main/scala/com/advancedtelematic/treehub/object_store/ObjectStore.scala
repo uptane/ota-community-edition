@@ -1,7 +1,8 @@
 package com.advancedtelematic.treehub.object_store
 
-import java.io.File
+import akka.Done
 
+import java.io.File
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.util.FastFuture
 import akka.stream.scaladsl.{FileIO, Source}
@@ -16,6 +17,10 @@ import slick.jdbc.MySQLProfile.api._
 import scala.concurrent.{ExecutionContext, Future}
 
 class ObjectStore(blobStore: BlobStore)(implicit ec: ExecutionContext, db: Database) extends ObjectRepositorySupport {
+  def deleteObject(ns: Namespace, objectId: ObjectId): Future[Done] = for {
+    deleted <- objectRepository.delete(ns, objectId)
+    _ <- if(deleted > 0) blobStore.deleteObject(ns, objectId) else FastFuture.failed(Errors.ObjectNotFound)
+  } yield Done
 
   import scala.async.Async._
 

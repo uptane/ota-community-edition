@@ -1,14 +1,12 @@
 package com.advancedtelematic.treehub.repo_metrics
 
 import java.nio.file.{Files, Paths}
-
 import akka.actor.ActorSystem
 import akka.testkit.TestKitBase
 import com.advancedtelematic.libats.messaging.MessageBus
-import com.advancedtelematic.libats.test.DatabaseSpec
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, ObjectStore}
-import com.advancedtelematic.util.TreeHubSpec
+import com.advancedtelematic.util.{DatabaseSpec, TreeHubSpec}
 import com.typesafe.config.ConfigFactory
 
 trait UsageUpdateSpec extends DatabaseSpec with ObjectRepositorySupport with TestKitBase {

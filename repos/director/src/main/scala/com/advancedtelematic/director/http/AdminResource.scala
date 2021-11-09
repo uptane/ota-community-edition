@@ -17,16 +17,20 @@ import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libtuf.data.ClientCodecs._
 import com.advancedtelematic.libtuf.data.TufCodecs._
-import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, SignedPayload, TargetName, ValidKeyId}
+import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, SignedPayload, TargetFilename, TargetName, ValidKeyId, ValidTargetFilename}
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import slick.jdbc.MySQLProfile.api._
 import PaginationParametersDirectives._
-import com.advancedtelematic.director.repo.DeviceRoleGeneration
+import com.advancedtelematic.director.data.DataType.AdminRoleName.AdminRoleNamePathMatcher
+import com.advancedtelematic.director.repo.{DeviceRoleGeneration, OfflineUpdates}
 import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
-import com.advancedtelematic.libtuf.data.ClientDataType.RootRole
+import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, RootRole}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
+import com.advancedtelematic.director.data.ClientDataType._
+
+case class OfflineUpdateRequest(values: Map[TargetFilename, ClientTargetItem])
 
 class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient: KeyserverClient)
                    (implicit val db: Database, val ec: ExecutionContext, messageBusPublisher: MessageBusPublisher)
@@ -37,13 +41,26 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
     with DeviceRepositorySupport
     with AutoUpdateDefinitionRepositorySupport {
 
-  private val EcuIdPath = Segment.flatMap(EcuIdentifier(_).toOption)
+  private val EcuIdPath = Segment.flatMap(EcuIdentifier.from(_).toOption)
   private val KeyIdPath = Segment.flatMap(_.refineTry[ValidKeyId].toOption)
   private val TargetNamePath: PathMatcher1[TargetName] = Segment.map(TargetName.apply)
 
   val deviceRegistration = new DeviceRegistration(keyserverClient)
   val repositoryCreation = new RepositoryCreation(keyserverClient)
   val deviceRoleGeneration = new DeviceRoleGeneration(keyserverClient)
+  val offlineUpdates = new OfflineUpdates(keyserverClient)
+
+  private def findDevicesCurrentTarget(ns: Namespace, devices: Seq[DeviceId]): Future[DevicesCurrentTarget] = {
+    val defaultResult = devices.map { deviceId => deviceId -> List.empty[EcuTarget] }.toMap
+
+    ecuRepository.currentTargets(ns, devices.toSet).map { existing =>
+      val result = existing.foldLeft(defaultResult) { case (acc, (deviceId, ecuId, target)) =>
+        acc + (deviceId -> (target.toClient(ecuId) +: acc(deviceId)))
+      }
+
+      DevicesCurrentTarget(result)
+    }
+  }
 
   def repoRoute(ns: Namespace): Route =
     pathPrefix("repo") {
@@ -77,6 +94,36 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
             }
           }
         }
+      } ~
+      (path("offline-updates" / AdminRoleNamePathMatcher) & UserRepoId(ns)){ (offlineTargetName, repoId) =>
+        (post & entity(as[OfflineUpdateRequest])) { req =>
+          val f = offlineUpdates.set(repoId, offlineTargetName, req.values)
+          complete(f.map(_ => StatusCodes.OK))
+        }
+      } ~
+      (path("offline-updates" / AdminRoleNamePathMatcher ~ ".json") & UserRepoId(ns)) { (offlineTargetName, repoId) =>
+        get {
+          val f = offlineUpdates.findLatestUpdates(repoId, offlineTargetName)
+          complete(f)
+        }
+      } ~
+      (path("offline-updates" / IntNumber ~ "." ~ AdminRoleNamePathMatcher ~ ".json") & UserRepoId(ns)) { (version, offlineTargetName, repoId) =>
+        get {
+          val f = offlineUpdates.findUpdates(repoId, offlineTargetName, version)
+          complete(f)
+        }
+      } ~
+      (path("offline-snapshot.json") & UserRepoId(ns)) { repoId =>
+        get {
+          val f = offlineUpdates.findLatestSnapshot(repoId)
+          complete(f)
+        }
+      } ~
+      (path(IntNumber ~ ".offline-snapshot.json") & UserRepoId(ns)) { (version, repoId) =>
+        get {
+          val f = offlineUpdates.findSnapshot(repoId, version)
+          complete(f)
+        }
       }
     }
 
@@ -108,7 +155,7 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
         complete(f)
       } ~
       (path("targets.json") & put) {
-        complete(deviceRoleGeneration.forceTargetsRefresh(ns, device).map(_ => StatusCodes.Accepted))
+        complete(deviceRoleGeneration.forceTargetsRefresh(device).map(_ => StatusCodes.Accepted))
       }
     }
 
@@ -140,6 +187,11 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
                         }
                     }
                   }
+                }
+              },
+              (post & path("list-installed-targets")) {
+                entity(as[Seq[DeviceId]]) { devices =>
+                  complete(findDevicesCurrentTarget(ns, devices))
                 }
               },
               get {

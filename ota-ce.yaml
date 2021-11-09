@@ -76,7 +76,7 @@ services:
       NAMESPACE_DIRECTOR_MODULE: ""
 
   db:
-    image: mariadb:10.2
+    image: mariadb:10.4
     #restart: always
     environment:
       MYSQL_DATABASE: 'ota'
@@ -95,7 +95,7 @@ services:
       - ota-db:/var/lib/mysql
 
   ota-lith:
-    image: advancedtelematic/ota-lith:latest
+    image: uptane/ota-lith:latest
     restart: always
     depends_on:
       - db
@@ -127,7 +127,7 @@ services:
       - objects:/var/lib/ota-lith
      
   ota-lith-daemons:
-    image: advancedtelematic/ota-lith:latest
+    image: uptane/ota-lith:latest
     restart: always
     depends_on:
       - db
@@ -145,7 +145,7 @@ services:
     ports:
       - "2181:2181"
   kafka:
-    image: wurstmeister/kafka:2.11-1.0.2
+    image: wurstmeister/kafka:2.13-2.7.1
     ports:
       - "9092:9092"
     environment:

@@ -1,14 +1,8 @@
 name := "treehub"
-organization := "com.advancedtelematic.com"
-scalaVersion := "2.12.8"
+organization := "io.github.uptane"
+scalaVersion := "2.12.15"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
-
-resolvers += "ATS Releases" at "https://nexus.ota.here.com/content/repositories/releases"
-
-resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots"
-
-resolvers += "commons-logging-empty" at "https://version99.qos.ch"
 
 def itFilter(name: String): Boolean = name endsWith "IntegrationSpec"
 
@@ -18,20 +12,19 @@ lazy val ItTest = config("it").extend(Test)
 
 lazy val UnitTest = config("ut").extend(Test)
 
-lazy val root = (project in file("."))
-  .enablePlugins(BuildInfoPlugin, JavaAppPackaging, Versioning.Plugin)
+lazy val treehub = (project in file("."))
+  .enablePlugins(BuildInfoPlugin)
   .configs(ItTest)
   .settings(inConfig(ItTest)(Defaults.testTasks): _*)
   .configs(UnitTest)
   .settings(inConfig(UnitTest)(Defaults.testTasks): _*)
-  .settings(testOptions in UnitTest := Seq(Tests.Filter(unitFilter)))
-  .settings(testOptions in IntegrationTest := Seq(Tests.Filter(itFilter)))
-  .settings(sonarSettings)
+  .settings(UnitTest / testOptions := Seq(Tests.Filter(unitFilter)))
+  .settings(IntegrationTest / testOptions := Seq(Tests.Filter(itFilter)))
   .settings(Seq(libraryDependencies ++= {
-    val akkaV = "2.6.5"
-    val akkaHttpV = "10.1.12"
-    val scalaTestV = "3.0.8"
-    val libatsV = "0.4.0-20-ge903ac1"
+    val akkaV = "2.6.17"
+    val akkaHttpV = "10.2.7"
+    val scalaTestV = "3.0.9"
+    val libatsV = "2.0.3"
 
     Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -42,48 +35,40 @@ lazy val root = (project in file("."))
       "com.typesafe.akka" %% "akka-slf4j" % akkaV,
       "org.scalatest"     %% "scalatest" % scalaTestV % "test,it",
 
-      "ch.qos.logback" % "logback-classic" % "1.2.3",
-      "org.slf4j" % "slf4j-api" % "1.7.25",
+      "ch.qos.logback" % "logback-classic" % "1.2.6",
+      "org.slf4j" % "slf4j-api" % "1.7.32",
 
-      "com.advancedtelematic" %% "libats" % libatsV,
-      "com.advancedtelematic" %% "libats-http" % libatsV,
-      "com.advancedtelematic" %% "libats-http-tracing" % libatsV,
-      "com.advancedtelematic" %% "libats-messaging" % libatsV,
-      "com.advancedtelematic" %% "libats-messaging-datatype" % libatsV,
-      "com.advancedtelematic" %% "libats-auth" % libatsV,
-      "com.advancedtelematic" %% "libats-slick" % libatsV,
-      "com.advancedtelematic" %% "libats-metrics-akka" % libatsV,
-      "com.advancedtelematic" %% "libats-metrics-prometheus" % libatsV,
-      "com.advancedtelematic" %% "libats-logging" % libatsV,
-      "com.advancedtelematic" %% "libats-logging" % libatsV,
+      "io.github.uptane" %% "libats" % libatsV,
+      "io.github.uptane" %% "libats-http" % libatsV,
+      "io.github.uptane" %% "libats-http-tracing" % libatsV,
+      "io.github.uptane" %% "libats-messaging" % libatsV,
+      "io.github.uptane" %% "libats-messaging-datatype" % libatsV,
+      "io.github.uptane" %% "libats-slick" % libatsV,
+      "io.github.uptane" %% "libats-metrics-akka" % libatsV,
+      "io.github.uptane" %% "libats-metrics-prometheus" % libatsV,
+      "io.github.uptane" %% "libats-logging" % libatsV,
+      "io.github.uptane" %% "libats-logging" % libatsV,
 
       "org.scala-lang.modules" %% "scala-async" % "0.9.6",
-      "org.mariadb.jdbc" % "mariadb-java-client" % "2.4.4",
+      "org.mariadb.jdbc" % "mariadb-java-client" % "2.7.4",
 
-      "com.amazonaws" % "aws-java-sdk-s3" % "1.11.86"
+      "com.amazonaws" % "aws-java-sdk-s3" % "1.12.105"
     )
   }))
 
-mainClass in Compile := Some("com.advancedtelematic.treehub.Boot")
-
-buildInfoOptions += BuildInfoOption.ToMap
-buildInfoOptions += BuildInfoOption.BuildTime
-buildInfoObject := "AppBuildInfo"
-buildInfoPackage := "com.advancedtelematic.treehub"
-buildInfoUsePackageAsPath := true
-buildInfoOptions += BuildInfoOption.Traits("com.advancedtelematic.libats.boot.VersionInfoProvider")
+Compile / mainClass := Some("com.advancedtelematic.treehub.Boot")
 
 import com.typesafe.sbt.packager.docker._
 
 dockerRepository := Some("advancedtelematic")
 
-packageName in Docker := packageName.value
+Docker / packageName := packageName.value
 
 dockerUpdateLatest := true
 
 dockerAliases ++= Seq(dockerAlias.value.withTag(git.gitHeadCommit.value))
 
-defaultLinuxInstallLocation in Docker := s"/opt/${moduleName.value}"
+Docker / defaultLinuxInstallLocation := s"/opt/${moduleName.value}"
 
 dockerCommands := Seq(
   Cmd("FROM", "advancedtelematic/alpine-jre:adoptopenjdk-jre8u262-b10"),
@@ -96,19 +81,12 @@ dockerCommands := Seq(
   Cmd("USER", "daemon")
 )
 
+enablePlugins(JavaAppPackaging, GitVersioning, BuildInfoPlugin)
+
 Versioning.settings
 
-Release.settings
-
-lazy val sonarSettings = Seq(
-  sonarProperties ++= Map(
-    "sonar.projectName" -> "OTA Connect Treehub",
-    "sonar.projectKey" -> "ota-connect-treehub",
-    "sonar.host.url" -> "http://sonar.in.here.com",
-    "sonar.links.issue" -> "https://saeljira.it.here.com/projects/OTA/issues",
-    "sonar.links.scm" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/treehub",
-    "sonar.links.ci" -> "https://main.gitlab.in.here.com/olp/edge/ota/connect/back-end/treehub/pipelines",
-    "sonar.language" -> "scala",
-    "sonar.projectVersion" -> version.value,
-  )
-)
+buildInfoObject := "AppBuildInfo"
+buildInfoPackage := "com.advancedtelematic.treehub"
+buildInfoOptions += BuildInfoOption.Traits("com.advancedtelematic.libats.boot.VersionInfoProvider")
+buildInfoOptions += BuildInfoOption.ToMap
+buildInfoOptions += BuildInfoOption.BuildTime

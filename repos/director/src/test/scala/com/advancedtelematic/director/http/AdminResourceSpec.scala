@@ -12,7 +12,7 @@ import com.advancedtelematic.director.data.Codecs._
 import com.advancedtelematic.director.data.DbDataType.Ecu
 import com.advancedtelematic.director.data.GeneratorOps._
 import com.advancedtelematic.director.data.Generators._
-import com.advancedtelematic.director.db.{DbSignedRoleRepositorySupport, RepoNamespaceRepositorySupport}
+import com.advancedtelematic.director.db.{DbDeviceRoleRepositorySupport, RepoNamespaceRepositorySupport}
 import com.advancedtelematic.director.http.AdminResources.RegisterDeviceResult
 import com.advancedtelematic.director.util._
 import com.advancedtelematic.libats.codecs.CirceCodecs._
@@ -97,7 +97,7 @@ trait AdminResources {
 class AdminResourceSpec extends DirectorSpec
   with RouteResourceSpec
   with RepoNamespaceRepositorySupport
-  with DbSignedRoleRepositorySupport with AdminResources with RepositorySpec with DeviceResources with DeviceManifestSpec {
+  with DbDeviceRoleRepositorySupport with AdminResources with RepositorySpec with DeviceResources with DeviceManifestSpec {
 
   testWithNamespace("can register a device") { implicit ns =>
     createRepoOk()
@@ -272,6 +272,59 @@ class AdminResourceSpec extends DirectorSpec
       val page = responseAs[PaginationResult[ClientDataType.Device]]
       page.values.length shouldBe 2
       page.values.head.id shouldBe regDev1.deviceId
+    }
+  }
+
+  testWithRepo("GET returns object containing unknown devices") { implicit ns =>
+    val deviceId = DeviceId.generate()
+    val body = List(deviceId)
+
+    Post(apiUri("admin/devices/list-installed-targets"), body).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      val expected = Map(deviceId -> List.empty)
+      responseAs[ClientDataType.DevicesCurrentTarget].values shouldBe expected
+    }
+  }
+
+  testWithRepo("GET devices returns objects for registered devices when target is unknown") { implicit  ns =>
+    val regDev = registerAdminDeviceOk()
+
+    val body = List(regDev.deviceId)
+
+    Post(apiUri("admin/devices/list-installed-targets"), body).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+
+      val expected = Map(regDev.deviceId -> List.empty)
+
+      responseAs[ClientDataType.DevicesCurrentTarget].values shouldBe expected
+    }
+  }
+
+  testWithRepo("GET devices returns object containing current targets for devices with known targets") { implicit  ns =>
+    val regDev = registerAdminDeviceOk()
+    val targetUpdate = GenTargetUpdateRequest.generate
+    val correlationId = GenCorrelationId.generate
+    val deviceReport = GenInstallReport(regDev.primary.ecuSerial, success = true, correlationId = correlationId.some).generate
+    val deviceManifest = buildPrimaryManifest(regDev.primary, regDev.primaryKey,targetUpdate.to, deviceReport.some)
+
+    val body = List(regDev.deviceId)
+
+    Post(apiUri("admin/devices/list-installed-targets"), body).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+
+      val expected = Map(regDev.deviceId -> List.empty)
+
+      responseAs[ClientDataType.DevicesCurrentTarget].values shouldBe expected
+    }
+
+    putManifestOk(regDev.deviceId, deviceManifest)
+
+    Post(apiUri("admin/devices/list-installed-targets"), body).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+
+      val expected = Map(regDev.deviceId -> List(ClientDataType.EcuTarget(regDev.primary.ecuSerial, targetUpdate.to.checksum, targetUpdate.to.target)))
+
+      responseAs[ClientDataType.DevicesCurrentTarget].values shouldBe expected
     }
   }
 }

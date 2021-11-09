@@ -20,16 +20,13 @@ import slick.jdbc.MySQLProfile.api._
 import scala.concurrent.{ExecutionContext, Future}
 
 object Campaigns {
-  def apply()(implicit db: Database, ec: ExecutionContext): Campaigns = new Campaigns()
+  def apply()(implicit db: Database, ec: ExecutionContext): Campaigns = new Campaigns(Repositories())
 }
 
-protected [db] class Campaigns(implicit db: Database, ec: ExecutionContext)
-    extends CampaignSupport
-    with CampaignMetadataSupport
-    with DeviceUpdateSupport
-    with CancelTaskSupport {
+class Campaigns(val repositories: Repositories)(implicit db: Database, ec: ExecutionContext) {
+  import  repositories._
 
-  val campaignStatusTransition = new CampaignStatusTransition()
+  val campaignStatusTransition = new CampaignStatusTransition(repositories)
 
   def remainingCancelling(): Future[Seq[(Namespace, CampaignId)]] = cancelTaskRepo.findInprogress()
 
@@ -302,9 +299,8 @@ protected [db] class Campaigns(implicit db: Database, ec: ExecutionContext)
 }
 
 // TODO (OTA-2384) refactor and get rid of this class
-protected [db] class CampaignStatusTransition(implicit db: Database, ec: ExecutionContext)
-    extends CampaignSupport
-    with CancelTaskSupport  {
+class CampaignStatusTransition(repositories: Repositories)(implicit ec: ExecutionContext) {
+  import repositories._
 
   def devicesFinished(campaignId: CampaignId): DBIO[Unit] =
     updateToCalculatedStatus(campaignId)
@@ -321,31 +317,27 @@ protected [db] class CampaignStatusTransition(implicit db: Database, ec: Executi
 
   protected[db] def updateToCalculatedStatus(campaignId: CampaignId): DBIO[Unit] =
     for {
-      campaign <- campaignRepo.findAction(campaignId)
-      campaignedFinished <- isFinished(campaignId, Some(campaign.status))
+      campaignStatus <- campaignRepo.findCampaignStatusAction(campaignId)
+      campaignedFinished <- isFinished(campaignId, Some(campaignStatus))
       _ <- if (campaignedFinished) campaignRepo.setStatusAction(campaignId, CampaignStatus.finished)
            else DBIO.successful(())
     } yield ()
 
-  protected[db] def isFinished(campaignId: CampaignId,
-                               currentCampaignStatus: Option[CampaignStatus] = None): DBIO[Boolean] = {
-    val deviceCountByStatus = Schema.deviceUpdates
+  private val deviceCountByStatusQuery = Compiled { campaignId: Rep[CampaignId] =>
+    Schema.deviceUpdates
       .filter(_.campaignId === campaignId)
       .groupBy(_.status)
       .map(t => t._1 -> t._2.length)
-      .result
-      .map(_.toMap)
+  }
+
+  protected[db] def isFinished(campaignId: CampaignId,
+                               currentCampaignStatus: Option[CampaignStatus] = None): DBIO[Boolean] = {
 
     for {
-      affected <- deviceCountByStatus
-        .map(_.filterKeys(k => k != DeviceStatus.requested && k != DeviceStatus.rejected))
-        .map(_.values.sum)
-      finished <- deviceCountByStatus
-        .map(_.filterKeys(k => k == DeviceStatus.successful || k == DeviceStatus.failed || k == DeviceStatus.cancelled))
-        .map(_.values.sum)
-      requested <- deviceCountByStatus
-        .map(_.filterKeys(k => k == DeviceStatus.requested))
-        .map(_.values.sum)
+      deviceCountByStatus <- deviceCountByStatusQuery(campaignId).result.map(_.toMap)
+      affected = deviceCountByStatus.filterKeys(k => k != DeviceStatus.requested && k != DeviceStatus.rejected).values.sum
+      finished = deviceCountByStatus.filterKeys(k => k == DeviceStatus.successful || k == DeviceStatus.failed || k == DeviceStatus.cancelled).values.sum
+      requested = deviceCountByStatus.filterKeys(k => k == DeviceStatus.requested).values.sum
       wasCampaignCancelled = currentCampaignStatus.contains(CampaignStatus.cancelled)
     } yield !wasCampaignCancelled && requested == 0 && affected == finished
   }

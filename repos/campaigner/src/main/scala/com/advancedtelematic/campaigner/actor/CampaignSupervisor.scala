@@ -9,7 +9,6 @@ import com.advancedtelematic.campaigner.db.Campaigns
 import com.advancedtelematic.libats.data.DataType.Namespace
 
 import scala.concurrent.duration._
-import slick.jdbc.MySQLProfile.api._
 import cats.syntax.show._
 
 object CampaignSupervisor {
@@ -24,19 +23,21 @@ object CampaignSupervisor {
   final case class CampaignsCancelled(campaigns: Set[CampaignId])
 
   def props(director: DirectorClient,
+            campaigns: Campaigns,
             pollingTimeout: FiniteDuration,
             delay: FiniteDuration,
             batchSize: Int)
-           (implicit db: Database, mat: Materializer): Props =
-    Props(new CampaignSupervisor(director, pollingTimeout, delay, batchSize))
+           (implicit mat: Materializer): Props =
+    Props(new CampaignSupervisor(director, campaigns, pollingTimeout, delay, batchSize))
 
 }
 
 class CampaignSupervisor(director: DirectorClient,
+                         campaigns: Campaigns,
                          pollingTimeout: FiniteDuration,
                          delay: FiniteDuration,
                          batchSize: Int)
-                        (implicit db: Database, mat: Materializer) extends Actor
+                        (implicit mat: Materializer) extends Actor
   with ActorLogging {
 
   import CampaignScheduler._
@@ -45,8 +46,6 @@ class CampaignSupervisor(director: DirectorClient,
   import context._
 
   val scheduler = system.scheduler
-
-  val campaigns = Campaigns()
 
   override def preStart(): Unit = {
     // periodically clear out cancelled campaigns
@@ -71,13 +70,14 @@ class CampaignSupervisor(director: DirectorClient,
   def cancelCampaign(ns: Namespace, campaign: CampaignId): ActorRef =
     context.actorOf(CampaignCanceler.props(
       director,
+      campaigns,
       campaign,
       ns,
       batchSize
     ))
 
   def scheduleCampaign(campaign: Campaign): ActorRef = {
-    val childProps = CampaignScheduler.props(director, campaign, delay, batchSize)
+    val childProps = CampaignScheduler.props(director, campaigns, campaign, delay, batchSize)
 
     val props = BackoffSupervisor.props(
       BackoffOpts.onFailure(
@@ -112,6 +112,9 @@ class CampaignSupervisor(director: DirectorClient,
       become(supervising(campaignSchedulers -- cs.map(_._2)))
       parent ! CampaignsCancelled(cs.map(_._2))
 
+    case CancelCampaigns(cs) if cs.isEmpty =>
+      log.debug("empty CancelCampaigns event")
+
     case ResumeCampaigns(cs) if cs.nonEmpty =>
       log.info(s"resume campaigns ${cs.map(_.id)}")
       // only create schedulers for campaigns without a scheduler
@@ -125,6 +128,9 @@ class CampaignSupervisor(director: DirectorClient,
         parent ! CampaignsScheduled(newlyScheduled.keySet)
       } else
         log.debug(s"Not creating scheduler for campaigns, scheduler already exists")
+
+    case ResumeCampaigns(cs) if cs.isEmpty =>
+      log.debug("empty ResumeCampaigns event")
 
     case CampaignComplete(id) =>
       log.info(s"$id completed")

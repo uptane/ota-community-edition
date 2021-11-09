@@ -8,7 +8,7 @@ import com.advancedtelematic.director.data.Codecs._
 import com.advancedtelematic.director.data.DataType.TargetItemCustom
 import com.advancedtelematic.director.data.GeneratorOps._
 import com.advancedtelematic.director.data.Generators._
-import com.advancedtelematic.director.db.{DbSignedRoleRepositorySupport, RepoNamespaceRepositorySupport}
+import com.advancedtelematic.director.db.{DbDeviceRoleRepositorySupport, RepoNamespaceRepositorySupport}
 import com.advancedtelematic.director.util._
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, MultiTargetUpdateId, Namespace}
 import com.advancedtelematic.libats.data.ErrorRepresentation
@@ -91,7 +91,7 @@ trait AssignmentResources {
 class AssignmentsResourceSpec extends DirectorSpec
   with RouteResourceSpec
   with RepoNamespaceRepositorySupport
-  with DbSignedRoleRepositorySupport
+  with DbDeviceRoleRepositorySupport
   with AdminResources
   with AssignmentResources
   with RepositorySpec

@@ -6,7 +6,6 @@ import akka.testkit.TestProbe
 import com.advancedtelematic.campaigner.client._
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{Campaigns, DeviceUpdateSupport, UpdateSupport}
 import com.advancedtelematic.campaigner.util.{ActorSpec, CampaignerSpec, DatabaseUpdateSpecUtil}
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
@@ -15,14 +14,11 @@ import org.scalatest.Inspectors
 
 import scala.concurrent.Future
 
-class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with CampaignerSpec with UpdateSupport
-  with DeviceUpdateSupport
+class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with CampaignerSpec
   with DatabaseUpdateSpecUtil with Inspectors {
   import CampaignScheduler._
 
   import scala.concurrent.duration._
-
-  val campaigns = Campaigns()
 
   "campaign scheduler" should "trigger updates for each device" in {
     val campaign = buildCampaignWithUpdate
@@ -59,6 +55,7 @@ class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with Campaigner
 
     parent.childActorOf(CampaignScheduler.props(
       director,
+      campaigns,
       campaign,
       schedulerDelay,
       schedulerBatchSize
@@ -79,6 +76,7 @@ class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with Campaigner
 
     parent.childActorOf(CampaignScheduler.props(
       director,
+      campaigns,
       campaign,
       schedulerDelay,
       schedulerBatchSize
@@ -86,7 +84,7 @@ class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with Campaigner
 
     parent.expectMsg(5.seconds, CampaignComplete(campaign.id))
 
-    val processed = deviceUpdateRepo.findByCampaignStream(campaign.id, DeviceStatus.requested)
+    val processed = repositories.deviceUpdateRepo.findByCampaignStream(campaign.id, DeviceStatus.requested)
       .map(d => List(d._1)).runWith(Sink.fold(List.empty[DeviceId])(_ ++ _)).futureValue
 
     processed should contain allElementsOf(devices.toList)
@@ -123,6 +121,7 @@ class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with Campaigner
 
     parent.childActorOf(CampaignScheduler.props(
       director,
+      campaigns,
       campaign,
       schedulerDelay,
       schedulerBatchSize
@@ -139,6 +138,7 @@ class CampaignSchedulerSpec extends ActorSpec[CampaignScheduler] with Campaigner
 
     parent.childActorOf(CampaignScheduler.props(
       director,
+      campaigns,
       campaign,
       schedulerDelay,
       schedulerBatchSize

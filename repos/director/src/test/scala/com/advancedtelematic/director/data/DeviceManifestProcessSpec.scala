@@ -7,11 +7,11 @@ import com.advancedtelematic.libtuf.data.TufCodecs._
 import com.advancedtelematic.libtuf.data.TufDataType.{RsaKeyType, SignedPayload}
 import io.circe.Json
 import io.circe.parser._
-import org.scalatest.FunSuite
 
 import scala.io.Source
+import org.scalatest.funsuite.AnyFunSuite
 
-class DeviceManifestProcessSpec extends FunSuite {
+class DeviceManifestProcessSpec extends AnyFunSuite {
   import java.security.Security
 
   import org.bouncycastle.jce.provider.BouncyCastleProvider

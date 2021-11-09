@@ -1,5 +1,6 @@
 package com.advancedtelematic.director.http
 
+import com.advancedtelematic.director.data.ClientDataType
 import akka.http.scaladsl.model.StatusCodes
 import cats.syntax.option._
 import cats.syntax.show._
@@ -39,7 +40,7 @@ class DeviceResourceSpec extends DirectorSpec
 
   def forceRoleExpire[T](deviceId: DeviceId)(implicit tufRole: TufRole[T]): Unit = {
     import slick.jdbc.MySQLProfile.api._
-    val sql = sql"update signed_roles set expires_at = '1970-01-01 00:00:00' where device_id = '#${deviceId.show}' and role = '#${tufRole.typeStr}'"
+    val sql = sql"update device_roles set expires_at = '1970-01-01 00:00:00' where device_id = '#${deviceId.show}' and role = '#${tufRole.roleType.toString}'"
     db.run(sql.asUpdate).futureValue
   }
 
@@ -615,6 +616,23 @@ class DeviceResourceSpec extends DirectorSpec
 
     val deviceSeenMsg = msgPub.findReceived[DeviceSeen](deviceId.toString)
     deviceSeenMsg.map(_.namespace) should contain(ns)
+  }
+
+  testWithRepo("publishes DeviceUpdateInFlight message") { implicit  ns =>
+    val regDev = registerAdminDeviceOk()
+    val targetUpdate = GenTargetUpdateRequest.generate
+    val correlationId = GenCorrelationId.generate
+
+    createDeviceAssignmentOk(regDev.deviceId, regDev.primary.hardwareId, targetUpdate.some, correlationId.some)
+
+    fetchRoleOk[TargetsRole](regDev.deviceId)
+
+    val reportMsg = msgPub.findReceived[DeviceUpdateEvent] { msg: DeviceUpdateEvent =>
+      msg.deviceUuid === regDev.deviceId
+    }.map(_.asInstanceOf[DeviceUpdateInFlight]).value
+
+    reportMsg.namespace shouldBe ns
+    reportMsg.correlationId shouldBe correlationId
   }
 
   testWithRepo("publishes DeviceUpdateCompleted message") { implicit  ns =>

@@ -9,6 +9,4 @@ object Versioning {
   lazy val settings = Seq(
     git.useGitDescribe := true
   )
-
-  val Plugin = GitVersioning
 }

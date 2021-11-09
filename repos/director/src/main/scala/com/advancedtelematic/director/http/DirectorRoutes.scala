@@ -1,9 +1,8 @@
 package com.advancedtelematic.director.http
 
 import akka.http.scaladsl.server.{Directives, _}
-import com.advancedtelematic.libats.auth.NamespaceDirectives
 import com.advancedtelematic.libats.http.DefaultRejectionHandler.rejectionHandler
-import com.advancedtelematic.libats.http.ErrorHandler
+import com.advancedtelematic.libats.http.{ErrorHandler, NamespaceDirectives}
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
 import slick.jdbc.MySQLProfile.api._
@@ -15,7 +14,7 @@ class DirectorRoutes(keyserverClient: KeyserverClient, allowEcuReplacement: Bool
                     (implicit val db: Database, ec: ExecutionContext, messageBusPublisher: MessageBusPublisher) {
   import Directives._
 
-  val extractNamespace = NamespaceDirectives.defaultNamespaceExtractor.map(_.namespace)
+  val extractNamespace = NamespaceDirectives.defaultNamespaceExtractor
 
   val routes: Route =
     handleRejections(rejectionHandler) {

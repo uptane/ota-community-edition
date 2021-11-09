@@ -1,6 +1,7 @@
 package com.advancedtelematic.treehub.delta_store
 
 import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
 import com.advancedtelematic.data.DataType.ValidDeltaId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.delta_store.StaticDeltaStorage.StaticDeltaRedirectResponse
@@ -19,7 +20,7 @@ class S3DeltaStorageIntegrationSpec extends TreeHubSpec with BeforeAndAfterAll {
 
   implicit lazy val system = ActorSystem("S3BlobStoreSpec")
 
-    val s3Client = object_store.S3Client(s3Credentials)
+  val s3Client = object_store.S3Client(s3Credentials)
 
   val s3DeltaStore = new S3DeltaStorage(s3Credentials, s3Client)
 

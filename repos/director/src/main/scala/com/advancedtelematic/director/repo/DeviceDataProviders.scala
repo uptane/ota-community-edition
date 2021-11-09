@@ -7,7 +7,7 @@ import cats.implicits._
 import com.advancedtelematic.director.data.Codecs._
 import com.advancedtelematic.director.data.DataType.{DeviceTargetsCustom, TargetItemCustom, TargetItemCustomEcuData}
 import com.advancedtelematic.director.data.DbDataType._
-import com.advancedtelematic.director.db.{AssignmentsRepositorySupport, DbSignedRoleRepositorySupport, EcuRepositorySupport, EcuTargetsRepositorySupport}
+import com.advancedtelematic.director.db.{AssignmentsRepositorySupport, DbDeviceRoleRepositorySupport, EcuRepositorySupport, EcuTargetsRepositorySupport}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
@@ -22,14 +22,14 @@ import slick.jdbc.MySQLProfile.api._
 import scala.async.Async._
 import scala.concurrent.{ExecutionContext, Future}
 
-protected [repo] class DeviceSignedRoleProvider(ns: Namespace, deviceId: DeviceId)(implicit val db: Database, val ec: ExecutionContext) extends SignedRoleProvider
-  with DbSignedRoleRepositorySupport {
+protected [repo] class DeviceSignedRoleProvider(deviceId: DeviceId)(implicit val db: Database, val ec: ExecutionContext) extends SignedRoleProvider
+  with DbDeviceRoleRepositorySupport {
 
-  override def find[T](repoId: RepoId)(implicit evidence$1: TufRole[T]): Future[SignedRole[T]] =
-    dbSignedRoleRepository.findLatest(deviceId).map(_.toSignedRole)
+  override def find[T : TufRole](repoId: RepoId): Future[SignedRole[T]] =
+    dbDeviceRoleRepository.findLatest(deviceId).map(_.toSignedRole)
 
   override def persistAll(repoId: RepoId, roles: List[SignedRole[_]]): Future[List[SignedRole[_]]] =
-    dbSignedRoleRepository.persistAll(roles.map(_.toDbSignedRole(deviceId))).map(_ => roles)
+    dbDeviceRoleRepository.persistAll(roles.map(_.toDbDeviceRole(deviceId))).map(_ => roles)
 }
 
 

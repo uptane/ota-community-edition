@@ -1,7 +1,5 @@
 package com.advancedtelematic.campaigner.http
 
-import java.util.concurrent.TimeoutException
-
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.model.{StatusCodes, Uri}
@@ -13,7 +11,7 @@ import com.advancedtelematic.campaigner.data.AkkaSupport._
 import com.advancedtelematic.campaigner.data.Codecs._
 import com.advancedtelematic.campaigner.data.DataType.SortBy.SortBy
 import com.advancedtelematic.campaigner.data.DataType._
-import com.advancedtelematic.campaigner.db.UpdateSupport
+import com.advancedtelematic.campaigner.db.UpdateRepository
 import com.advancedtelematic.campaigner.http.Errors.ConflictingUpdate
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.{ErrorRepresentation, PaginationResult}
@@ -22,8 +20,8 @@ import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateId
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
-import slick.jdbc.MySQLProfile.api._
 
+import java.util.concurrent.TimeoutException
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -45,8 +43,11 @@ object HypermediaResource {
 
 final case class HypermediaResource[T](links: Seq[HypermediaResource.Link], value: T)
 
-class UpdateResource(extractNamespace: Directive1[Namespace], deviceRegistry: DeviceRegistryClient, resolver: ResolverClient, userProfile: UserProfileClient)
-                    (implicit db: Database, ec: ExecutionContext) extends Settings with UpdateSupport {
+class UpdateResource(extractNamespace: Directive1[Namespace],
+                     deviceRegistry: DeviceRegistryClient,
+                     resolver: ResolverClient,
+                     userProfile: UserProfileClient,
+                     updateRepo: UpdateRepository)(implicit ec: ExecutionContext) extends Settings {
 
   private[this] val pathToUpdates = Path.Empty / "api" / "v2" / "updates"
 
@@ -89,7 +90,7 @@ class UpdateResource(extractNamespace: Directive1[Namespace], deviceRegistry: De
     userProfile
       .externalResolverUri(ns)
       .flatMap {
-        case Some(uri) => new GroupUpdateResolver(deviceRegistry, resolver, uri).groupUpdates(ns, groups)
+        case Some(uri) => new GroupUpdateResolver(deviceRegistry, resolver, uri, updateRepo).groupUpdates(ns, groups)
         case None => updateRepo.all(ns, updateType = Some(UpdateType.multi_target)) // TODO use the internal resolver from director once it's implemented
       }
       .map(updates => PaginationResult(updates, updates.size.toLong, 0, updates.size.toLong).map(linkToSelf))
@@ -104,7 +105,7 @@ class UpdateResource(extractNamespace: Directive1[Namespace], deviceRegistry: De
           (post & entity(as[CreateUpdate])) { request =>
             createUpdate(ns, request)
           } ~
-          (get & parameters(('groupId.as[GroupId].*, 'nameContains.as[String].?, 'sortBy.as[SortBy].?, 'offset.as[Long] ? 0L, 'limit.as[Long] ? 50L))) {
+          (get & parameters('groupId.as[GroupId].*, 'nameContains.as[String].?, 'sortBy.as[SortBy].?, 'offset.as(nonNegativeLongUnmarshaller) ? 0L, 'limit.as(nonNegativeLongUnmarshaller) ? 50L)) {
             (groupId, nameContains, sortBy, offset, limit) => (groupId, nameContains) match {
               case (Nil, _) => complete(getAllUpdates(ns, offset, limit, sortBy, nameContains))
               case (groups, None) => availableUpdatesForGroups(ns, groups.toSet)

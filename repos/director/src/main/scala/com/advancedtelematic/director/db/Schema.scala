@@ -1,23 +1,17 @@
 package com.advancedtelematic.director.db
 
 import java.time.Instant
-
 import akka.http.scaladsl.model.Uri
+import com.advancedtelematic.director.data.DataType.AdminRoleName
 import com.advancedtelematic.director.data.DbDataType._
-import com.advancedtelematic.libats.data
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
-import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, RepoId, SignedPayload, TargetFilename, TargetName, TufKey}
+import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, RepoId, TargetFilename, TargetName, TufKey}
 import io.circe.Json
 import slick.jdbc.MySQLProfile.api._
 import com.advancedtelematic.libats.slick.db.SlickCirceMapper.jsonMapper
-import com.advancedtelematic.libtuf_server.crypto.Sha256Digest
-import slick.ast.Subquery.Default
-import slick.sql.SqlProfile.ColumnOption
-
 
 object Schema {
   import SlickMapping._
@@ -26,6 +20,7 @@ object Schema {
   import com.advancedtelematic.libats.slick.db.SlickExtensions.javaInstantMapping
   import com.advancedtelematic.libats.slick.db.SlickUUIDKey._
   import com.advancedtelematic.libats.slick.db.SlickUrnMapper._
+  import SlickMapping.adminRoleNameMapper
   import com.advancedtelematic.libats.slick.db.SlickValidatedGeneric._
   import com.advancedtelematic.libtuf_server.data.TufSlickMappings._
   import com.advancedtelematic.libats.slick.db.SlickUriMapper._
@@ -83,7 +78,25 @@ object Schema {
 
   protected [db] val ecuTargets = TableQuery[EcuTargetsTable]
 
-  class SignedRolesTable(tag: Tag) extends Table[DbSignedRole](tag, "signed_roles") {
+  class AdminRolesTable(tag: Tag) extends Table[DbAdminRole](tag, "admin_roles") {
+    def repoId = column[RepoId]("repo_id")
+    def role = column[RoleType]("role")
+    def name = column[AdminRoleName]("name")
+    def version = column[Int]("version")
+    def content = column[JsonSignedPayload]("content")
+    def expires = column[Instant]("expires_at")
+    def createdAt = column[Instant]("created_at")
+    def checksum = column[Checksum]("checksum")
+    def length = column[Long]("length")
+
+    def primKey = primaryKey("offline_targets_pk", (repoId, name, version))
+
+    override def * = (repoId, role, name, checksum, length, version, expires, content) <> ((DbAdminRole.apply _).tupled, DbAdminRole.unapply)
+  }
+
+  protected [db] val adminRoles = TableQuery[AdminRolesTable]
+
+  class DeviceRolesTable(tag: Tag) extends Table[DbDeviceRole](tag, "device_roles") {
     def role = column[RoleType]("role")
     def device  = column[DeviceId]("device_id")
     def version = column[Int]("version")
@@ -93,12 +106,12 @@ object Schema {
     def checksum = column[Option[Checksum]]("checksum")
     def length = column[Option[Long]]("length")
 
-    def primKey = primaryKey("signed_roles_pk", (role, version, device))
+    def primKey = primaryKey("device_roles_pk", (role, version, device))
 
-    override def * = (role, device, checksum, length, version, expires, content) <> ((DbSignedRole.apply _).tupled, DbSignedRole.unapply)
+    override def * = (role, device, checksum, length, version, expires, content) <> ((DbDeviceRole.apply _).tupled, DbDeviceRole.unapply)
   }
 
-  protected [db] val signedRoles = TableQuery[SignedRolesTable]
+  protected [db] val deviceRoles = TableQuery[DeviceRolesTable]
 
   class AssignmentsTable(tag: Tag) extends Table[Assignment](tag, "assignments") {
     def namespace = column[Namespace]("namespace")

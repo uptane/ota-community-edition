@@ -4,17 +4,11 @@ import akka.http.scaladsl.util.FastFuture
 import cats.data.NonEmptyList
 import com.advancedtelematic.campaigner.client.{ExternalUpdate, ResolverClient, UserProfileClient}
 import com.advancedtelematic.campaigner.data.DataType._
-import com.advancedtelematic.campaigner.db.{
-  CampaignMetadataSupport,
-  CampaignSupport,
-  DeviceUpdateSupport,
-  UpdateSupport
-}
+import com.advancedtelematic.campaigner.db.Repositories
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
-import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
-import slick.jdbc.MySQLProfile.api._
+import io.circe.{Decoder, Encoder}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -39,12 +33,9 @@ private[http] object DeviceCampaign {
   implicit val DecoderInstance: Decoder[DeviceCampaign] = deriveDecoder
 }
 
-class DeviceCampaigns(userProfileClient: UserProfileClient, resolverClient: ResolverClient)(implicit val db: Database,
-                                                                                            val ec: ExecutionContext)
-    extends DeviceUpdateSupport
-    with UpdateSupport
-    with CampaignSupport
-    with CampaignMetadataSupport {
+class DeviceCampaigns(userProfileClient: UserProfileClient,
+                      resolverClient: ResolverClient,
+                      repositories: Repositories)(implicit val ec: ExecutionContext) {
 
   private[this] def fetchSizesForUpdates(ns: Namespace,
                                          deviceId: DeviceId)(updates: List[Update]): Future[Map[UpdateId, Long]] = {
@@ -70,7 +61,7 @@ class DeviceCampaigns(userProfileClient: UserProfileClient, resolverClient: Reso
                                    campaigns: List[Campaign]): Future[Map[UpdateId, Long]] =
     NonEmptyList.fromList(campaigns) match {
       case Some(xs) =>
-        updateRepo.findByIds(ns, xs.map(_.updateId)).flatMap(fetchSizesForUpdates(ns, deviceId))
+        repositories.updateRepo.findByIds(ns, xs.map(_.updateId)).flatMap(fetchSizesForUpdates(ns, deviceId))
 
       case None =>
         FastFuture.successful(Map.empty)
@@ -78,7 +69,7 @@ class DeviceCampaigns(userProfileClient: UserProfileClient, resolverClient: Reso
 
   def findScheduledCampaigns(ns: Namespace, deviceId: DeviceId): Future[GetDeviceCampaigns] =
     for {
-      campaignsWithMeta <- deviceUpdateRepo.findDeviceCampaigns(deviceId, DeviceStatus.scheduled)
+      campaignsWithMeta <- repositories.deviceUpdateRepo.findDeviceCampaigns(deviceId, DeviceStatus.scheduled)
       updateSizes       <- getUpdateSizes(ns, deviceId, campaignsWithMeta.map(_._1).toList)
     } yield {
       val campaignToMetadata = campaignsWithMeta.groupBy(_._1).mapValues(_.flatMap(_._2))

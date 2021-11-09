@@ -6,11 +6,16 @@ import com.advancedtelematic.campaigner.data.DataType.MetadataType.MetadataType
 import com.advancedtelematic.campaigner.data.DataType.UpdateType.UpdateType
 import com.advancedtelematic.libats.codecs.CirceCodecs._
 import io.circe.{Decoder, Encoder, KeyEncoder}
+import CampaignId._
+import com.advancedtelematic.libats.messaging_datatype.MessageCodecs._
 
 object Codecs {
   import DataType.CampaignStatus.CampaignStatus
   import DataType.RetryStatus.RetryStatus
   import io.circe.generic.semiauto._
+
+  implicit val externalUpdateIdEncoder: Encoder[ExternalUpdateId] = Encoder.encodeString.contramap(_.value)
+  implicit val externalUpdateIdDecoder: Decoder[ExternalUpdateId] = Decoder.decodeString.map(ExternalUpdateId.apply)
 
   implicit val createCampaignMetadataEncoder: Encoder[CreateCampaignMetadata] = deriveEncoder
   implicit val createCampaignMetadataDecoder: Decoder[CreateCampaignMetadata] = deriveDecoder

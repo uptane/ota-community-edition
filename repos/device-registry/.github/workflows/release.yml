@@ -1,0 +1,26 @@
+name: Release
+on:
+  push:
+    branches: [master]
+    tags: ["*"]
+env:
+  SBT_OPTS: "-Dsbt.color=true -Dscala.color=true"
+
+jobs:
+  build-images:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: olafurpg/setup-scala@v11
+        with:
+          java-version: adopt@1.8
+      - uses: coursier/cache-action@v6
+      - run: sbt docker:publishLocal
+      - run: docker tag advancedtelematic/device-registry:$GITHUB_SHA uptane/device-registry:$GITHUB_SHA
+      - run: docker push uptane/device-registry:$GITHUB_SHA

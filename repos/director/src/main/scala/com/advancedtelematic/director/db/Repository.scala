@@ -2,11 +2,10 @@ package com.advancedtelematic.director.db
 
 import java.time.Instant
 import java.util.UUID
-
 import cats.Show
-import com.advancedtelematic.director.data.DbDataType.{Assignment, AutoUpdateDefinition, AutoUpdateDefinitionId, DbSignedRole, Device, Ecu, EcuTarget, EcuTargetId, HardwareUpdate, ProcessedAssignment}
+import com.advancedtelematic.director.data.DbDataType.{Assignment, AutoUpdateDefinition, AutoUpdateDefinitionId, DbAdminRole, DbDeviceRole, Device, Ecu, EcuTarget, EcuTargetId, HardwareUpdate, ProcessedAssignment}
 import com.advancedtelematic.director.db.DeviceRepository.DeviceCreateResult
-import com.advancedtelematic.libats.data.DataType.Namespace
+import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace}
 import com.advancedtelematic.libats.data.{EcuIdentifier, PaginationResult}
 import com.advancedtelematic.libats.http.Errors.{EntityAlreadyExists, MissingEntity, MissingEntityId}
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
@@ -19,9 +18,11 @@ import slick.jdbc.MySQLProfile.api._
 import akka.NotUsed
 import akka.http.scaladsl.util.FastFuture
 import akka.stream.scaladsl.Source
+import com.advancedtelematic.director.data.DataType.AdminRoleName
 import com.advancedtelematic.director.http.Errors
 import com.advancedtelematic.libats.messaging_datatype.Messages.{EcuAndHardwareId, EcuReplaced, EcuReplacement}
 import com.advancedtelematic.libats.slick.db.SlickAnyVal._
+import com.advancedtelematic.libats.slick.db.SlickUrnMapper._
 import com.advancedtelematic.libats.slick.db.SlickValidatedGeneric._
 import com.advancedtelematic.libtuf.data.ClientDataType.TufRole
 import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, RepoId, RoleType, TargetFilename, TargetName}
@@ -29,6 +30,7 @@ import com.advancedtelematic.libtuf_server.crypto.Sha256Digest
 import com.advancedtelematic.libtuf_server.data.TufSlickMappings._
 import io.circe.Json
 import com.advancedtelematic.libtuf.crypt.CanonicalJson._
+import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
 import slick.jdbc.GetResult
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -300,7 +302,7 @@ protected class AssignmentsRepository()(implicit val db: Database, val ec: Execu
     } else {
       // raw sql is workaround for https://github.com/slick/slick/pull/995
       implicit val getResult = GetResult { r =>
-        DeviceId(UUID.fromString(r.nextString)) -> EcuIdentifier(r.nextString()).valueOr(throw _)
+        DeviceId(UUID.fromString(r.nextString)) -> EcuIdentifier.from(r.nextString()).valueOr(throw _)
       }
 
       val elems = ids.map { case (d, e) => "('" + d.uuid.toString + "','" + e.value + "')" }.mkString("(", ",", ")")
@@ -316,10 +318,16 @@ protected class AssignmentsRepository()(implicit val db: Database, val ec: Execu
     Schema.assignments.filter(_.deviceId === deviceId).sortBy(_.createdAt.reverse).map(_.createdAt).result.headOption
   }
 
-  def markRegenerated(deviceRepository: DeviceRepository)(deviceId: DeviceId): Future[Unit] = db.run {
-    Schema.assignments.filter(_.deviceId === deviceId).map(_.inFlight).update(true).map(_ => ())
-      .andThen { deviceRepository.setMetadataOutdatedAction(Set(deviceId), outdated = false) }
-      .transactionally
+  def markRegenerated(deviceRepository: DeviceRepository)(deviceId: DeviceId): Future[Seq[Assignment]] = db.run {
+    val deviceAssignments = Schema.assignments.filter(_.deviceId === deviceId)
+
+    val io = for {
+      assignments <- deviceAssignments.forUpdate.result
+      _ <- deviceAssignments.map(_.inFlight).update(true)
+      _ <- deviceRepository.setMetadataOutdatedAction(Set(deviceId), outdated = false)
+    } yield assignments
+
+    io.transactionally
   }
 
   def processCancellation(ns: Namespace, deviceIds: Seq[DeviceId]): Future[Seq[Assignment]] = {
@@ -427,20 +435,80 @@ protected class EcuRepository()(implicit val db: Database, val ec: ExecutionCont
 
     DBIO.seq(activeIO, deleteIO)
   }
+
+  def currentTargets(ns: Namespace, devices: Set[DeviceId]): Future[Seq[(DeviceId, EcuIdentifier, EcuTarget)]] = {
+    val io = Schema.activeEcus
+      .filter(_.deviceId.inSet(devices)).filter(_.namespace === ns)
+      .join(Schema.ecuTargets).on { (l, r) => l.installedTarget === r.id }
+      .map { case (l, r) => (l.deviceId, l.ecuSerial, r) }
+      .result
+
+    db.run(io)
+  }
 }
 
-trait DbSignedRoleRepositorySupport extends DatabaseSupport {
-  lazy val dbSignedRoleRepository = new DbSignedRoleRepository()
+trait DbOfflineUpdatesRepositorySupportSupport extends DatabaseSupport {
+  lazy val dbAdminRolesRepository = new DbOfflineUpdatesRepository()
 }
 
-protected[db] class DbSignedRoleRepository()(implicit val db: Database, val ec: ExecutionContext) {
-  import Schema.signedRoles
+protected[db] class DbOfflineUpdatesRepository()(implicit val db: Database, val ec: ExecutionContext) {
 
-  def persist(signedRole: DbSignedRole, forceVersion: Boolean = false): Future[DbSignedRole] =
+
+  import Schema.adminRoles
+  import SlickMapping.adminRoleNameMapper
+
+  private val AlreadyExists = EntityAlreadyExists[(Namespace, DbAdminRole)]()
+
+  def findLatestOpt(repoId: RepoId, role: RoleType, name: AdminRoleName): Future[Option[DbAdminRole]] = db.run {
+    adminRoles
+      .filter(_.repoId === repoId)
+      .filter(_.name === name)
+      .filter(_.role === role )
+      .sortBy(_.version.reverse)
+      .take(1)
+      .result
+      .headOption
+  }
+
+  def findAll(repoId: RepoId, role: RoleType): Future[Seq[DbAdminRole]] = db.run {
+    adminRoles
+      .filter(_.repoId === repoId)
+      .filter(_.role === role)
+      .result
+  }
+
+  def findByVersion(repoId: RepoId, role: RoleType, name: AdminRoleName, version: Int): Future[DbAdminRole] = db.run {
+    adminRoles
+      .filter(_.repoId === repoId)
+      .filter(_.role === role)
+      .filter(_.version === version)
+      .result
+      .failIfNotSingle(Errors.MissingAdminRole(repoId, name))
+  }
+
+  def findLatest(repoId: RepoId, role: RoleType, name: AdminRoleName): Future[DbAdminRole] =
+    findLatestOpt(repoId, role, name).flatMap {
+      case Some(r) => FastFuture.successful(r)
+      case None => FastFuture.failed(Errors.MissingAdminRole(repoId, name))
+    }
+
+  def persistAll(values: DbAdminRole*): Future[Unit] = db.run {
+    (adminRoles ++= values).handleIntegrityErrors(AlreadyExists).transactionally.map(_ => ())
+  }
+}
+
+trait DbDeviceRoleRepositorySupport extends DatabaseSupport {
+  lazy val dbDeviceRoleRepository = new DbDeviceRoleRepository()
+}
+
+protected[db] class DbDeviceRoleRepository()(implicit val db: Database, val ec: ExecutionContext) {
+  import Schema.deviceRoles
+
+  def persist(signedRole: DbDeviceRole, forceVersion: Boolean = false): Future[DbDeviceRole] =
     db.run(persistAction(signedRole, forceVersion).transactionally)
 
-  protected [db] def persistAction(signedRole: DbSignedRole, forceVersion: Boolean): DBIO[DbSignedRole] = {
-    signedRoles
+  protected [db] def persistAction(signedRole: DbDeviceRole, forceVersion: Boolean): DBIO[DbDeviceRole] = {
+    deviceRoles
       .filter(_.device === signedRole.device)
       .filter(_.role === signedRole.role)
       .sortBy(_.version.reverse)
@@ -452,30 +520,28 @@ protected[db] class DbSignedRoleRepository()(implicit val db: Database, val ec: 
         else
           DBIO.successful(())
       }
-      .flatMap(_ => signedRoles += signedRole)
+      .flatMap(_ => deviceRoles += signedRole)
       .map(_ => signedRole)
   }
 
-  def persistAll(signedRoles: List[DbSignedRole]): Future[Seq[DbSignedRole]] = db.run {
+  def persistAll(signedRoles: List[DbDeviceRole]): Future[Seq[DbDeviceRole]] = db.run {
     DBIO.sequence(signedRoles.map(sr => persistAction(sr, forceVersion = false))).transactionally
   }
 
-  def findLatest[T](deviceId: DeviceId)(implicit ev: TufRole[T]): Future[DbSignedRole] =
+  def findLatest[T](deviceId: DeviceId)(implicit ev: TufRole[T]): Future[DbDeviceRole] =
     db.run {
-      signedRoles
+      deviceRoles
         .filter(_.device === deviceId)
         .filter(_.role === ev.roleType)
         .sortBy(_.version.reverse)
-        .result
-        .headOption
-        .failIfNone(Errors.SignedRoleNotFound[T](deviceId))
+        .resultHead(Errors.SignedRoleNotFound[T](deviceId))
     }
 
   def findLastCreated[T](deviceId: DeviceId)(implicit ev: TufRole[T]): Future[Option[Instant]] = db.run {
-    signedRoles.filter(_.device === deviceId).filter(_.role === ev.roleType).sortBy(_.createdAt.reverse).map(_.createdAt).result.headOption
+    deviceRoles.filter(_.device === deviceId).filter(_.role === ev.roleType).sortBy(_.createdAt.reverse).map(_.createdAt).result.headOption
   }
 
-  private def ensureVersionBumpIsValid(signedRole: DbSignedRole)(oldSignedRole: Option[DbSignedRole]): DBIO[Unit] =
+  private def ensureVersionBumpIsValid(signedRole: DbDeviceRole)(oldSignedRole: Option[DbDeviceRole]): DBIO[Unit] =
     oldSignedRole match {
       case Some(sr) if signedRole.role != RoleType.ROOT && sr.version != signedRole.version - 1 =>
         DBIO.failed(Errors.InvalidVersionBumpError(sr.version, signedRole.version, signedRole.role))

@@ -3,7 +3,6 @@ package com.advancedtelematic.campaigner.http
 import akka.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.campaigner.data.DataType.CreateCampaign
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{CampaignSupport, Campaigns}
 import com.advancedtelematic.campaigner.util.{CampaignerSpec, ResourceSpec, UpdateResourceSpecUtil}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
@@ -12,10 +11,7 @@ import org.scalacheck.Arbitrary._
 class DeviceResourceSpec
   extends CampaignerSpec
   with ResourceSpec
-    with CampaignSupport
-    with UpdateResourceSpecUtil {
-
-  val campaigns = Campaigns()
+  with UpdateResourceSpecUtil {
 
   it should "returns scheduled campaigns for device" in {
     val (campaignId,request) = createCampaignWithUpdateOk(arbitrary[CreateCampaign].retryUntil(_.metadata.nonEmpty))

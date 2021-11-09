@@ -57,7 +57,7 @@ class TufTargetAddedListener()(implicit val db: Database, val ec: ExecutionConte
       _log.info(s"Creating auto update assignment for ${assignment.deviceId} (target = ${ecuTarget.filename})")
     }
 
-    assignmentsRepository.persistManyForEcuTarget(ecuTargetsRepository, deviceRepository)(ecuTarget, newAssignments)
+    await(assignmentsRepository.persistManyForEcuTarget(ecuTargetsRepository, deviceRepository)(ecuTarget, newAssignments))
   }
 
   override def apply(msg: TufTargetAdded): Future[_] = async {

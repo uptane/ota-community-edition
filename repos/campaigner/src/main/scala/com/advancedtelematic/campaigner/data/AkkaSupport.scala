@@ -1,6 +1,7 @@
 package com.advancedtelematic.campaigner.data
 
-import akka.http.scaladsl.unmarshalling.Unmarshaller
+import akka.http.scaladsl.unmarshalling.{PredefinedFromStringUnmarshallers, Unmarshaller}
+import akka.http.scaladsl.util.FastFuture
 import com.advancedtelematic.campaigner.data.DataType.CampaignStatus.CampaignStatus
 import com.advancedtelematic.campaigner.data.DataType.{CampaignStatus, GroupId, SortBy}
 import com.advancedtelematic.campaigner.data.DataType.SortBy.SortBy
@@ -17,4 +18,11 @@ object AkkaSupport {
       case s           => throw new IllegalArgumentException(s"Invalid value for sorting parameter: '$s'.")
     }
   }
+
+  val nonNegativeLongUnmarshaller: Unmarshaller[String, Long] =
+    PredefinedFromStringUnmarshallers.longFromStringUnmarshaller
+      .flatMap { ec => mat => value =>
+        if (value < 0) FastFuture.failed(new IllegalArgumentException("Value cannot be negative"))
+        else FastFuture.successful(value)
+      }
 }

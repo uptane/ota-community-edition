@@ -2,6 +2,7 @@ package com.advancedtelematic.treehub.object_store
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectIdOps, ObjectStatus, TObject}
@@ -51,6 +52,20 @@ class S3BlobStoreIntegrationSpec extends TreeHubSpec {
 
     f.futureValue.size shouldBe obj.blob.size
     s3BlobStore.exists(ns, obj.objectId).futureValue shouldBe true
+  }
+
+  test("can delete object") {
+    val obj = new ClientTObject()
+
+    val f = async {
+      await(s3BlobStore.storeStream(ns, obj.objectId, obj.blob.size, obj.byteSource))
+    }
+
+    s3BlobStore.exists(ns, obj.objectId).futureValue shouldBe true
+
+    s3BlobStore.deleteObject(ns, obj.objectId).futureValue
+
+    s3BlobStore.exists(ns, obj.objectId).futureValue shouldBe false
   }
 
   test("build response builds a redirect") {

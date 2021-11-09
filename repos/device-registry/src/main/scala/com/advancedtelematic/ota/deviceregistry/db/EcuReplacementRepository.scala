@@ -40,8 +40,10 @@ object EcuReplacementRepository {
       record match {
         case (did, Some(fe), Some(fh), Some(ce), Some(ch), at, s) if s =>
           EcuReplaced(did, EcuAndHardwareId(fe, fh.value), EcuAndHardwareId(ce, ch.value), at)
-        case (did, None, None, None, None, at, s) if !s =>
+        case (did, _, _, _, _, at, s) if !s =>
           EcuReplacementFailed(did, at)
+        case _ =>
+          throw Errors.CannotSerializeEcuReplacement
       }
 
     private def classToTuple(ecuReplacement: EcuReplacement): Option[Record] =

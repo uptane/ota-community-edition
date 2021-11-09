@@ -1,7 +1,6 @@
 package com.advancedtelematic.campaigner.http
 
 import java.util.UUID
-
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.Uri.Query
@@ -13,7 +12,7 @@ import com.advancedtelematic.campaigner.data.DataType.GroupId._
 import com.advancedtelematic.campaigner.data.DataType.SortBy.SortBy
 import com.advancedtelematic.campaigner.data.DataType._
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.UpdateSupport
+import com.advancedtelematic.campaigner.db.Campaigns
 import com.advancedtelematic.campaigner.util.{CampaignerSpec, ResourceSpec, SlowFakeDeviceRegistry}
 import com.advancedtelematic.libats.data.{ErrorRepresentation, PaginationResult}
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateId
@@ -21,7 +20,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Gen
 
-class UpdateResourceSpec extends CampaignerSpec with ResourceSpec with UpdateSupport {
+class UpdateResourceSpec extends CampaignerSpec with ResourceSpec {
 
   import scala.concurrent.duration._
   implicit def default(): RouteTestTimeout = RouteTestTimeout(15.seconds)
@@ -37,9 +36,18 @@ class UpdateResourceSpec extends CampaignerSpec with ResourceSpec with UpdateSup
       responseAs[UpdateId]
     }
 
-  private def getUpdates(groups: Seq[GroupId] = Seq(), nameContains: Option[String] = None): HttpRequest = {
-    val m = nameContains.map(x => Seq("nameContains" -> x)).getOrElse(Seq.empty) ++ groups.map("groupId" -> _.show) :+ ("limit" -> "200")
-    Get(apiUri("updates").withQuery(Query(m:_*))).withHeaders(header)
+  private def getUpdates(groups: Seq[GroupId] = Seq(),
+                         nameContains: Option[String] = None,
+                         limit: Option[Long] = Some(200),
+                         offset: Option[Long] = None): HttpRequest = {
+
+    val queryParams = Seq(
+      "nameContains" -> nameContains,
+      "limit" -> limit,
+      "offset" -> offset
+    ).collect { case (k, Some(v)) => (k, v.toString) } ++ groups.map("groupId" -> _.show)
+
+    Get(apiUri("updates").withQuery(Query(queryParams: _*))).withHeaders(header)
   }
 
   private def getUpdateOk(updateId: UpdateId): Update =
@@ -252,6 +260,22 @@ class UpdateResourceSpec extends CampaignerSpec with ResourceSpec with UpdateSup
     }
   }
 
+  "GET /updates with negative pagination limit" should "fail with BadRequest" in {
+    val groupId = GroupId.generate()
+    getUpdates(Seq(groupId), limit = Some(-1)) ~> routes ~> check {
+      status shouldBe BadRequest
+      responseAs[ErrorRepresentation].description should include("The query parameter 'limit' was malformed")
+    }
+  }
+
+  "GET /updates with negative pagination offset" should "fail with BadRequest" in {
+    val groupId = GroupId.generate()
+    getUpdates(Seq(groupId), offset = Some(-1)) ~> routes ~> check {
+      status shouldBe BadRequest
+      responseAs[ErrorRepresentation].description should include("The query parameter 'offset' was malformed")
+    }
+  }
+
   "GET to /updates/:updateId" should "return 404 Not Found if update does not exists" in {
     val updateId = genUpdateId.generate
     getUpdateResult(updateId) ~> check {
@@ -295,7 +319,7 @@ class UpdateResourceSpec extends CampaignerSpec with ResourceSpec with UpdateSup
     slowRegistry.setGroup(groupId, devices)
     fakeUserProfile.setNamespaceSetting(testNs, testResolverUri)
     fakeResolver.setUpdates(testResolverUri, Seq(devices.last), Seq(request.updateSource.id))
-    val _routes = new Routes(slowRegistry, fakeResolver, fakeUserProfile).routes
+    val _routes = new Routes(slowRegistry, fakeResolver, fakeUserProfile, Campaigns()).routes
 
     getUpdates(Seq(groupId)) ~> _routes ~> check {
       status shouldBe GatewayTimeout

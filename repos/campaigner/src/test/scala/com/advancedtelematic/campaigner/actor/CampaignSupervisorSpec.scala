@@ -3,18 +3,18 @@ package com.advancedtelematic.campaigner.actor
 import akka.actor.PoisonPill
 import akka.testkit.TestProbe
 import com.advancedtelematic.campaigner.data.Generators._
-import com.advancedtelematic.campaigner.db.{Campaigns, UpdateSupport}
+import com.advancedtelematic.campaigner.db.{Campaigns, Repositories}
 import com.advancedtelematic.campaigner.util.{ActorSpec, CampaignerSpec}
 import org.scalacheck.Gen
 
 import scala.concurrent.duration._
 
-class CampaignSupervisorSpec extends ActorSpec[CampaignSupervisor] with CampaignerSpec with UpdateSupport {
+class CampaignSupervisorSpec extends ActorSpec[CampaignSupervisor] with CampaignerSpec {
 
   import CampaignScheduler._
   import CampaignSupervisor._
 
-  val campaigns = Campaigns()
+  val campaigns = new Campaigns(Repositories())
 
   "campaign supervisor" should "pick up unfinished and fresh campaigns" in {
     val partiallyScheduledCampaign = buildCampaignWithUpdate
@@ -46,6 +46,7 @@ class CampaignSupervisorSpec extends ActorSpec[CampaignSupervisor] with Campaign
 
     parent.childActorOf(CampaignSupervisor.props(
       director,
+      campaigns,
       schedulerPollingTimeout,
       schedulerDelay,
       schedulerBatchSize
@@ -62,10 +63,10 @@ class CampaignSupervisorSpec extends ActorSpec[CampaignSupervisor] with Campaign
   }
 }
 
-class CampaignSupervisorSpec2 extends ActorSpec[CampaignSupervisor] with CampaignerSpec with UpdateSupport {
+class CampaignSupervisorSpec2 extends ActorSpec[CampaignSupervisor] with CampaignerSpec {
   import CampaignSupervisor._
 
-  val campaigns = Campaigns()
+  val campaigns = new Campaigns(Repositories())
 
   "campaign supervisor" should "clean out campaigns that are marked to be cancelled" in {
     val campaign = buildCampaignWithUpdate
@@ -77,6 +78,7 @@ class CampaignSupervisorSpec2 extends ActorSpec[CampaignSupervisor] with Campaig
 
     val child = parent.childActorOf(CampaignSupervisor.props(
       director,
+      campaigns,
       schedulerPollingTimeout,
       10.seconds,
       schedulerBatchSize
@@ -104,6 +106,7 @@ class CampaignSupervisorSpec2 extends ActorSpec[CampaignSupervisor] with Campaig
 
     val child = parent.childActorOf(CampaignSupervisor.props(
       director,
+      campaigns,
       schedulerPollingTimeout,
       1.seconds,
       schedulerBatchSize

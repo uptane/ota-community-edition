@@ -21,9 +21,6 @@ trait Settings {
 
   val localStorePath = Paths.get(_config.getString("storage.local.path"))
 
-  val deviceRegistryUri = Uri(_config.getString("http.client.device_registry.baseUri"))
-  val deviceRegistryMyApi = Uri(_config.getString("http.client.device_registry.mydeviceUri"))
-
   lazy val s3Credentials = {
     val accessKey = _config.getString("storage.s3.accessKey")
     val secretKey = _config.getString("storage.s3.secretKey")

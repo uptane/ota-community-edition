@@ -75,7 +75,7 @@ class SignedRoleMigration(old_director_schema: String = "director")
 
   private def writeSignedRole(rows: Seq[(Row, Checksum, Long)]): Future[Done] = {
     val sql = DBIO.sequence(rows.map { case (row, checksum, length) =>
-      sqlu"""insert into signed_roles value (${row.role},${row.version},${row.deviceId},$checksum,$length,${row.content},${row.createdAt},${row.updatedAt},${row.expiresAt})
+      sqlu"""insert into device_roles value (${row.role},${row.version},${row.deviceId},$checksum,$length,${row.content},${row.createdAt},${row.updatedAt},${row.expiresAt})
         on duplicate key update checksum=$checksum,length=$length,content=${row.content},created_at=${row.createdAt},updated_at=${row.updatedAt},expires_at=${row.expiresAt}
         """
     })

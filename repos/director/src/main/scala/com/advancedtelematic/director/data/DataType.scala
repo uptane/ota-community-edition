@@ -1,11 +1,12 @@
 package com.advancedtelematic.director.data
 
 import java.security.PublicKey
-import java.time.Instant
+import java.time.{Duration, Instant}
 import java.util.UUID
-
 import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.server.PathMatcher
 import cats.implicits._
+import com.advancedtelematic.director.data.DataType.AdminRoleName
 import com.advancedtelematic.director.data.DbDataType.Ecu
 import com.advancedtelematic.director.data.UptaneDataType.{Hashes, TargetImage}
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, HashMethod, Namespace, ValidChecksum}
@@ -15,15 +16,18 @@ import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Updat
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.advancedtelematic.libats.messaging_datatype.Messages.EcuAndHardwareId
 import com.advancedtelematic.libtuf.crypt.CanonicalJson._
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientHashes, TufRole}
+import com.advancedtelematic.libtuf.data.ClientDataType.{ClientHashes, MetaPath, TufRole, ValidMetaPath}
 import com.advancedtelematic.libtuf.data.TufCodecs._
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
-import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, KeyType, SignedPayload, TargetFilename, TargetName, TufKey}
+import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, KeyType, RepoId, SignedPayload, TargetFilename, TargetName, TufKey}
+import com.advancedtelematic.libtuf.data.ValidatedString.{ValidatedString, ValidatedStringValidation}
 import com.advancedtelematic.libtuf_server.crypto.Sha256Digest
 import com.advancedtelematic.libtuf_server.repo.server.DataType.SignedRole
 import eu.timepit.refined.api.Refined
 import io.circe.Json
 import io.circe.syntax._
+import com.advancedtelematic.libats.data.RefinedUtils._
+
 
 object DbDataType {
   case class AutoUpdateDefinitionId(uuid: UUID) extends UUIDKey
@@ -47,9 +51,18 @@ object DbDataType {
     def asEcuAndHardwareId: EcuAndHardwareId = EcuAndHardwareId(ecuSerial, hardwareId.value)
   }
 
-  final case class DbSignedRole(role: RoleType, device: DeviceId, checksum: Option[Checksum], length: Option[Long], version: Int, expires: Instant, content: JsonSignedPayload)
+  final case class DbAdminRole(repoId: RepoId, role: RoleType, name: AdminRoleName, checksum: Checksum, length: Long, version: Int, expires: Instant, content: JsonSignedPayload) {
+    def isExpired(expireAhead: Duration) = expires.isBefore(Instant.now.plus(expireAhead))
+  }
 
-  implicit class DbDSignedRoleToSignedPayload(value: DbSignedRole) {
+  implicit class DbAdminRoleToSignedPayload(value: DbAdminRole) {
+    def toSignedRole[T : TufRole]: SignedRole[T] =
+      SignedRole[T](value.content, value.checksum, value.length, value.version, value.expires)
+  }
+
+  final case class DbDeviceRole(role: RoleType, device: DeviceId, checksum: Option[Checksum], length: Option[Long], version: Int, expires: Instant, content: JsonSignedPayload)
+
+  implicit class DbDSignedRoleToSignedPayload(value: DbDeviceRole) {
     def toSignedRole[T : TufRole]: SignedRole[T] = {
       val (checksum, length) = value.checksum.product(value.length).getOrElse {
         val canonicalJson = value.content.asJson.canonical
@@ -62,9 +75,12 @@ object DbDataType {
     }
   }
 
-  implicit class SignedPayloadToDbSignedRole[_](value: SignedRole[_]) {
-    def toDbSignedRole(deviceId: DeviceId): DbSignedRole =
-      DbDataType.DbSignedRole(value.tufRole.roleType, deviceId, value.checksum.some, value.length.some, value.version, value.expiresAt, value.content)
+  implicit class SignedPayloadToDbRole[_](value: SignedRole[_]) {
+    def toDbDeviceRole(deviceId: DeviceId): DbDeviceRole =
+      DbDeviceRole(value.tufRole.roleType, deviceId, value.checksum.some, value.length.some, value.version, value.expiresAt, value.content)
+
+    def toDbAdminRole(repoId: RepoId, name: AdminRoleName): DbAdminRole =
+      DbAdminRole(repoId, value.tufRole.roleType, name, value.checksum, value.length, value.version, value.expiresAt, value.content)
   }
 
   final case class HardwareUpdate(namespace: Namespace,
@@ -170,6 +186,24 @@ object DataType {
   final case class DeviceUpdateTarget(device: DeviceId, correlationId: Option[CorrelationId], updateId: Option[UpdateId], targetVersion: Int, inFlight: Boolean)
 
   final case class DeviceTargetsCustom(correlationId: Option[CorrelationId])
+
+  final case class AdminRoleName private(value: String) extends ValidatedString {
+    def asMetaPath: MetaPath =  (value + ".json").refineTry[ValidMetaPath].get // get safe due to Validation
+  }
+
+  object AdminRoleName {
+    val AdminRoleNamePathMatcher = PathMatcher("[A-Za-z0-9_-]+".r).flatMap { name =>
+      adminRoleNameValidation.apply(name).toOption
+    }
+
+    implicit val adminRoleNameValidation = ValidatedStringValidation(new AdminRoleName(_)) { v: String =>
+      cats.data.Validated.condNel(
+        v.nonEmpty && v.length < 254 && v.matches("[A-Za-z0-9_-]+"),
+        new AdminRoleName(v),
+        "An admin role name cannot be empty or bigger than 254 chars and can only contain alphanumeric characters and `_-`"
+      )
+    }
+  }
 }
 
 object ClientDataType {
@@ -182,4 +216,12 @@ object ClientDataType {
   implicit class DevicePaginationOps(value: PaginationResult[(Instant, DbDataType.Device)]) {
     def toClient: PaginationResult[Device] = value.map { case (createdAt, device) => device.toClient(createdAt) }
   }
+
+  case class EcuTarget(ecuId: EcuIdentifier, checksum: Checksum, filename: TargetFilename)
+
+  implicit class EcuTargetOps(value: DbDataType.EcuTarget) {
+    def toClient(ecuId: EcuIdentifier): EcuTarget = EcuTarget(ecuId, value.checksum, value.filename)
+  }
+
+  case class DevicesCurrentTarget(values: Map[DeviceId, Seq[EcuTarget]])
 }

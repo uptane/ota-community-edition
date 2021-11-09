@@ -11,12 +11,11 @@ import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class CampaignStatusRecalculate()(implicit db: Database, ec: ExecutionContext, mat: Materializer) extends
-  CampaignSupport {
+class CampaignStatusRecalculate(repositories: Repositories)(implicit db: Database, ec: ExecutionContext, mat: Materializer) {
 
   private val _log = LoggerFactory.getLogger(this.getClass)
 
-  val statusTransition = new CampaignStatusTransition()
+  val statusTransition = new CampaignStatusTransition(repositories)
 
   implicit val getRowResult: GetResult[CampaignId] = slick.jdbc.GetResult { r =>
     SlickUUIDKey.dbMapping[CampaignId].getValue(r.rs, 1)
@@ -33,7 +32,7 @@ class CampaignStatusRecalculate()(implicit db: Database, ec: ExecutionContext, m
           case true => CampaignStatus.finished
           case false => CampaignStatus.launched
         }.flatMap { newStatus =>
-          campaignRepo.setStatusAction(campaignId, newStatus).map(_ => newStatus)
+          repositories.campaignRepo.setStatusAction(campaignId, newStatus).map(_ => newStatus)
         }
       }.map { status =>
         _log.info(s"updated $campaignId to status $status")
