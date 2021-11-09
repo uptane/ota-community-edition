@@ -1,17 +1,13 @@
 name := "ota-lith"
-organization := "com.advancedtelematic"
+organization := "io.github.uptane"
 scalaVersion := "2.12.12"
-
-resolvers += "ATS Releases" at "https://nexus.ota.here.com/content/repositories/releases"
-
-resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots"
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
 libraryDependencies ++= {
-  val bouncyCastleV = "1.59"
-  val akkaV = "2.6.5"
-  val akkaHttpV = "10.1.12"
+  val bouncyCastleV = "1.69"
+  val akkaV = "2.6.17"
+  val akkaHttpV = "10.2.6"
 
   Seq(
     "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
@@ -23,14 +19,12 @@ libraryDependencies ++= {
   )
 }
 
-// TODO: Add to libraryDependencies when done
-lazy val treehub = (ProjectRef(file("./repos/treehub"), "root"))
+lazy val treehub = (ProjectRef(file("./repos/treehub"), "treehub"))
 lazy val device_registry = (ProjectRef(file("./repos/device-registry"), "ota-device-registry"))
 lazy val campaigner = (ProjectRef(file("./repos/campaigner"), "campaigner"))
 lazy val director = (ProjectRef(file("./repos/director"), "director"))
-lazy val keyserver = (ProjectRef(file("./repos/tuf"), "keyserver"))
-lazy val reposerver = (ProjectRef(file("./repos/tuf"), "reposerver"))
-// lazy val libats_slick = (ProjectRef(file("/home/simao/ats/libats"), "libats_slick"))
+lazy val keyserver = (ProjectRef(file("./repos/ota-tuf"), "keyserver"))
+lazy val reposerver = (ProjectRef(file("./repos/ota-tuf"), "reposerver"))
 
 dependsOn(treehub, device_registry, campaigner, director, keyserver, reposerver)
 
@@ -49,7 +43,7 @@ import com.typesafe.sbt.SbtGit.git
 import com.typesafe.sbt.SbtNativePackager.autoImport._
 import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
 
-dockerRepository in Docker := Some("advancedtelematic")
+dockerRepository in Docker := Some("uptane")
 
 packageName in Docker := packageName.value
 

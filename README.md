@@ -16,20 +16,43 @@ Currently there are three active branches in this repository:
 
 - `webapp`. The webapp is broken in `ota-community-edition` and therefore is not included in `ota-lith/master`. The `webapp` branch includes patched version of `webapp` that does not rely on user profile and is therefore working with both `ota-community-edition` and `ota-lith`.
 
-## Pending changes and dependencies
+## Dependency management
   
-This project depends on changes to other `ota-community-edition` repositories. The changes were incorporated into this repository using `git subtree`, and they will need to be updated using the same method once those changes are merged upstream. 
+This project follows the upstream [UPTANE OTA](https://uptane.github.io/) (see [sources](https://github.com/uptane/)) projects.
 
-The following forks/branches are included using git subtree:
+The following forks/branches are included:
 
-- campaigner https://github.com/simao/campaigner/tree/ota-lith
-- device-registry https://github.com/simao/ota-device-registry/tree/ota-lith
-- director https://github.com/simao/director/tree/ota-lith
-- libats https://github.com/simao/libats/tree/ota-lith
-- treehub https://github.com/simao/treehub/tree/ota-lith
-- treehub https://github.com/simao/treehub/tree/ota-lith
-- tuf https://github.com/simao/ota-tuf/tree/ota-lith
+- tuf https://github.com/uptane/ota-tuf
+- director https://github.com/uptane/director
+- device-registry https://github.com/uptane/ota-device-registry
+- campaigner https://github.com/simao/campaigner
+- treehub https://github.com/uptane/treehub
+- libats https://github.com/uptane/libats
 
+The dependencies are managed using
+[git-subtree](https://man.archlinux.org/man/git-subtree.1) under the
+`repos` directory on this repository.
+
+To update to the latest changes from upstream ota-tuf, you could use for example:
+
+    git subtree pull --prefix repos/ota-tuf git@github.com:uptane/ota-tuf.git master --squash
+
+If you wish to make changes to ota-tuf, you could edit directly
+`repos/ota-tuf` and then commit the changes, then use `git-subtree` to
+split the changes and open a pull request upstream. However, a simpler
+way would be to just use `git diff` to generate a patch and apply that
+patch to the repository separately:
+
+    cd repos/ota-tuf
+    git diff . > tuf.patch
+    cd /home/user/my-ota-tuf
+    patch -p3 < tuf.patch
+    
+    # normal git flow to create a PR for ota-tuf
+    
+And then once those changes are merged upstream you could use `git
+subtree pull` to incorporate those changes.
+    
 ## Building
 
 To build a container running the services, run `sbt docker:publishLocal`

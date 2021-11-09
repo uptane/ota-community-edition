@@ -22,13 +22,13 @@ Save id to use in campaign below
 
 # Add device to group
 
-`POST http://deviceregistry.ota.ce/api/v1/device_groups/:group-id/:device-id`
+`POST http://deviceregistry.ota.ce/api/v1/device_groups/:group-id/devices/:device-id`
 
 # Create software version
 
 Use hardwareid from device, some random jpeg will work or any binary file.
 
-    curl -X PUT 'http://reposerver.ota.ce/api/v1/user_repo/targets/mypkg_0.0.2?name=mypkg&version=0.0.2&hardwareIds=ota-ce-device -F file=@path/to/binary.bin`
+    curl -X PUT 'http://reposerver.ota.ce/api/v1/user_repo/targets/mypkg_0.0.2?name=mypkg&version=0.0.2&hardwareIds=ota-ce-device' -F file=@path/to/binary.bin`
 
 Use name/version below.
 
