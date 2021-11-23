@@ -77,6 +77,11 @@ The scala apps run in a single container, but you'll need kafka and mariadb. Wri
 
     sbt docker:publishLocal
     docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf advancedtelematic/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
+    
+If you don't have `sbt` or prefer to use a pre built image, you can use:
+
+    export img=uptane/ota-lith:$(git rev-parse master)
+    docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf $img -Dconfig.file=/tmp/ota-lith.conf
 
 ## Running With Docker Compose
 
@@ -86,11 +91,17 @@ If you don't have kafka or mariadb running and just want to try ota-ce, run usin
 
 2. Update /etc/hosts
 
-3. build docker image
+3. build docker image or pull from docker
 
 `sbt docker:publishLocal`
 
-4. Run docker-compose 
+Or:
+
+    export img=uptane/ota-lith:$(git rev-parse master)
+    docker pull $img
+    docker tag $img uptane/ota-lith:latest
+
+4. Run docker-compose
  
 `docker-compose -f ota-ce.yaml up`
 
