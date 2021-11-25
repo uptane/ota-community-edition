@@ -91,6 +91,7 @@ If you don't have kafka or mariadb running and just want to try ota-ce, run usin
 
 2. Update /etc/hosts with the following host names:
 
+```
 0.0.0.0         reposerver.ota.ce
 0.0.0.0         keyserver.ota.ce
 0.0.0.0         director.ota.ce
@@ -99,6 +100,7 @@ If you don't have kafka or mariadb running and just want to try ota-ce, run usin
 0.0.0.0         campaigner.ota.ce
 0.0.0.0         app.ota.ce
 0.0.0.0         ota.ce
+```
 
 3. build docker image or pull from docker
 
