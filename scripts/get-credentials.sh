@@ -13,13 +13,13 @@ curl --silent --fail ${director}/health || echo "$director not running"
 curl --silent --fail ${keyserver}/health || echo "$keyserver not running"
 curl --silent --fail ${reposerver}/health || echo "$reposerver not running"
 
-curl -X POST "${reposerver}/api/v1/user_repo" "-H ${namespace}"
+curl -X POST "${reposerver}/api/v1/user_repo" -H "${namespace}"
 
 # sleep 5s
 
-id=$(curl --fail --silent -vv "${reposerver}/api/v1/user_repo/root.json" "-H ${namespace}" 2>&1 | grep -i x-ats-tuf-repo-id | awk '{print $3}' | tr -d '\r')
+id=$(curl --fail --silent -vv "${reposerver}/api/v1/user_repo/root.json" -H "${namespace}" 2>&1 | grep -i x-ats-tuf-repo-id | awk '{print $3}' | tr -d '\r')
 
-curl --silent -X POST "${director}/api/v1/admin/repo" "-H ${namespace}"
+curl --silent -X POST "${director}/api/v1/admin/repo" -H "${namespace}"
 
 curl --silent "${keyserver}/api/v1/root/${id}"
 
