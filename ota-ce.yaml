@@ -41,7 +41,7 @@ services:
       - ./ota-ce-gen/devices/ca.crt:/etc/ssl/gateway/ca.crt:ro
 
   webapp:
-    image: simaom/ota-plus-web:06053862900a6be6e9b54fe4529e4d1070c98711
+    image: simaom/ota-plus-web:fbeb80223434b91e05ee18b5dfed38af616adce9
     restart: always
     labels:
       - traefik.enable=true
