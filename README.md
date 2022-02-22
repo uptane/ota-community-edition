@@ -138,6 +138,59 @@ To deploy an update using the API and a custom campaign, see [api-updates.md](do
 
 To deploy an update using [ota-cli](https://github.com/simao/ota-cli/) with or without a custom campaign see [updates-ota-cli.md](docs/updates-ota-cli.md).
 
+## FAQ
+
+### Who maintains ota-lith
+
+ota-lith is a collection of scripts and configurations that aggregates
+upstream projects and makes it easier to run a complete OTA
+solution. These scripts and configurations are maintained by
+[simao](https://github.com/simao).
+
+The actual OTA implementation is implemented and maintained by
+multiple uptane contributors under the [uptane
+organization](https://github.com/uptane/).
+
+There are currently multiple contributors to the upstream UPTANE
+repositories, most notably [toradex](https://toradex.com) which runs
+the same uptane implementation as part of the [torizon
+platform](https://app.torizon.io)
+
+### How does it keep up with changes on the Uptane Standard?
+
+All the [UPTANE repositories](https://github.com/uptane) are updated
+frequently and docker images are built and pushed to
+`hub.docker.io`. Periodically, these images are incorporated into
+ota-lith. This is usually just a case of updating the docker tags used
+and creating the containers again.
+
+However, `webapp` and `campaigner` projects are not part of the UPTANE
+repositories and they are independently maintained by HERE Technologies
+GmbH. These changes might or might not be merged back into `ota-lith`,
+depending on the complexity of merging the changes.
+
+### What is the relationship with Advanced Telematic OTA Community Edition?
+
+The OTA Community Edition (OTA CE) was initially created and developed
+by Advanced Telematic Systems GmbH. Advanced Telematic Systems GmbH (ATS)
+was acquired by HERE Technologies GmbH and developed OTA CE
+further. All changes to the already open source components continued
+to be published in the [ats github
+repository](https://github.com/advancedtelematic/).
+
+Recently, the [uptane github organization](https://github.com/uptane/)
+was created and all projects were forked into that organization. HERE
+Technologies continues to develop their OTA solution, publishing
+their open source changes to the ATS github repository.
+
+Changes made to the ATS github repository are merged back to the
+Uptane Repositories by the uptane contributors if they are considered
+important, and they are then used by ota-lith once the docker images
+are updated.
+
+The HERE OTA CE solution appears to be on a bug fix only mode, while
+the UPTANE OTA CE is actively developing new features. 
+
 ## Related
 
 - https://github.com/simao/ota-cli
