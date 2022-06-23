@@ -1,2 +1,0 @@
-keyUsage=critical, digitalSignature
-extendedKeyUsage=critical, clientAuth

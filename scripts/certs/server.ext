@@ -1,3 +1,0 @@
-keyUsage=critical, digitalSignature, keyEncipherment, keyAgreement
-extendedKeyUsage=critical, serverAuth
-subjectAltName=DNS:$ENV::SERVER_NAME
