@@ -112,6 +112,33 @@ sudo aktualizr --run-mode=once --config=config.toml
 ```   
 
 ---
+## Working with APIs
+
+>List all devices
+```
+curl deviceregistry.ota.ce/api/v1/devices
+```
+
+>Detailed information about a specific device
+```
+curl deviceregistry.ota.ce/api/v1/devices/<device-uuid>
+```
+>Packages updated on a specific device
+```
+curl director.ota.ce/api/v1/admin/devices/<device-uuid>
+```
+
+>Package update installation history of a specific device
+```
+curl deviceregistry.ota.ce/api/v1/devices/<device-uuid>/installation_history
+```
+
+>Updates assigned to be installed on a specific device
+```
+curl director.ota.ce/api/v1/assignments/<device-uuid>
+```
+
+---
 ## License
 
 This code is licensed under the [Mozilla Public License 2.0](LICENSE), a copy of which can be found in this repository. All code is copyright [ATS Advanced Telematic Systems GmbH](https://www.advancedtelematic.com), 2016-2018.
