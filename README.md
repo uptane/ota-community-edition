@@ -138,5 +138,27 @@ curl deviceregistry.ota.ce/api/v1/devices/<device-uuid>/installation_history
 curl director.ota.ce/api/v1/assignments/<device-uuid>
 ```
 
+
+
+>List device groups
+```
+curl deviceregistry.ota.ce/api/v1/device_groups
+```
+
+>Add device group
+> you should get the group id as response which you can retrieve by getting the list of device groups
+```
+curl -X POST  -H 'Content-Type: application/json' deviceregistry.ota.ce/api/v1/device_groups -d '
+{
+  "name": "name-of-device-group",
+  "groupType": "static",
+  "expression": null
+}'
+```
+
+>Add device to device group 
+```
+curl -X POST deviceregistry.ota.ce/api/v1/device_groups/:group-id/devices/:device-id
+```
 ---
 ## License
