@@ -18,7 +18,7 @@ openssl pkcs8 -topk8 -nocrypt -in "${device_dir}/pkey.ec.pem" -out "${device_dir
 openssl req -new -key "${device_dir}/pkey.pem" \
           -config <(sed "s/\$ENV::DEVICE_UUID/${DEVICE_UUID}/g" "${CWD}/certs/client.cnf") \
           -out "${device_dir}/${device_id}.csr"
-  
+
 openssl x509 -req -days 365 -extfile "${CWD}/certs/client.ext" -in "${device_dir}/${device_id}.csr" \
         -CAkey "${DEVICES_DIR}/ca.key" -CA "${DEVICES_DIR}/ca.crt" -CAcreateserial -out "${device_dir}/client.pem"
 
@@ -60,6 +60,6 @@ tls_clientcert_path = "client.pem"
 tls_pkey_path = "pkey.pem"
 EOF
 
-curl -X PUT -d "${body}" http://deviceregistry.ota.ce/api/v1/devices -s -S -v -H "Content-Type: application/json" -H "Accept: application/json, */*"
+curl -X PUT -d "${body}" https://deviceregistry.uptanedemo.org/api/v1/devices -s -S -v -H "Content-Type: application/json" -H "Accept: application/json, */*"
 
-echo "https://ota.ce:30443" > ${device_dir}/gateway.url
+echo "https://uptanedemo.org:30443" > ${device_dir}/gateway.url
