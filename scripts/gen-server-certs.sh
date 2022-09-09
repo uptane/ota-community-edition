@@ -5,7 +5,7 @@ set -euo pipefail
 SERVER_DIR=ota-ce-gen
 DEVICES_DIR=ota-ce-gen/devices
 CWD=$(dirname $0)
-SERVER_NAME=ota.ce
+SERVER_NAME=dgw.uptanedemo.org
 
 if [ -d "$SERVER_DIR" ] || [ -d "$DEVICES_DIR" ] ; then
     echo "${SERVER_DIR} or ${DEVICES_DIR} exists, aborting"
@@ -37,4 +37,3 @@ openssl ecparam -genkey -name prime256v1 | openssl ec -out "${DEVICES_DIR}/ca.ke
 
 openssl req -new -x509 -days 3650 -key "${DEVICES_DIR}/ca.key" -config "${CWD}/certs/device_ca.cnf" \
     -out "${DEVICES_DIR}/ca.crt"
-
