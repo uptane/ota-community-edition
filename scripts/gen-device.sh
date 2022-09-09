@@ -6,27 +6,26 @@ DEVICE_UUID=${DEVICE_UUID:-$(uuidgen | tr "[:upper:]" "[:lower:]")}
 
 
 CWD=$(dirname "$0")
-
-mkdir -p "${CWD}/certs"
 CERTS_DIR=$CWD/certs
-wget -O ${CERTS_DIR}/client.cnf https://uptanedemo.org/client.cnf
 
-wget -O ${CERTS_DIR}/client.ext https://uptanedemo.org/client.ext
-
-mkdir -p "${CWD}/ota-ce-gen"
-SERVER_DIR=$CWD/ota-ce-gen
-
-
-
-wget -O ${SERVER_DIR}/server_ca.pem https://uptanedemo.org/server_ca.pem
-
-
-mkdir -p "${SERVER_DIR}/devices"
+SERVER_DIR=$CWD/../ota-ce-gen
 DEVICES_DIR=${SERVER_DIR}/devices
-wget -O ${DEVICES_DIR}/ca.crt https://uptanedemo.org/ca.crt
 
-wget -O ${DEVICES_DIR}/ca.key https://uptanedemo.org/ca.key
+# if there's no gen-server-certs in this directory, we're probably not running
+# the script from the repo. In that case, we can just pull the keys, etc. from
+# the uptanedemo server.
+if [ ! -f gen-server-certs.sh ]; then
+  SERVER_DIR=$CWD/ota-ce-gen
+  mkdir -p "${CWD}/certs"
+  mkdir -p "${CWD}/ota-ce-gen"
+  mkdir -p "${SERVER_DIR}/devices"
 
+  wget -O ${CERTS_DIR}/client.cnf https://uptanedemo.org/client.cnf
+  wget -O ${CERTS_DIR}/client.ext https://uptanedemo.org/client.ext
+  wget -O ${SERVER_DIR}/server_ca.pem https://uptanedemo.org/server_ca.pem
+  wget -O ${DEVICES_DIR}/ca.crt https://uptanedemo.org/ca.crt
+  wget -O ${DEVICES_DIR}/ca.key https://uptanedemo.org/ca.key
+fi
 
 
 device_id=$DEVICE_UUID

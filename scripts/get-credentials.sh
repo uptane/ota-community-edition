@@ -2,12 +2,18 @@
 
 set -euox pipefail
 
+
+# usage: ./get-credentials.sh <server_hostname>
+#
+#   server_hostname is optional, and defaults to `ota.ce` for running locally
 SERVER_DIR=ota-ce-gen
+SERVER_BASE_URI=${1:-ota.ce}
+
 
 namespace="x-ats-namespace:default"
-keyserver="https://keyserver.uptanedemo.org"
-reposerver="https://reposerver.uptanedemo.org"
-director="https://director.uptanedemo.org"
+keyserver="https://keyserver.${SERVER_BASE_URI}"
+reposerver="https://reposerver.${SERVER_BASE_URI}"
+director="https://director.${SERVER_BASE_URI}"
 
 curl --silent --fail ${director}/health/version || echo "$director not running"
 curl --silent --fail ${keyserver}/health/version || echo "$keyserver not running"
@@ -29,14 +35,14 @@ keys=$(curl -s -f "${keyserver}/api/v1/root/${id}/keys/targets/pairs")
 echo ${keys} | jq '.[0] | {keytype, keyval: {public: .keyval.public}}'   > "${SERVER_DIR}/targets.pub"
 echo ${keys} | jq '.[0] | {keytype, keyval: {private: .keyval.private}}' > "${SERVER_DIR}/targets.sec"
 
-echo "http://reposerver.uptanedemo.org" > "${SERVER_DIR}/tufrepo.url"
-echo "http://uptanedemo.org:30443" > "${SERVER_DIR}/autoprov.url"
+echo "http://reposerver.${SERVER_BASE_URI}" > "${SERVER_DIR}/tufrepo.url"
+echo "http://${SERVER_BASE_URI}:30443" > "${SERVER_DIR}/autoprov.url"
 
 cat > "${SERVER_DIR}/treehub.json" <<END
 {
     "no_auth": true,
     "ostree": {
-        "server": "http://treehub.uptanedemo.org/api/v3/"
+        "server": "http://treehub.${SERVER_BASE_URI}/api/v3/"
     }
 }
 END
