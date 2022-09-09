@@ -32,6 +32,33 @@ services:
       # So that Traefik can listen to the Docker events
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
+  landing-page:
+    # to host the landing page for uptanedemo.org
+    image: nginx
+    restart: always
+    command: ["nginx-debug", "-g", "daemon off;"]
+    expose:
+      - '80'
+      - '443'
+      - '7443'
+    ports:
+      - '80'
+      - '7443'
+      - '20443:7443'
+    depends_on:
+      - reverse-proxy
+      - ota-lith
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.landing-page.rule=Host(`uptanedemo.org`)"
+      - "traefik.http.routers.landing-page.entrypoints=websecure"
+      - "traefik.http.routers.landing-page.tls.certresolver=myresolver"
+    volumes:
+      - ./ota-ce/landing-page.conf:/etc/nginx/conf.d/landing-page.conf:ro
+      - ./ota-ce-gen/server.chain.pem:/etc/ssl/gateway/server.chain.pem:ro
+      - ./ota-ce-gen/server.key:/etc/ssl/gateway/server.key:ro
+      - ./ota-ce-gen/devices/ca.crt:/etc/ssl/gateway/ca.crt:ro
+
   gateway:
     image: nginx:1.13.7
     restart: always
