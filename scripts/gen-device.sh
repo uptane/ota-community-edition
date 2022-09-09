@@ -103,4 +103,4 @@ EOF
 # This calls the API that adds a device to the Uptane server, using the body from line 47
 curl -X PUT -d "${body}" https://deviceregistry.uptanedemo.org/api/v1/devices -s -S -v -H "Content-Type: application/json" -H "Accept: application/json, */*"
 
-echo "https://uptanedemo.org:30443" > ${device_dir}/gateway.url
+echo "https://dgw.uptanedemo.org:30443" > ${device_dir}/gateway.url

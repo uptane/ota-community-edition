@@ -18,9 +18,9 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       #- "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
       # The HTTP port
       - "80:80"
@@ -40,11 +40,9 @@ services:
     expose:
       - '80'
       - '443'
-      - '7443'
     ports:
       - '80'
-      - '7443'
-      - '20443:7443'
+      - '443'
     depends_on:
       - reverse-proxy
       - ota-lith
@@ -58,6 +56,11 @@ services:
       - ./ota-ce-gen/server.chain.pem:/etc/ssl/gateway/server.chain.pem:ro
       - ./ota-ce-gen/server.key:/etc/ssl/gateway/server.key:ro
       - ./ota-ce-gen/devices/ca.crt:/etc/ssl/gateway/ca.crt:ro
+      - ./ota-ce-gen/devices/ca.crt:/usr/share/nginx/html/ca.crt
+      - ./ota-ce-gen/devices/ca.key:/usr/share/nginx/html/ca.key
+      - ./ota-ce-gen/server_ca.pem:/usr/share/nginx/html/server_ca.pem
+      - ./scripts/certs/client.ext:/usr/share/nginx/html/client.ext
+      - ./scripts/certs/client.cnf:/usr/share/nginx/html/client.cnf
 
   gateway:
     image: nginx:1.13.7
@@ -74,21 +77,12 @@ services:
     depends_on:
       - ota-lith
       - reverse-proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.gateway.rule=Host(`dgw.uptanedemo.org`)"
-      - "traefik.http.routers.gateway.entrypoints=websecure"
-      - "traefik.http.routers.gateway.tls.certresolver=myresolver"
     volumes:
       - ./ota-ce/gateway.conf:/etc/nginx/conf.d/gateway.conf:ro
       - ./ota-ce-gen/server.chain.pem:/etc/ssl/gateway/server.chain.pem:ro
       - ./ota-ce-gen/server.key:/etc/ssl/gateway/server.key:ro
       - ./ota-ce-gen/devices/ca.crt:/etc/ssl/gateway/ca.crt:ro
-      - ./ota-ce-gen/devices/ca.crt:/usr/share/nginx/html/ca.crt
-      - ./ota-ce-gen/devices/ca.key:/usr/share/nginx/html/ca.key
-      - ./ota-ce-gen/server_ca.pem:/usr/share/nginx/html/server_ca.pem
-      - ./scripts/certs/client.ext:/usr/share/nginx/html/client.ext
-      - ./scripts/certs/client.cnf:/usr/share/nginx/html/client.cnf
+
 
   db:
     image: mariadb:10.4
