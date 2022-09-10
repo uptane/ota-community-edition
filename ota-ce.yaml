@@ -9,20 +9,29 @@ services:
     # The official v2 Traefik docker image
     image: traefik:v2.3
     # Enables the web UI and tells Traefik to listen to docker
+#BEGIN REVERSE PROXY COMMAND
     command: --api.insecure=true --providers.docker --providers.docker.exposedbydefault=false
+#END REVERSE PROXY COMMAND
+#BEGIN REVERSE PROXY CERTIFICATES
+#END REVERSE PROXY CERTIFICATES
     ports:
       # The HTTP port
       - "80:80"
+#BEGIN REVERSE PROXY PORT
+#END REVERSE PROXY PORT
       # The Web UI (enabled by --api.insecure=true)
       - "8080:8080"
     volumes:
+#BEGIN REVERSE PROXY VOLUME
+#END REVERSE PROXY VOLUME
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
-
+#BEGIN LANDING PAGE CONTAINER
+#END LANDING PAGE CONTAINER
   gateway:
     image: nginx:1.13.7
     restart: always
-    command: ["nginx-debug", "-g", "daemon off;"]      
+    command: ["nginx-debug", "-g", "daemon off;"]
     expose:
       - '80'
       - '443'
@@ -67,6 +76,9 @@ services:
     command:
        - "/opt/ota-lith/bin/ota-lith"
        - "-Dconfig.file=/tmp/ota-lith.conf"
+#BEGIN NEW OTA LITH LABELS
+#END NEW OTA LITH LABELS
+#BEGIN OTA LITH LABELS
     labels:
       - traefik.enable=true
       - traefik.http.routers.reposerver.service=reposerver
@@ -87,10 +99,11 @@ services:
       - traefik.http.routers.campaigner.service=campaigner
       - traefik.http.routers.campaigner.rule=Host(`campaigner.ota.ce`)
       - traefik.http.services.campaigner.loadbalancer.server.port=7600
+#END OTA LITH LABELS
     volumes:
       - ./ota-lith-ce.conf:/tmp/ota-lith.conf
       - objects:/var/lib/ota-lith
-     
+
   ota-lith-daemons:
     image: uptane/ota-lith:latest
     restart: always
