@@ -1,20 +1,216 @@
-# OTA Community Edition (mono)-lith
+# OTA-Community-Edition
 
-Easy to run, secure, open source [tuf](https://theupdateframework.io/)/[uptane](https://uptane.github.io/) over the air (OTA) updates.
+- The OTA Community Edition is an open-source server software using uptane to deliver over-the-air (OTA) updates to compatible clients.
 
-You may not want or need to run [ota-community-edition](https://github.com/advancedtelematic/ota-community-edition) using a microservice architecure. A monolith might fit your use case better if you just want to try `ota-community-edition` or if your organization doesn't need to serve millions of devices. A monolith architecture is easier to deploy and manage, and uses less resources.
+- Uptane is an open and secure software update framework design which protects software delivered over-the-air to automobile electronic control units (ECUs).
 
-This project bundles all the scala apps included in [ota-community-edition](https://github.com/advancedtelematic/ota-community-edition) into a application that can be executed in a single container. The app can be easily configured using a single configuration file and avoids the usage of environment variables to simplifly configuration. Additionally, a `docker-compose` file is provided to run the application. This means you no longer need a kubernetes cluster if you just want to try or test `ota-community-edition`.
+- OTA-CE comprises of a number of services which together make up the OTA system.
+  `reposerver, keyserver, director, deviceregistry, campaigner and treehub`
 
-For small deployments, you don't need kubernetes. This solution can fit your organization better. With this app you could run ota in a single machine/vm + mariadb and kafka.
+- The source code for the servers is available on [Advanced Telematic's Github](https://github.com/advancedtelematic) and is licensed under the MPL2.0
 
-## Active branches
+- Docker container images of the latest build are available on Docker Hub : [Advanced Telematic](https://hub.docker.com/u/advancedtelematic) & [ota-lith](https://hub.docker.com/r/uptane/ota-lith)
 
-Currently there are three active branches in this repository:
+## Prerequisite
+### Linux/Debian setup with the following installed:
+```
+sudo apt install asn1c build-essential cmake curl libarchive-dev libboost-dev libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libcurl4-openssl-dev libpthread-stubs0-dev libsodium-dev libsqlite3-dev pkg-config libssl-dev python3 uuid-runtime
+```
+- [docker](https://docs.docker.com/engine/install/) (with [docker compose](https://docs.docker.com/compose/#compose-v2-and-the-new-docker-compose-command) version 2.6.x & above)
 
-- `master`. `ota-community-edition` running without webapp and with kafka, using a single scala app.
+- [aktualizr](https://github.com/advancedtelematic/aktualizr)
 
-- `webapp`. The webapp is broken in `ota-community-edition` and therefore is not included in `ota-lith/master`. The `webapp` branch includes patched version of `webapp` that does not rely on user profile and is therefore working with both `ota-community-edition` and `ota-lith`.
+
+## Install OTA-CE
+#### All the following commands are run from the `ota-community-edition` directory
+
+### 1. Add the following host names to `/etc/hosts` :
+> paste the following on the last line of `/etc/hosts`
+```
+0.0.0.0         reposerver.ota.ce
+0.0.0.0         keyserver.ota.ce
+0.0.0.0         director.ota.ce
+0.0.0.0         treehub.ota.ce
+0.0.0.0         deviceregistry.ota.ce
+0.0.0.0         campaigner.ota.ce
+0.0.0.0         app.ota.ce
+0.0.0.0         ota.ce
+```
+### 2. Run the script `gen-server-certs.sh` :
+> Once you clone the repository and are inside it, generate the required certificates.
+> This is required to provision the device using aktualizr.
+```bash
+#make sure the script is executable
+chmod +x scripts/gen-server-certs.sh
+
+./scripts/gen-server-certs.sh
+```
+
+
+### 3. Pull latest ota-lith image from docker
+> Read more about [ota-lith](https://github.com/simao/ota-lith)
+```bash
+export img=uptane/ota-lith:$(git rev-parse master)
+docker pull $img
+docker tag $img uptane/ota-lith:latest
+```
+###  4. Run docker compose
+> Run in daemon mode
+```bash
+docker compose -f ota-ce.yaml up -d
+
+# stop using followinng
+docker compose -f ota-ce.yaml down
+```
+> Run without daemon mode 
+```bash
+docker compose -f ota-ce.yaml up 
+
+#stop by hitting ctrl+c or by running the following command in another terminal 
+docker compose -f ota-ce.yaml down
+```
+
+###  5. You can now create a virtual device
+
+> This will create new directories `certs` and `ota-ce-gen` the first time you run it and a device in `ota-ce-gen/devices/:uuid` where `uuid` is the id of the new device. 
+```bash
+chmod +x scripts/gen-device.sh
+
+./scripts/gen-device.sh
+```    
+
+
+### 6. Provision that device with aktualizr
+
+> Before you try to update your virtual device, make sure it connects with aktualizr
+```bash
+cd ota-ce-gen/devices/:uuid
+
+aktualizr --run-mode=once --config=config.toml
+```    
+
+### 7. Create credentials
+> Credentials are needed to send updates to device. This will create a `credentials.zip` file in the `ota-ce-gen` directory
+```bash
+chmod +x scripts/get-credentials.sh
+
+./scripts/get-credentials.sh
+```    
+
+## Deploy updates
+
+You can use [ota-cli](https://github.com/simao/ota-cli/) to deploy updates. After provisioning devices (see above).
+
+### 1. Install ota-cli
+```bash
+git clone https://github.com/simao/ota-cli.git
+
+cd ota-cli
+
+#run the following and follow the onscreen instructions
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+#Build the tool
+make ota
+```
+
+### 2. Initialize ota-cli
+```bash
+ota init --credentials /path/to/ota-ce-gen/credentials.zip --campaigner http://campaigner.ota.ce --director http://director.ota.ce --registry http://deviceregistry.ota.ce
+```
+
+### 3. Add package to update 
+> Name a file with content in it that you would like to update to device as `update.bin` . It is not necessary to call it that, you can name it anything but for the sake of this tutorial name it `update.bin`. 
+```bash
+# The output of this command is important to create the target file in the next step
+ota package add -n mypkg -v 0.0.1 --path /path/to/update.bin --binary --hardware ota-ce-device
+
+# You can regenerate the same output with this step
+ota package list
+```
+ example output:
+```json
+{
+  "signatures": [
+    {
+      "keyid": "f62cfe66e8e986f4aac9161dcb231a9ccbff6db7b7907a4cd797f4db975d727c",
+      "method": "ed25519",
+      "sig": "dD2y2kX08uPsLLC9Uab8b7g0xdUqd3W/GUWc8dri6CE2OaA7rBKFO+M/GgZSIKXq8xzsO1tWP4POcei60NymAA=="
+    }
+  ],
+  "signed": {
+    "_type": "Targets",
+    "expires": "2022-10-12T14:06:56Z",
+    "targets": {
+      "mypkg-0.0.1": {
+    "custom": {
+      "createdAt": "2022-09-11T14:06:55Z",
+      "hardwareIds": [
+        "ota-ce-device"
+      ],
+      "name": "mypkg",
+      "targetFormat": "BINARY",
+      "updatedAt": "2022-09-11T14:06:55Z",
+      "uri": null,
+      "version": "0.0.1"
+    },
+    "hashes": {
+      "sha256": "70b22c2b8c857d1416a16e04cbfdf2b4d00d8b84000cc809af2061301ccfecb1"
+    },
+    "length": 830
+      }
+    },
+    "version": 1
+  }
+}
+```
+
+### 4. Create target.toml file
+> You have to use the name, version, length and hash using the json output recieved above and write a `target.toml` file. 
+
+For example the content of `target.toml` file wrt the above example output will be:
+```
+[ota-ce-device]
+target_format = "binary"
+generate_diff = true
+ 
+# required metadata specifying update target
+[ota-ce-device.to]
+name = "mypkg"
+version = "0.0.1"
+length = 830
+hash = "70b22c2b8c857d1416a16e04cbfdf2b4d00d8b84000cc809af2061301ccfecb1"
+method = "sha256"
+```
+### 5. Create update
+> The output of this command will be an `uuid` which you will use next to --update parameter in next step
+```bash
+ota update create -t /path/to/target.toml
+```
+### 6. Serve the Update
+> Using the uuid you get in the above command and the uuid of the device you want to update.
+```bash
+ota update launch --update <uuid> --device <uuid>
+```
+> If it works , the o/p of the command will be `OK` or else it will give an error
+
+### 7. Update the device
+```bash
+cd ota-ce-gen/devices/:uuid
+
+aktualizr --run-mode=once --config=config.toml
+
+# you should find the update in the following path
+
+cd ota-ce-gen/devices/[uuid]/storage/images/
+
+```
+
+
+
+To deploy an update using the API and a custom campaign, see [api-updates.md](docs/api-updates.md).
+
+To deploy an update using [ota-cli](https://github.com/simao/ota-cli/) with a custom campaign see [updates-ota-cli.md](docs/updates-ota-cli.md).
 
 ## Dependency management
   
@@ -53,108 +249,8 @@ patch to the repository separately:
 And then once those changes are merged upstream you could use `git
 subtree pull` to incorporate those changes.
     
-## Building
-
-To build a container running the services, run `sbt docker:publishLocal`
-
-## Configuration
-
-Configuration is done through a single config file, rather than using enviroment variables. This is meant to simplify the deployment scripts and just pass a `configFile=file.conf` argument to the container, or when needed, using system properties (`-Dkey=value`). An example config file is provied in `ota-lith-ce.conf`.
-
-## Running
-
-If you already have kafka and mariadb instances you can just run the ota-lith binary using sbt or docker.
-
-### Using sbt
-
-You'll need a valid ota-lith.conf, then run:
-
-    sbt -Dconfig.file=$(pwd)/ota-lith.conf run
-
-### Using docker
-
-The scala apps run in a single container, but you'll need kafka and mariadb. Write a valid ota-lith.conf.
-
-    sbt docker:publishLocal
-    docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf uptane/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
-    
-If you don't have `sbt` or prefer to use a pre built image, you can use:
-
-    export img=uptane/ota-lith:$(git rev-parse master)
-    docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf $img -Dconfig.file=/tmp/ota-lith.conf
-
-## Running With Docker Compose
-
-If you don't have kafka or mariadb running and just want to try ota-ce, run using docker-compose:
-
-1. Generate the required certificates using `scripts/gen-server-certs.sh` 
-
-2. Update /etc/hosts with the following host names:
-
-```
-0.0.0.0         reposerver.ota.ce
-0.0.0.0         keyserver.ota.ce
-0.0.0.0         director.ota.ce
-0.0.0.0         treehub.ota.ce
-0.0.0.0         deviceregistry.ota.ce
-0.0.0.0         campaigner.ota.ce
-0.0.0.0         app.ota.ce
-0.0.0.0         ota.ce
-```
-
-3. build docker image or pull from docker
-
-`sbt docker:publishLocal`
-
-Or:
-
-    export img=uptane/ota-lith:$(git rev-parse master)
-    docker pull $img
-    docker tag $img uptane/ota-lith:latest
-
-4. Run docker-compose
- 
-`docker-compose -f ota-ce.yaml up`
-
-5. Test
-
-For example `curl director.ota.ce/health/version`
-
-6. You can now create device credentials and provision devices
-
-Run `scripts/gen-device.sh`. This will create a new dir in `ota-ce-gen/devices/:uuid` where `uuid` is the id of the new device. You can run `aktualizr` in that directory using:
-
-    aktualizr --run-mode=once --config=config.toml
-    
-7. You can now deploy updates to the devices
-
-## Deploy updates
-
-You can either use the API directly or use [ota-cli](https://github.com/simao/ota-cli/) to deploy updates. After provisioning devices (see above).
-
-Before using the api or `ota-cli` you will need to generate a valid `credentials.zip`. Run `scripts/get-credentials.zip`.
-
-To deploy an update using the API and a custom campaign, see [api-updates.md](docs/api-updates.md).
-
-To deploy an update using [ota-cli](https://github.com/simao/ota-cli/) with or without a custom campaign see [updates-ota-cli.md](docs/updates-ota-cli.md).
 
 ## FAQ
-
-### Who maintains ota-lith
-
-ota-lith is a collection of scripts and configurations that aggregates
-upstream projects and makes it easier to run a complete OTA
-solution. These scripts and configurations are maintained by
-[simao](https://github.com/simao).
-
-The actual OTA implementation is implemented and maintained by
-multiple uptane contributors under the [uptane
-organization](https://github.com/uptane/).
-
-There are currently multiple contributors to the upstream UPTANE
-repositories, most notably [toradex](https://toradex.com) which runs
-the same uptane implementation as part of the [torizon
-platform](https://app.torizon.io)
 
 ### How does it keep up with changes on the Uptane Standard?
 
@@ -166,8 +262,7 @@ and creating the containers again.
 
 However, `webapp` and `campaigner` projects are not part of the UPTANE
 repositories and they are independently maintained by HERE Technologies
-GmbH. These changes might or might not be merged back into `ota-lith`,
-depending on the complexity of merging the changes.
+GmbH. 
 
 ### What is the relationship with Advanced Telematic OTA Community Edition?
 

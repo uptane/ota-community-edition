@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#Using comments as markers to interact with ansible builtin block file modules to configure uptanedemo.org
+#To change how ota-ce-gen and cert directories are configured when interacting with uptanedemo.org, we use the markers:  CE DIR CONF and UPTANE DEMO DIR CONF 
+#To change how the script will interact with uptanedemo.org apis, we use the markers: UPTANE DEMO API CONF and  CE API CONF
+
 set -euo pipefail
 
 DEVICE_UUID=${DEVICE_UUID:-$(uuidgen | tr "[:upper:]" "[:lower:]")}

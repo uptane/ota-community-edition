@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#Using comments as markers to interact with ansible builtin block file modules to configure uptanedemo.org
+# To configure apis when interacting with uptanedemo.org  we use the markers:  HTTPS and HTTP
+# ./get-credentials.sh https uptanedemo.org
+
 set -euox pipefail
 
 SERVER_DIR=ota-ce-gen

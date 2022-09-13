@@ -4,6 +4,11 @@
 
 # TODO: Kafka
 
+#Using comments as markers to interact with ansible builtin block file modules to configure uptanedemo.org
+#To setup https using letsencrypt in reverse proxy container we use the  makers: REVERSE PROXY COMMAND, REVERSE PROXY CERTIFICATES, REVERSE PROXY PORT, REVERSE PROXY VOLUME
+#To setup the landing page for uptanedemo.org using an nginx container we use the  makerr:  LANDING PAGE CONTAINER
+#To setup the ota-lith services i.e. director, deviceregistry.. etc with reverse proxy we use the markers: OTA LITH LABELS  & NEW OTA LITH LABELS
+
 services:
   reverse-proxy:
     # The official v2 Traefik docker image

@@ -1,4 +1,6 @@
 #!/bin/bash
+# To generate server certs for uptanedemo.org , run the script like follows:
+#./gen-server-certs.sh uptanedemo.org  
 
 set -euo pipefail
 
