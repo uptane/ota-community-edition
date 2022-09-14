@@ -1,11 +1,20 @@
 #!/bin/bash
 
+#Using comments as markers to interact with ansible builtin block file modules to configure uptanedemo.org
+#To change how ota-ce-gen and cert directories are configured when interacting with uptanedemo.org, we use the markers:  CE DIR CONF and UPTANE DEMO DIR CONF 
+#To change how the script will interact with uptanedemo.org apis, we use the markers: UPTANE DEMO API CONF and  CE API CONF
+
 set -euo pipefail
 
 DEVICE_UUID=${DEVICE_UUID:-$(uuidgen | tr "[:upper:]" "[:lower:]")}
 CWD=$(dirname "$0")
+
+#BEGIN UPTANE DEMO DIR CONF
+#END UPTANE DEMO DIR CONF
+#BEGIN CE DIR CONF
 SERVER_DIR=$CWD/../ota-ce-gen
 DEVICES_DIR=${SERVER_DIR}/devices
+#END CE DIR CONF
 
 device_id=$DEVICE_UUID
 device_dir="${DEVICES_DIR}/${DEVICE_UUID}"
@@ -18,7 +27,7 @@ openssl pkcs8 -topk8 -nocrypt -in "${device_dir}/pkey.ec.pem" -out "${device_dir
 openssl req -new -key "${device_dir}/pkey.pem" \
           -config <(sed "s/\$ENV::DEVICE_UUID/${DEVICE_UUID}/g" "${CWD}/certs/client.cnf") \
           -out "${device_dir}/${device_id}.csr"
-  
+
 openssl x509 -req -days 365 -extfile "${CWD}/certs/client.ext" -in "${device_dir}/${device_id}.csr" \
         -CAkey "${DEVICES_DIR}/ca.key" -CA "${DEVICES_DIR}/ca.crt" -CAcreateserial -out "${device_dir}/client.pem"
 
@@ -60,6 +69,11 @@ tls_clientcert_path = "client.pem"
 tls_pkey_path = "pkey.pem"
 EOF
 
+#BEGIN UPTANE DEMO API CONF
+#END UPTANE DEMO API CONF
+#BEGIN CE API CONF
 curl -X PUT -d "${body}" http://deviceregistry.ota.ce/api/v1/devices -s -S -v -H "Content-Type: application/json" -H "Accept: application/json, */*"
 
 echo "https://ota.ce:30443" > ${device_dir}/gateway.url
+#END CE API CONF
+

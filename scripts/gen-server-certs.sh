@@ -1,11 +1,13 @@
 #!/bin/bash
+# To generate server certs for uptanedemo.org , run the script like follows:
+#./gen-server-certs.sh uptanedemo.org  
 
 set -euo pipefail
 
 SERVER_DIR=ota-ce-gen
 DEVICES_DIR=ota-ce-gen/devices
 CWD=$(dirname $0)
-SERVER_NAME=ota.ce
+SERVER_NAME=${1:-ota.ce}
 
 if [ -d "$SERVER_DIR" ] || [ -d "$DEVICES_DIR" ] ; then
     echo "${SERVER_DIR} or ${DEVICES_DIR} exists, aborting"
