@@ -1,15 +1,16 @@
 package com.advancedtelematic.treehub.delta_store
 
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.util.FastFuture
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.model.HttpResponse
+import org.apache.pekko.http.scaladsl.util.FastFuture
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.advancedtelematic.data.ClientDataType.{CommitInfo, CommitSize, StaticDelta}
 import com.advancedtelematic.data.DataType.{DeltaId, DeltaIndexId, StaticDeltaIndex, StaticDeltaMeta, SuperBlockHash}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.PaginationResult
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
-import com.advancedtelematic.treehub.db.DbOps.PaginationResultOps
+import com.advancedtelematic.treehub.db.DbOps.{PaginationResultLimitOps, PaginationResultOffsetOps}
 import com.advancedtelematic.treehub.db.StaticDeltaMetaRepositorySupport
 import com.advancedtelematic.treehub.http.Errors
 import com.advancedtelematic.treehub.object_store.BlobStore
@@ -17,7 +18,6 @@ import org.slf4j.LoggerFactory
 import slick.jdbc.MySQLProfile.api.*
 
 import scala.async.Async.{async, await}
-import scala.collection.{immutable, mutable}
 import scala.concurrent.{ExecutionContext, Future}
 
 class StaticDeltas(storage: BlobStore)(implicit val db: Database, ec: ExecutionContext) extends StaticDeltaMetaRepositorySupport {
@@ -63,7 +63,7 @@ class StaticDeltas(storage: BlobStore)(implicit val db: Database, ec: ExecutionC
     }
   }
 
-  def getAll(ns: Namespace, offset: Option[Long] = None, limit: Option[Long] = None): Future[PaginationResult[StaticDelta]] =
+  def getAll(ns: Namespace, offset: Option[Offset] = None, limit: Option[Limit] = None): Future[PaginationResult[StaticDelta]] =
     staticDeltaMetaRepository.findAll(ns, StaticDeltaMeta.Status.Available, offset.orDefaultOffset, limit.orDefaultLimit)
 
   def store(ns: Namespace, deltaId: DeltaId, path: String, data: Source[ByteString, ?], size: Long,

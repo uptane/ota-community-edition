@@ -1,6 +1,6 @@
 package com.advancedtelematic.treehub.http
 
-import akka.http.scaladsl.model.headers._
+import org.apache.pekko.http.scaladsl.model.headers._
 
 import scala.util.{Failure, Success, Try}
 

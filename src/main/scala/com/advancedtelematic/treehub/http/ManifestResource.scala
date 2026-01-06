@@ -2,9 +2,9 @@ package com.advancedtelematic.treehub.http
 
 import java.time.Instant
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directive1
-import akka.stream.Materializer
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directive1
+import org.apache.pekko.stream.Materializer
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
@@ -12,7 +12,7 @@ import com.advancedtelematic.libats.messaging_datatype.DataType.ValidCommit
 import com.advancedtelematic.libats.messaging_datatype.Messages.CommitManifestUpdated
 import com.advancedtelematic.treehub.db.ManifestRepositorySupport
 import com.advancedtelematic.treehub.http.ManifestParser.ManifestInfo
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport._
 import io.circe.{Decoder, DecodingFailure}
 import slick.jdbc.MySQLProfile.api._
 
@@ -25,7 +25,7 @@ class ManifestResource(namespace: Directive1[Namespace],
                        messageBus: MessageBusPublisher)
                       (implicit db: Database, ec: ExecutionContext, mat: Materializer) extends ManifestRepositorySupport {
 
-  import akka.http.scaladsl.server.Directives._
+  import org.apache.pekko.http.scaladsl.server.Directives._
 
   private val CommitPath = Segment.flatMap(s =>  eu.timepit.refined.refineV[ValidCommit](s).toOption)
 

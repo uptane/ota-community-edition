@@ -1,11 +1,11 @@
 package com.advancedtelematic.treehub.http
 
-import akka.http.scaladsl.server.PathMatcher1
+import org.apache.pekko.http.scaladsl.server.PathMatcher1
 import com.advancedtelematic.data.DataType.{ObjectId, ValidDeltaId, ValidDeltaIndexId}
 import com.advancedtelematic.libats.data.RefinedUtils.*
 
 object PathMatchers {
-  import akka.http.scaladsl.server.Directives.*
+  import org.apache.pekko.http.scaladsl.server.Directives.*
 
   val PrefixedObjectId: PathMatcher1[ObjectId] = (Segment / Segment).tflatMap { case (oprefix, osuffix) =>
     ObjectId.parse(oprefix + osuffix).toOption.map(Tuple1(_))

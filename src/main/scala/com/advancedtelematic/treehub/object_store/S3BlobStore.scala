@@ -1,12 +1,12 @@
 package com.advancedtelematic.treehub.object_store
 
-import akka.Done
-import akka.http.scaladsl.model.headers.Location
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
-import akka.http.scaladsl.util.FastFuture
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Source, StreamConverters}
-import akka.util.ByteString
+import org.apache.pekko.Done
+import org.apache.pekko.http.scaladsl.model.headers.Location
+import org.apache.pekko.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
+import org.apache.pekko.http.scaladsl.util.FastFuture
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Source, StreamConverters}
+import org.apache.pekko.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.object_store.BlobStore.UploadAt

@@ -1,9 +1,13 @@
 package com.advancedtelematic.treehub.db
 
-object DbOps {
-  implicit class PaginationResultOps(x: Option[Long]) {
-    def orDefaultOffset: Long = x.getOrElse(0L)
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 
-    def orDefaultLimit: Long = x.getOrElse(50L)
+object DbOps {
+  implicit class PaginationResultOffsetOps(x: Option[Offset]) {
+    def orDefaultOffset: Offset = x.getOrElse(Offset(0))
+  }
+
+  implicit class PaginationResultLimitOps(x: Option[Limit]) {
+      def orDefaultLimit: Limit = x.getOrElse(Limit(50L))
   }
 }
