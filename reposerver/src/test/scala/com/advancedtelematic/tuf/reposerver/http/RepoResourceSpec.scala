@@ -51,6 +51,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.refineV
 import io.circe.syntax._
 import io.circe.Json
+import io.circe.parser.parse
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.prop.Whenever
 import org.scalatest.time.{Seconds, Span}
@@ -2140,6 +2141,54 @@ class RepoResourceSpec
     Put(apiUri(s"repo/${repoId.show}/root/rotate")) ~> routes ~> check {
       status shouldBe StatusCodes.PreconditionFailed
     }
+  }
+
+  test("returns canonicalized root.json") {
+    val responseBody = Get(apiUri(s"repo/${repoId.show}/root.json")) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[ByteString].utf8String
+    }
+    val parsedJson = parse(responseBody).getOrElse(fail(s"Failed to parse response: $responseBody"))
+    responseBody shouldBe parsedJson.canonical
+  }
+
+  test("returns canonicalized 1.root.json") {
+    val responseBody = Get(apiUri(s"repo/${repoId.show}/1.root.json")) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[ByteString].utf8String
+    }
+    val parsedJson = parse(responseBody).getOrElse(fail(s"Failed to parse response: $responseBody"))
+    responseBody shouldBe parsedJson.canonical
+  }
+
+  test("returns canonicalized targets.json") {
+    addTargetToRepo()
+    val responseBody = Get(apiUri(s"repo/${repoId.show}/targets.json")) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[ByteString].utf8String
+    }
+    val parsedJson = parse(responseBody).getOrElse(fail(s"Failed to parse response: $responseBody"))
+    responseBody shouldBe parsedJson.canonical
+  }
+
+  test("returns canonicalized snapshot.json") {
+    addTargetToRepo()
+    val responseBody = Get(apiUri(s"repo/${repoId.show}/snapshot.json")) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[ByteString].utf8String
+    }
+    val parsedJson = parse(responseBody).getOrElse(fail(s"Failed to parse response: $responseBody"))
+    responseBody shouldBe parsedJson.canonical
+  }
+
+  test("returns canonicalized timestamp.json") {
+    addTargetToRepo()
+    val responseBody = Get(apiUri(s"repo/${repoId.show}/timestamp.json")) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[ByteString].utf8String
+    }
+    val parsedJson = parse(responseBody).getOrElse(fail(s"Failed to parse response: $responseBody"))
+    responseBody shouldBe parsedJson.canonical
   }
 
   implicit class ErrorRepresentationOps(value: ErrorRepresentation) {

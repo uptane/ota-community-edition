@@ -25,7 +25,7 @@ include:
     file: '/gitlab/deploy-core-service.yml'
 
 services:
-  - name: docker:dind
+  - name: docker:28.5.0-dind
 
 default:
   cache:

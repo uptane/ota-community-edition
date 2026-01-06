@@ -284,7 +284,7 @@ class RepoResource(keyserverClient: KeyserverClient,
 
   private def findRootByVersion(repoId: RepoId, version: Int): Route =
     onComplete(keyserverClient.fetchRootRole(repoId, version)) {
-      case Success(root)                           => complete(root)
+      case Success(root)                           => complete(JsonSignedPayload(root.signatures, root.signed.asJson))
       case Failure(err) if err == RootRoleNotFound =>
         // Devices always request current version + 1 to see if it exists, so this is a normal response, do not log an error and instead just log a debug message
         log.debug(s"Root role not found in keyserver for $repoId, version=$version")
