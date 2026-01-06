@@ -1,49 +1,18 @@
 package com.advancedtelematic.director.data
 
-import com.advancedtelematic.libats.data.EcuIdentifier
 import org.scalacheck.Gen
 import GeneratorOps.*
-import akka.http.scaladsl.model.Uri
-import com.advancedtelematic.director.data.AdminDataType.{
-  MultiTargetUpdate,
-  RegisterEcu,
-  TargetUpdate,
-  TargetUpdateRequest
-}
-import com.advancedtelematic.director.data.DeviceRequest.{
-  DeviceManifest,
-  EcuManifest,
-  InstallationItem,
-  InstallationReport,
-  MissingInstallationReport
-}
+import org.apache.pekko.http.scaladsl.model.Uri
+import com.advancedtelematic.director.data.AdminDataType.{RegisterEcu, TargetUpdate, TargetUpdateRequest, TargetUpdateSpec}
+import com.advancedtelematic.director.data.DeviceRequest.{DeviceManifest, EcuManifest, InstallationItem, InstallationReport, MissingInstallationReport}
 import com.advancedtelematic.director.data.UptaneDataType.*
-import com.advancedtelematic.libats.data.DataType.{
-  Checksum,
-  CorrelationId,
-  HashMethod,
-  MultiTargetUpdateId,
-  OfflineUpdateId,
-  ResultCode,
-  ResultDescription,
-  ValidChecksum,
-  ValidLockboxHash
-}
-import com.advancedtelematic.libats.messaging_datatype.DataType.InstallationResult
-import com.advancedtelematic.libtuf.data.TufDataType.{
-  Ed25519KeyType,
-  HardwareIdentifier,
-  KeyType,
-  RsaKeyType,
-  SignedPayload,
-  TargetFilename,
-  TufKey,
-  TufKeyPair,
-  ValidTargetFilename
-}
+import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, HashMethod, MultiTargetUpdateCorrelationId, OfflineUpdateId, ResultCode, ResultDescription, ValidChecksum, ValidLockboxHash}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{EcuIdentifier, InstallationResult, ValidEcuIdentifier}
+import com.advancedtelematic.libtuf.data.TufDataType.{Ed25519KeyType, HardwareIdentifier, KeyType, RsaKeyType, SignedPayload, TargetFilename, TufKey, TufKeyPair, ValidTargetFilename}
 import eu.timepit.refined.api.{RefType, Refined}
 import io.circe.Json
 import Codecs.*
+import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
 import com.advancedtelematic.libtuf.data.ClientDataType.ClientTargetItem
 
 trait Generators {
@@ -53,7 +22,7 @@ trait Generators {
     Gen
       .choose(10, 64)
       .flatMap(GenStringByCharN(_, Gen.alphaChar))
-      .map(EcuIdentifier.from(_).toOption.get)
+      .map(_.refineTry[ValidEcuIdentifier].get)
 
   lazy val GenHardwareIdentifier: Gen[HardwareIdentifier] =
     Gen.choose(10, 200).flatMap(GenRefinedStringByCharN(_, Gen.alphaChar))
@@ -137,9 +106,9 @@ trait Generators {
     targetUpdate <- GenTargetUpdate
   } yield TargetUpdateRequest(None, targetUpdate)
 
-  val GenMultiTargetUpdateRequest: Gen[MultiTargetUpdate] = for {
+  val GenMultiTargetUpdateRequest: Gen[TargetUpdateSpec] = for {
     targets <- Gen.nonEmptyMap(Gen.zip(GenHardwareIdentifier, GenTargetUpdateRequest))
-  } yield MultiTargetUpdate(targets)
+  } yield TargetUpdateSpec(targets)
 
   lazy val GenKeyType: Gen[KeyType] = Gen.oneOf(RsaKeyType, Ed25519KeyType)
 
@@ -158,7 +127,7 @@ trait Generators {
   } yield RegisterEcu(ecu, hwId, crypto)
 
   lazy val GenCorrelationId =
-    Gen.uuid.map(u => MultiTargetUpdateId(u))
+    Gen.uuid.map(u => MultiTargetUpdateCorrelationId(u))
 
   lazy val GenOffLineCorrelationId = for {
     hash <- Gen

@@ -24,6 +24,7 @@ object TaggedDeviceRepository {
   class TaggedDeviceTable(tag: Tag) extends Table[TaggedDevice](tag, "TaggedDevice") {
     def namespace = column[Namespace]("namespace")
     def deviceUuid = column[DeviceId]("device_uuid")
+
     def tagId = column[TagId]("tag_id")(validatedStringMapper)
     def tagValue = column[String]("tag_value")
 

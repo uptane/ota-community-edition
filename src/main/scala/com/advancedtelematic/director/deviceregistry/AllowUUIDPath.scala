@@ -8,11 +8,11 @@
 
 package com.advancedtelematic.director.deviceregistry
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{AuthorizationFailedRejection, Directive1, Directives}
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.{AuthorizationFailedRejection, Directive1, Directives}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
-import com.advancedtelematic.libats.http.UUIDKeyAkka._
+import com.advancedtelematic.libats.http.UUIDKeyPekko._
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 
 import scala.concurrent.Future

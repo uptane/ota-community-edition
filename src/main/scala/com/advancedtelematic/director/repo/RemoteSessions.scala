@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.repo
 
-import akka.http.scaladsl.util.FastFuture
+import org.apache.pekko.http.scaladsl.util.FastFuture
 import cats.data.Validated.{Invalid, Valid}
 import cats.data.ValidatedNel
 import com.advancedtelematic.director.data.DataType.AdminRoleName
@@ -9,6 +9,7 @@ import com.advancedtelematic.director.db.AdminRolesRepositorySupport
 import com.advancedtelematic.director.http.Errors
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
 import com.advancedtelematic.libtuf.data.ClientDataType.{
+  RemoteCommandsPayload,
   RemoteSessionsPayload,
   RemoteSessionsRole,
   TufRole,
@@ -62,36 +63,64 @@ class RemoteSessions(keyserverClient: KeyserverClient)(
       existing.content
   }
 
-  def set(repoId: RepoId,
-          remoteSessions: RemoteSessionsPayload,
-          previousVersion: Int): Future[SignedRole[RemoteSessionsRole]] = async {
-    val existing = await(
-      adminRolesRepository
-        .findLatestOpt(repoId, RoleType.REMOTE_SESSIONS, REMOTE_SESSIONS_ADMIN_NAME)
-    )
-
-    val expireAt = nextExpires
-
-    val newRole = existing match {
-      case Some(r) =>
-        val role = r.value.toSignedRole[RemoteSessionsRole].role
-        val newRole = role.copy(
-          remoteSessions,
-          expireAt,
-          version = previousVersion + 1
-        ) // persist will check this bump is valid and does not conflict
-        newRole
+  def setRemoteCommands(
+    repoId: RepoId,
+    remoteCommands: RemoteCommandsPayload): Future[SignedRole[RemoteSessionsRole]] =
+    set(repoId) {
+      case Some(rs) =>
+        rs.copy(remote_commands = Some(remoteCommands))
       case None =>
-        await(keyserverClient.addRemoteSessionsRole(repoId))
-        RemoteSessionsRole(remoteSessions, expireAt, version = 1)
+        RemoteSessionsRole (
+          remote_sessions = RemoteSessionsPayload.empty,
+          remote_commands = Some(remoteCommands),
+          version = 1,
+          expires = nextExpires
+        )
     }
 
-    val signedRole = await(sign(repoId, newRole))
-    await(
-      adminRolesRepository.persistAll(signedRole.toDbAdminRole(repoId, REMOTE_SESSIONS_ADMIN_NAME))
-    )
-    signedRole
-  }
+  def setRemoteSessions(
+    repoId: RepoId,
+    remoteSessions: RemoteSessionsPayload): Future[SignedRole[RemoteSessionsRole]] =
+    set(repoId) {
+      case Some(rs) =>
+        rs.copy(remote_sessions = remoteSessions)
+      case None =>
+        RemoteSessionsRole(
+          remote_sessions = remoteSessions,
+          None,
+          version = 1,
+          expires = nextExpires
+        )
+    }
+
+  private def set(repoId: RepoId)(updateFn: Option[RemoteSessionsRole] => RemoteSessionsRole)
+    : Future[SignedRole[RemoteSessionsRole]] =
+    async {
+      val existing = await(
+        adminRolesRepository
+          .findLatestOpt(repoId, RoleType.REMOTE_SESSIONS, REMOTE_SESSIONS_ADMIN_NAME)
+      )
+
+      val newRole = existing match {
+        case Some(r) =>
+          val role = r.value.toSignedRole[RemoteSessionsRole].role
+          val newRole = updateFn(Some(role)).copy(
+            expires = nextExpires,
+            version = role.version + 1
+          ) // persist will check this bump is valid and does not conflict
+          newRole
+        case None =>
+          await(keyserverClient.addRemoteSessionsRole(repoId))
+          updateFn(None)
+      }
+
+      val signedRole = await(sign(repoId, newRole))
+      await(
+        adminRolesRepository
+          .persistAll(signedRole.toDbAdminRole(repoId, REMOTE_SESSIONS_ADMIN_NAME))
+      )
+      signedRole
+    }
 
   private def sign[T: Codec: TufRole](repoId: RepoId, role: T): Future[SignedRole[T]] = async {
     val signedPayload = await(keyserverClient.sign(repoId, role))

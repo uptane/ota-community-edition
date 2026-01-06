@@ -1,7 +1,7 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.model.Uri.Path
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.model.Uri.Path
 
 object DeviceRegistryResourceUri {
 

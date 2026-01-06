@@ -1,74 +1,48 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.util.ByteString
 import cats.syntax.option.*
 import cats.syntax.show.*
 import com.advancedtelematic.director.daemon.UpdateSchedulerDaemon
 import com.advancedtelematic.director.data.AdminDataType
-import com.advancedtelematic.director.data.AdminDataType.{
-  EcuInfoResponse,
-  MultiTargetUpdate,
-  QueueResponse,
-  RegisterDevice,
-  TargetUpdate
-}
+import com.advancedtelematic.director.data.AdminDataType.{EcuInfoResponse, QueueResponse, RegisterDevice, TargetUpdate, TargetUpdateSpec}
 import com.advancedtelematic.director.data.Codecs.*
 import com.advancedtelematic.director.data.DataType.*
-import com.advancedtelematic.director.data.DeviceRequest.{
-  DeviceManifest,
-  EcuManifest,
-  EcuManifestCustom,
-  InstallationReport,
-  InstallationReportEntity,
-  MissingInstallationReport,
-  OperationResult
-}
+import com.advancedtelematic.director.data.DeviceRequest.{DeviceManifest, EcuManifest, EcuManifestCustom, InstallationReport, InstallationReportEntity, MissingInstallationReport, OperationResult}
 import com.advancedtelematic.director.data.GeneratorOps.*
 import com.advancedtelematic.director.data.Generators.*
 import com.advancedtelematic.director.data.Messages.DeviceManifestReported
 import com.advancedtelematic.director.data.UptaneDataType.{FileInfo, Hashes, Image}
 import com.advancedtelematic.director.db.deviceregistry.{DeviceRepository, EcuReplacementRepository}
-import com.advancedtelematic.director.db.{
-  AssignmentsRepositorySupport,
-  EcuRepositorySupport,
-  UpdateSchedulerDBIO
-}
+import com.advancedtelematic.director.db.{AssignmentsRepositorySupport, EcuRepositorySupport, UpdateSchedulerDBIO}
 import com.advancedtelematic.director.deviceregistry.data.{DeviceGenerators, DeviceStatus}
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.genDeviceT
 import com.advancedtelematic.director.http.deviceregistry.RegistryDeviceRequests
 import com.advancedtelematic.director.manifest.ResultCodes
 import com.advancedtelematic.director.util.*
-import com.advancedtelematic.libats.data.DataType.{
-  CorrelationId,
-  HashMethod,
-  MultiTargetUpdateId,
-  Namespace,
-  ResultCode,
-  ResultDescription
-}
+import com.advancedtelematic.libats.data.DataType.{CorrelationId, HashMethod, MultiTargetUpdateCorrelationId, Namespace, ResultCode, ResultDescription, UpdateCorrelationId}
 import com.advancedtelematic.libats.data.ErrorRepresentation
 import com.advancedtelematic.libats.messaging.test.MockMessageBus
 import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, InstallationResult}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId.*
 import com.advancedtelematic.libats.messaging_datatype.Messages.*
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
-import com.advancedtelematic.libtuf.data.ClientDataType.{
-  RootRole,
-  SnapshotRole,
-  TargetsRole,
-  TimestampRole,
-  TufRole
-}
+import com.advancedtelematic.libtuf.data.ClientDataType.{RemoteSessionsPayload, RootRole, SnapshotRole, SshSessionProperties, TargetsRole, TimestampRole, TufRole}
+import com.advancedtelematic.director.http.RemoteSessionRequest
 import com.advancedtelematic.libtuf.data.TufCodecs.*
 import com.advancedtelematic.libtuf.data.TufDataType.SignedPayload
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
+import io.circe.parser.parse
+import com.advancedtelematic.libtuf.crypt.CanonicalJson._
 import org.scalatest.Inspectors
 import org.scalatest.LoneElement.*
 import org.scalatest.OptionValues.*
 import io.circe.syntax.*
 import org.scalatest.EitherValues.*
 
+import java.time.Instant
 import scala.concurrent.Future
 
 class DeviceResourceSpec
@@ -83,7 +57,7 @@ class DeviceResourceSpec
     with RegistryDeviceRequests
     with ProvisionedDevicesRequests
     with AssignmentsRepositorySupport
-    with ScheduledUpdatesResources {
+    with UpdatesResources {
 
   override implicit val msgPub: MockMessageBus = new MockMessageBus()
 
@@ -424,9 +398,7 @@ class DeviceResourceSpec
       resp.code shouldBe ErrorCodes.ReplaceEcuAssignmentExists
     }
 
-    db.run(DeviceRepository.findByUuid(deviceId))
-      .futureValue
-      .deviceStatus shouldBe DeviceStatus.Error
+    db.run(DeviceRepository.findByUuid(deviceId)).futureValue.deviceStatus shouldBe DeviceStatus.Error
   }
 
   testWithRepo("Previously used *secondary* ecus cannot be reused when replacing ecus") {
@@ -702,6 +674,91 @@ class DeviceResourceSpec
 
     if (firstTargets.json.canonical != secondTargets.json.canonical)
       fail(s"targets.json $firstTargets is not the same as $secondTargets")
+  }
+
+  testWithRepo("returns canonicalized targets.json") { implicit ns =>
+    val regDev = registerAdminDeviceOk()
+    val targetUpdate = GenTargetUpdateRequest.generate
+    createDeviceAssignmentOk(regDev.deviceId, regDev.primary.hardwareId, targetUpdate.some)
+
+    val responseBody =
+      Get(apiUri(s"device/${regDev.deviceId.show}/targets.json")).namespaced ~> routes ~> check {
+        status shouldBe StatusCodes.OK
+        responseAs[ByteString].utf8String
+      }
+
+    val parsedJson = parse(responseBody).fold(
+      error => fail(s"Failed to parse targets.json response: ${error.getMessage}"),
+      identity
+    )
+
+    val canonicalForm = parsedJson.canonical
+    responseBody shouldBe canonicalForm
+  }
+
+  testWithRepo("returns canonicalized root.json") { implicit ns =>
+    val deviceId = registerDeviceOk()
+
+    val responseBody =
+      Get(apiUri(s"device/${deviceId.show}/root.json")).namespaced ~> routes ~> check {
+        status shouldBe StatusCodes.OK
+        responseAs[ByteString].utf8String
+      }
+
+    val parsedJson = parse(responseBody).fold(
+      error => fail(s"Failed to parse root.json response: ${error.getMessage}"),
+      identity
+    )
+
+    val canonicalForm = parsedJson.canonical
+    responseBody shouldBe canonicalForm
+  }
+
+  testWithRepo("returns canonicalized n.root.json") { implicit ns =>
+    val deviceId = registerDeviceOk()
+
+    val responseBody =
+      Get(apiUri(s"device/${deviceId.show}/1.root.json")).namespaced ~> routes ~> check {
+        status shouldBe StatusCodes.OK
+        responseAs[ByteString].utf8String
+      }
+
+    val parsedJson = parse(responseBody).fold(
+      error => fail(s"Failed to parse 1.root.json response: ${error.getMessage}"),
+      identity
+    )
+
+    val canonicalForm = parsedJson.canonical
+    responseBody shouldBe canonicalForm
+  }
+
+  testWithRepo("returns canonicalized remote-sessions.json") { implicit ns =>
+    val regDev = registerAdminDeviceOk()
+    val deviceId = regDev.deviceId
+
+    // Create a remote session first so the endpoint has something to return
+    val session = RemoteSessionsPayload(
+      SshSessionProperties("someapiversion", Map.empty, Vector.empty, Vector.empty),
+      "someapiversion"
+    )
+    val body = RemoteSessionRequest(session)
+    Post(apiUri(s"admin/remote-sessions"), body).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+    }
+
+    val responseBody =
+      Get(apiUri(s"device/${deviceId.show}/remote-sessions.json")).namespaced ~> routes ~> check {
+        status shouldBe StatusCodes.OK
+        responseAs[ByteString].utf8String
+      }
+
+    val parsedJson = parse(responseBody).fold(
+      error => fail(s"Failed to parse remote-sessions.json response: ${error.getMessage}"),
+      identity
+    )
+
+    val canonicalForm = parsedJson.canonical
+    responseBody shouldBe canonicalForm
   }
 
   testWithRepo("returns a refreshed version of targets if it expires") { implicit ns =>
@@ -1612,7 +1669,7 @@ class DeviceResourceSpec
   }
 
   testWithRepo(
-    "installing assignments created via a scheduled update updates scheduled update status"
+    "installing assignments created via a scheduled update updates update status"
   ) { implicit ns =>
     val dev = registerAdminDeviceWithSecondariesOk()
     val currentUpdate = GenTargetUpdateRequest.generate
@@ -1629,11 +1686,11 @@ class DeviceResourceSpec
     )
     putManifestOk(dev.deviceId, deviceManifest)
 
-    val mtu = MultiTargetUpdate(
+    val mtu = TargetUpdateSpec(
       Map(dev.secondaries.values.head.hardwareId -> newUpdate, dev.primary.hardwareId -> newUpdate)
     )
 
-    createScheduledUpdateOk(dev.deviceId, mtu)
+    createUpdateOk(dev.deviceId, mtu)
 
     updateSchedulerIO.run().futureValue
 
@@ -1647,8 +1704,8 @@ class DeviceResourceSpec
 
     putManifestOk(dev.deviceId, newManifest)
 
-    val scheduledUpdate = listScheduledUpdatesOK(dev.deviceId).values.loneElement
-    scheduledUpdate.status shouldBe ScheduledUpdate.Status.Completed
+    val scheduledUpdate = listUpdatesOK(dev.deviceId).values.loneElement
+    scheduledUpdate.status shouldBe Update.Status.Completed
   }
 
   testWithRepo(
@@ -1661,9 +1718,9 @@ class DeviceResourceSpec
     val deviceManifest = buildPrimaryManifest(dev.primary, dev.primaryKey, currentUpdate.to)
     putManifestOk(dev.deviceId, deviceManifest)
 
-    val mtu = MultiTargetUpdate(Map(dev.primary.hardwareId -> newUpdate))
+    val mtu = TargetUpdateSpec(Map(dev.primary.hardwareId -> newUpdate))
 
-    createScheduledUpdateOk(dev.deviceId, mtu)
+    createUpdateOk(dev.deviceId, mtu, Instant.now().some)
 
     val scheduledUpdate = updateSchedulerIO.run().futureValue.loneElement
 
@@ -1672,7 +1729,7 @@ class DeviceResourceSpec
       dev.primaryKey,
       currentUpdate.to,
       InstallationReport(
-        MultiTargetUpdateId(scheduledUpdate.updateId.uuid),
+        scheduledUpdate.id.toCorrelationId,
         InstallationResult(
           success = false,
           code = ResultCode("download_failed"),
@@ -1685,8 +1742,8 @@ class DeviceResourceSpec
 
     putManifestOk(dev.deviceId, newManifest)
 
-    val apiScheduledUpdate = listScheduledUpdatesOK(dev.deviceId).values.loneElement
-    apiScheduledUpdate.status shouldBe ScheduledUpdate.Status.Completed
+    val apiScheduledUpdate = listUpdatesOK(dev.deviceId).values.loneElement
+    apiScheduledUpdate.status shouldBe Update.Status.Completed
   }
 
   testWithRepo("partially installing a scheduled update sets status to PartiallyCompleted") {
@@ -1707,14 +1764,14 @@ class DeviceResourceSpec
       )
       putManifestOk(dev.deviceId, deviceManifest)
 
-      val mtu = MultiTargetUpdate(
+      val mtu = TargetUpdateSpec(
         Map(
           dev.secondaries.values.head.hardwareId -> newUpdatePrimary,
           dev.primary.hardwareId -> newUpdateSecondary
         )
       )
 
-      createScheduledUpdateOk(dev.deviceId, mtu)
+      createUpdateOk(dev.deviceId, mtu)
 
       updateSchedulerIO.run().futureValue
 
@@ -1728,8 +1785,8 @@ class DeviceResourceSpec
 
       putManifestOk(dev.deviceId, newManifest)
 
-      val scheduledUpdate = listScheduledUpdatesOK(dev.deviceId).values.loneElement
-      scheduledUpdate.status shouldBe ScheduledUpdate.Status.PartiallyCompleted
+      val scheduledUpdate = listUpdatesOK(dev.deviceId).values.loneElement
+      scheduledUpdate.status shouldBe Update.Status.PartiallyCompleted
 
       val newManifest2 = buildSecondaryManifest(
         dev.primary.ecuSerial,
@@ -1741,8 +1798,8 @@ class DeviceResourceSpec
 
       putManifestOk(dev.deviceId, newManifest2)
 
-      val scheduledUpdate2 = listScheduledUpdatesOK(dev.deviceId).values.loneElement
-      scheduledUpdate2.status shouldBe ScheduledUpdate.Status.Completed
+      val scheduledUpdate2 = listUpdatesOK(dev.deviceId).values.loneElement
+      scheduledUpdate2.status shouldBe Update.Status.Completed
   }
 
   testWithRepo(
@@ -1758,9 +1815,9 @@ class DeviceResourceSpec
     val previousTargets = getTargetsOk(dev.deviceId).signed
     previousTargets.targets shouldBe empty
 
-    val mtu = MultiTargetUpdate(Map(dev.primary.hardwareId -> newUpdate))
+    val mtu = TargetUpdateSpec(Map(dev.primary.hardwareId -> newUpdate))
 
-    createScheduledUpdateOk(dev.deviceId, mtu)
+    createUpdateOk(dev.deviceId, mtu)
 
     updateSchedulerIO.run().futureValue
 
@@ -1780,11 +1837,11 @@ class DeviceResourceSpec
     val previousTargets = getTargetsOk(dev.deviceId).signed
     previousTargets.targets shouldBe empty
 
-    val mtu = MultiTargetUpdate(Map(dev.primary.hardwareId -> newUpdate))
+    val mtu = TargetUpdateSpec(Map(dev.primary.hardwareId -> newUpdate))
 
-    createScheduledUpdateOk(dev.deviceId, mtu)
+    createUpdateOk(dev.deviceId, mtu)
 
-    val mtuId = listScheduledUpdatesOK(dev.deviceId).values.loneElement.updateId
+    val updateId = listUpdatesOK(dev.deviceId).values.loneElement.updateId
 
     // TODO: runs full daemon instead of IO
     val daemon = new UpdateSchedulerDaemon()
@@ -1801,8 +1858,9 @@ class DeviceResourceSpec
       .value
 
     assignedMsg.deviceUuid shouldBe dev.deviceId
-    assignedMsg.correlationId shouldBe MultiTargetUpdateId(mtuId.uuid)
+    assignedMsg.correlationId shouldBe updateId.toCorrelationId
   }
+
 
   testWithRepo(
     "reporting an update that was present in a cancelled scheduled update keeps scheduled update untouched"
@@ -1822,16 +1880,16 @@ class DeviceResourceSpec
     )
     putManifestOk(dev.deviceId, deviceManifest)
 
-    val mtu = MultiTargetUpdate(
+    val mtu = TargetUpdateSpec(
       Map(dev.secondaries.values.head.hardwareId -> newUpdate, dev.primary.hardwareId -> newUpdate)
     )
 
-    val id = createScheduledUpdateOk(dev.deviceId, mtu)
+    val id = createUpdateOk(dev.deviceId, mtu)
 
-    cancelScheduledUpdateOK(dev.deviceId, id)
+    cancelUpdateOK(dev.deviceId, id)
 
-    val scheduledUpdate0 = listScheduledUpdatesOK(dev.deviceId).values.loneElement
-    scheduledUpdate0.status shouldBe ScheduledUpdate.Status.Cancelled
+    val scheduledUpdate0 = listUpdatesOK(dev.deviceId).values.loneElement
+    scheduledUpdate0.status shouldBe Update.Status.Cancelled
 
     val newManifest = buildSecondaryManifest(
       dev.primary.ecuSerial,
@@ -1843,8 +1901,7 @@ class DeviceResourceSpec
 
     putManifestOk(dev.deviceId, newManifest)
 
-    val scheduledUpdate = listScheduledUpdatesOK(dev.deviceId).values.loneElement
-    scheduledUpdate.status shouldBe ScheduledUpdate.Status.Cancelled
+    val scheduledUpdate = listUpdatesOK(dev.deviceId).values.loneElement
+    scheduledUpdate.status shouldBe Update.Status.Cancelled
   }
-
 }

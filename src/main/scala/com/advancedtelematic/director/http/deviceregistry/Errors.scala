@@ -27,7 +27,7 @@ import java.sql.SQLSyntaxErrorException
 
 object Errors {
 
-  import akka.http.scaladsl.model.StatusCodes
+  import org.apache.pekko.http.scaladsl.model.StatusCodes
 
   object Codes {
     val MissingDevice = ErrorCode("missing_device")

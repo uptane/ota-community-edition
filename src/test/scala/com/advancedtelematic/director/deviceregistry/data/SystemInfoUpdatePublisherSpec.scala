@@ -2,7 +2,7 @@ package com.advancedtelematic.director.deviceregistry.data
 
 import java.nio.file.Paths
 
-import akka.dispatch.ExecutionContexts
+import org.apache.pekko.dispatch.ExecutionContexts
 import com.advancedtelematic.director.deviceregistry.SystemInfoUpdatePublisher
 import io.circe.syntax._
 import org.scalatest.concurrent.ScalaFutures

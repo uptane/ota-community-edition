@@ -2,19 +2,20 @@ package com.advancedtelematic.director.http
 
 import io.circe.syntax.*
 import com.advancedtelematic.libtuf.crypt.CanonicalJson.*
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.director.data.Generators
 import com.advancedtelematic.director.db.RepoNamespaceRepositorySupport
 import com.advancedtelematic.director.util.{DirectorSpec, RepositorySpec, ResourceSpec}
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
 import com.advancedtelematic.libtuf.data.TufCodecs.*
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import com.advancedtelematic.director.data.GeneratorOps.*
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.ErrorRepresentation
 import com.advancedtelematic.libtuf.data.ClientDataType.{
   OfflineSnapshotRole,
   OfflineUpdatesRole,
+  RootRole,
   TufRole,
   ValidMetaPath
 }
@@ -297,6 +298,12 @@ class OfflineUpdatesRoutesSpec
       val resp = responseAs[SignedPayload[OfflineSnapshotRole]]
       resp.signed.version shouldBe 2
       resp.signed.expires shouldBe expiresAt
+    }
+
+    Get(apiUri("admin/repo/root.json")).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      val resp = responseAs[SignedPayload[RootRole]]
+      resp.signed.expires shouldBe expiresAt.plus(180, ChronoUnit.DAYS)
     }
   }
 

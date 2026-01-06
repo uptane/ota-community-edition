@@ -7,6 +7,7 @@ import com.advancedtelematic.director.deviceregistry.data.{DeviceSortBy, GroupSo
 import com.advancedtelematic.director.deviceregistry.data.SortDirection.SortDirection
 import Schema.DeviceTable
 import GroupInfoRepository.GroupInfoTable
+import com.advancedtelematic.libats.data.PaginationResult.{Offset, Limit}
 import slick.ast.Ordering
 import slick.jdbc.MySQLProfile.api.*
 import slick.lifted.ColumnOrdered
@@ -36,7 +37,7 @@ object DbOps {
           ColumnOrdered(d.deviceName, Ordering(slickDirection(sortDirection)))
         case DeviceSortBy.DeviceId =>
           ColumnOrdered(d.oemId, Ordering(slickDirection(sortDirection)))
-        case DeviceSortBy.Uuid      => ColumnOrdered(d.id, Ordering(slickDirection(sortDirection)))
+        case DeviceSortBy.Uuid => ColumnOrdered(d.id, Ordering(slickDirection(sortDirection)))
         case DeviceSortBy.CreatedAt =>
           ColumnOrdered(d.createdAt, Ordering(slickDirection(sortDirection)))
         case DeviceSortBy.ActivatedAt =>
@@ -57,11 +58,6 @@ object DbOps {
           ColumnOrdered(g.createdAt, Ordering(slickDirection(sortDirection)))
       }
 
-  }
-
-  implicit class PaginationResultOps(x: Option[Long]) {
-    def orDefaultOffset: Long = x.getOrElse(0L)
-    def orDefaultLimit: Long = x.getOrElse(50L)
   }
 
 }

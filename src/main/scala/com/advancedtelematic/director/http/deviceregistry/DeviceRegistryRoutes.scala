@@ -1,8 +1,8 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.server.{Directive1, Directives, Route}
-import akka.stream.Materializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.server.{Directive1, Directives, Route}
+import org.apache.pekko.stream.Materializer
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.http.DefaultRejectionHandler.rejectionHandler
 import com.advancedtelematic.libats.http.ErrorHandler

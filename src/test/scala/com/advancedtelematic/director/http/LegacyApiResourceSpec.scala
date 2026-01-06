@@ -1,15 +1,16 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.model.StatusCodes
-import com.advancedtelematic.director.data.AdminDataType.{MultiTargetUpdate, QueueResponse}
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import com.advancedtelematic.director.data.AdminDataType.{TargetUpdateSpec, QueueResponse}
 import com.advancedtelematic.director.util.{DirectorSpec, RepositorySpec, ResourceSpec}
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.director.data.Generators.*
-import com.advancedtelematic.libats.data.DataType.MultiTargetUpdateId
+import com.advancedtelematic.libats.data.DataType.MultiTargetUpdateCorrelationId
 import com.advancedtelematic.director.data.GeneratorOps.*
 import com.advancedtelematic.director.data.Codecs.*
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import cats.syntax.show.*
+import com.advancedtelematic.director.data.DataType.TargetSpecId
 import com.advancedtelematic.libats.data.PaginationResult
 import org.scalatest.OptionValues.*
 import com.advancedtelematic.libats.messaging_datatype.Messages.*
@@ -27,15 +28,15 @@ class LegacyApiResourceSpec
       val regDev = registerAdminDeviceWithSecondariesOk()
 
       val targetUpdate = GenTargetUpdateRequest.generate
-      val mtu = MultiTargetUpdate(Map(regDev.primary.hardwareId -> targetUpdate))
+      val mtu = TargetUpdateSpec(Map(regDev.primary.hardwareId -> targetUpdate))
 
-      val mtuId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
+      val targetSpecId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
         status shouldBe StatusCodes.Created
-        responseAs[UpdateId]
+        responseAs[TargetSpecId]
       }
 
       Put(
-        apiUri(s"admin/devices/${regDev.deviceId.show}/multi_target_update/${mtuId.show}")
+        apiUri(s"admin/devices/${regDev.deviceId.show}/multi_target_update/${targetSpecId.show}")
       ).namespaced ~> routes ~> check {
         status shouldBe StatusCodes.OK
       }
@@ -46,7 +47,7 @@ class LegacyApiResourceSpec
           responseAs[List[QueueResponse]]
         }
 
-      queue.head.correlationId shouldBe MultiTargetUpdateId(mtuId.uuid)
+      queue.head.correlationId shouldBe MultiTargetUpdateCorrelationId(targetSpecId.uuid)
       queue.head.targets
         .get(regDev.primary.ecuSerial)
         .value
@@ -91,8 +92,8 @@ class LegacyApiResourceSpec
       status shouldBe StatusCodes.OK
       val devices = responseAs[PaginationResult[DeviceId]]
       devices.total shouldBe 1
-      devices.offset shouldBe 0
-      devices.limit shouldBe 50
+      devices.offset.toLong shouldBe 0L
+      devices.limit.toLong shouldBe 50L
       devices.values.loneElement shouldBe regDev.deviceId
     }
   }

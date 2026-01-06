@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
 import cats.syntax.either.*
 import cats.syntax.show.*
 import com.advancedtelematic.director.db.DeleteDeviceDBIO
@@ -11,7 +11,7 @@ import com.advancedtelematic.director.deviceregistry.data.{GroupExpression, Grou
 import com.advancedtelematic.director.util.{DirectorSpec, ResourceSpec}
 import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation, PaginationResult}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.SpanSugar.*
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*

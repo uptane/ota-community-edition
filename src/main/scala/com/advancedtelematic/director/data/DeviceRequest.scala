@@ -1,9 +1,8 @@
 package com.advancedtelematic.director.data
 
 import com.advancedtelematic.libats.data.DataType.CorrelationId
-import com.advancedtelematic.libats.messaging_datatype.DataType.InstallationResult
+import com.advancedtelematic.libats.messaging_datatype.DataType.{EcuIdentifier, InstallationResult}
 import io.circe.Json
-import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libtuf.data.TufDataType.SignedPayload
 
 object DeviceRequest {

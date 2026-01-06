@@ -1,26 +1,32 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.server.{Directives, Route}
+import org.apache.pekko.http.scaladsl.server.{Directives, Route}
 import com.advancedtelematic.director.data.DeviceRequest.DeviceManifest
-import com.advancedtelematic.director.db.{CompiledManifestExecutor, DirectorDbDebug}
+import com.advancedtelematic.director.db.{
+  CompiledManifestExecutor,
+  DeviceManifestRepositorySupport,
+  DirectorDbDebug
+}
 import com.advancedtelematic.director.manifest.ManifestCompiler
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.debug.DebugRoutes
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import slick.jdbc.MySQLProfile.api.*
 import com.advancedtelematic.director.data.Codecs.*
+import com.advancedtelematic.director.http.PaginationParametersDirectives.PaginationParameters
 
 import scala.concurrent.ExecutionContext
 
-class DirectorDebugResource()(implicit val db: Database, val ec: ExecutionContext) {
+class DirectorDebugResource()(implicit val db: Database, val ec: ExecutionContext)
+    extends DeviceManifestRepositorySupport {
 
   import com.advancedtelematic.libats.debug.DebugDatatype.*
-  import com.advancedtelematic.libats.http.UUIDKeyAkka.*
+  import com.advancedtelematic.libats.http.UUIDKeyPekko.*
 
   val debug = new DirectorDbDebug()
 
   import Directives.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   val route: Route = DebugRoutes.routes {
     Directives.concat(
@@ -31,17 +37,22 @@ class DirectorDebugResource()(implicit val db: Database, val ec: ExecutionContex
         val f = db.run(new CompiledManifestExecutor().findStateAction(deviceId))
         complete(f)
       },
-      (put & path("run-manifest" / DeviceId.Path) & entity(as[DeviceManifest])) {
-        (deviceId, manifest) =>
-          onSuccess(db.run(new CompiledManifestExecutor().findStateAction(deviceId))) {
-            currentState =>
-              complete(
-                ManifestCompiler(Namespace("notused"), manifest)
-                  .apply(currentState)
-                  .map(_.knownState)
-              )
-          }
-      }
+      (get & path("device-manifests" / DeviceId.Path) & PaginationParameters) {
+        (deviceId, offset, limit) =>
+          val f = deviceManifestRepository.findAll(deviceId, offset, limit).map(_.map(_._1))
+          complete(f)
+      } ~
+        (put & path("run-manifest" / DeviceId.Path) & entity(as[DeviceManifest])) {
+          (deviceId, manifest) =>
+            onSuccess(db.run(new CompiledManifestExecutor().findStateAction(deviceId))) {
+              currentState =>
+                complete(
+                  ManifestCompiler(Namespace("notused"), manifest)
+                    .apply(currentState)
+                    .map(_.knownState)
+                )
+            }
+        }
     )
   }
 

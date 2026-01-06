@@ -3,10 +3,9 @@ package com.advancedtelematic.director.db.deviceregistry
 import cats.syntax.either._
 import cats.syntax.option._
 import cats.syntax.show._
-import com.advancedtelematic.libats.data.DataType.{CampaignId, CorrelationId}
+import com.advancedtelematic.libats.data.DataType.CorrelationId
 import com.advancedtelematic.libats.messaging_datatype.DataType.{Event, EventType}
 import com.advancedtelematic.director.deviceregistry.data.DataType.{IndexedEvent, _}
-import java.util.UUID
 
 object EventIndex {
   type EventIndexResult = Either[String, IndexedEvent]
@@ -20,17 +19,6 @@ object EventIndex {
       .leftMap(err => s"Could not parse payload for event ${event.show}: $err")
       .map { correlationId =>
         IndexedEvent(event.deviceUuid, event.eventId, indexedEventType, correlationId.some)
-      }
-
-  private def parseEventOfTypeWithCampaignId(
-    event: Event,
-    indexedEventType: IndexedEventType.Value): EventIndexResult =
-    event.payload.hcursor
-      .downField("campaignId")
-      .as[UUID]
-      .leftMap(err => s"Could not parse payload for event ${event.show}: $err")
-      .map { campaignId =>
-        IndexedEvent(event.deviceUuid, event.eventId, indexedEventType, CampaignId(campaignId).some)
       }
 
   private def parseEventOfType(event: Event,
@@ -56,12 +44,6 @@ object EventIndex {
       parseEventOfTypeWithCorrelationId(event, IndexedEventType.DevicePaused)
     case EventType("DeviceResumed", 0) =>
       parseEventOfTypeWithCorrelationId(event, IndexedEventType.DeviceResumed)
-    case EventType("campaign_accepted", 0) =>
-      parseEventOfTypeWithCampaignId(event, IndexedEventType.CampaignAccepted)
-    case EventType("campaign_declined", 0) =>
-      parseEventOfTypeWithCampaignId(event, IndexedEventType.CampaignDeclined)
-    case EventType("campaign_postponed", 0) =>
-      parseEventOfTypeWithCampaignId(event, IndexedEventType.CampaignPostponed)
     case eventType =>
       s"Unknown event type $eventType".asLeft
   }

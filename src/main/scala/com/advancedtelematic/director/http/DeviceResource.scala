@@ -1,8 +1,8 @@
 package com.advancedtelematic.director.http
 
 import java.time.Instant
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{Directive, Directive0, Directive1, Route}
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.{Directive, Directive0, Directive1, Route}
 import cats.data.Validated.{Invalid, Valid}
 import cats.implicits.*
 import com.advancedtelematic.director.data.AdminDataType.RegisterDevice
@@ -15,7 +15,7 @@ import com.advancedtelematic.director.manifest.{DeviceManifestProcess, ManifestC
 import com.advancedtelematic.director.repo.{DeviceRoleGeneration, OfflineUpdates, RemoteSessions}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.ErrorRepresentation.*
-import com.advancedtelematic.libats.http.UUIDKeyAkka.*
+import com.advancedtelematic.libats.http.UUIDKeyPekko.*
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.messaging_datatype.Messages.{
@@ -28,7 +28,7 @@ import com.advancedtelematic.libtuf.data.TufCodecs.*
 import com.advancedtelematic.libtuf.data.TufDataType.{RoleType, SignedPayload}
 import com.advancedtelematic.libtuf_server.data.Marshalling.JsonRoleTypeMetaPath
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
 import slick.jdbc.MySQLProfile.api.*
 
@@ -39,7 +39,8 @@ import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient.RootRoleNot
 
 import scala.util.{Failure, Success}
 
-object DeviceResource {}
+object DeviceResource {
+}
 
 class DeviceResource(extractNamespace: Directive1[Namespace],
                      val keyserverClient: KeyserverClient,
@@ -55,7 +56,7 @@ class DeviceResource(extractNamespace: Directive1[Namespace],
     with AdminRolesRepositorySupport
     with RootFetching {
 
-  import akka.http.scaladsl.server.Directives.*
+  import org.apache.pekko.http.scaladsl.server.Directives.*
 
   val deviceRegistration = new DeviceRegistration(keyserverClient)
   val deviceManifestProcess = new DeviceManifestProcess()
@@ -126,7 +127,7 @@ class DeviceResource(extractNamespace: Directive1[Namespace],
           path(IntNumber ~ ".root.json") { version =>
             logDevice(ns, device) {
               onComplete(fetchRoot(ns, version.some)) {
-                case Success(root)             => complete(root)
+                case Success(root) => complete(root)
                 case Failure(RootRoleNotFound) =>
                   complete(RootRoleNotFound.responseCode -> RootRoleNotFound.toErrorRepr)
                 case Failure(ex) => failWith(ex)

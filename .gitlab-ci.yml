@@ -29,7 +29,7 @@ default:
         - --character-set-server=utf8
         - --collation-server=utf8_unicode_ci
         - --max_connections=1000
-    - name: docker:dind
+    - name: docker:28.5.0-dind
 
 include:
   - project: toradex/torizon-cloud/ci-container-build

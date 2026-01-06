@@ -1,8 +1,8 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.StatusCodes.*
-import akka.http.scaladsl.model.Uri.Query
+import org.apache.pekko.http.scaladsl.model.HttpRequest
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.model.Uri.Query
 import cats.syntax.option.*
 import com.advancedtelematic.director.data.Generators.GenHardwareIdentifier
 import com.advancedtelematic.director.db.deviceregistry.TaggedDeviceRepository
@@ -21,8 +21,9 @@ import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation, PaginationResult}
 import com.advancedtelematic.libats.http.HttpOps.HttpRequestOps
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
+
 
 trait SearchRequests {
   self: DirectorSpec & ResourceSpec & RegistryDeviceRequests =>
@@ -30,8 +31,8 @@ trait SearchRequests {
   def listDevices(sortBy: Option[DeviceSortBy] = None,
                   sortDirection: Option[SortDirection] = None): HttpRequest = {
     val m = (sortBy, sortDirection) match {
-      case (None, _)                   => Map.empty[String, String]
-      case (Some(sort), None)          => Map("sortBy" -> sort.toString)
+      case (None, _)          => Map.empty[String, String]
+      case (Some(sort), None) => Map("sortBy" -> sort.toString)
       case (Some(sort), Some(sortDir)) =>
         Map("sortBy" -> sort.toString, "sortDirection" -> sortDir.toString)
     }
@@ -129,18 +130,9 @@ class SearchResourceSpec
         DeviceRegistryResourceUri.uri("devices"),
         DevicesQuery(Some(deviceOemIds), None)
       ) ~> routes ~> check {
-        status shouldBe NotFound
-        val errResponse = responseAs[ErrorRepresentation]
-        errResponse.code shouldBe Codes.MissingDevice
-        errResponse.cause shouldBe defined
-        val errMap = errResponse.cause
-          .getOrElse(Json.fromString("{}"))
-          .as[Map[String, String]]
-          .getOrElse(Map.empty[String, String])
-        errMap.keys should contain("missingDeviceUuids")
-        errMap.keys should contain("missingOemIds")
-        errMap("missingOemIds") should not be empty
-        errMap("missingDeviceUuids") shouldBe empty
+        status shouldBe OK
+        val resp = responseAs[List[Device]]
+        resp.map(_.deviceId) shouldNot contain(DeviceOemId("not-real-deviceId"))
       }
     }
   }
@@ -160,18 +152,9 @@ class SearchResourceSpec
         DeviceRegistryResourceUri.uri("devices"),
         DevicesQuery(None, Some(deviceUuids))
       ) ~> routes ~> check {
-        status shouldBe NotFound
-        val errResponse = responseAs[ErrorRepresentation]
-        errResponse.code shouldBe Codes.MissingDevice
-        errResponse.cause shouldBe defined
-        val errMap = errResponse.cause
-          .getOrElse(Json.fromString("{}"))
-          .as[Map[String, String]]
-          .getOrElse(Map.empty[String, String])
-        errMap.keys should contain("missingDeviceUuids")
-        errMap.keys should contain("missingOemIds")
-        errMap("missingOemIds") shouldBe empty
-        errMap("missingDeviceUuids") should not be empty
+        status shouldBe OK
+        val resp = responseAs[List[Device]].map(_.deviceId)
+        resp.length shouldBe devices.length
       }
     }
   }
@@ -192,19 +175,10 @@ class SearchResourceSpec
         DeviceRegistryResourceUri.uri("devices"),
         DevicesQuery(Some(deviceOemIds), Some(deviceUuids))
       ) ~> routes ~> check {
-        status shouldBe NotFound
-        val errResponse = responseAs[ErrorRepresentation]
-        errResponse.code shouldBe Codes.MissingDevice
-        errResponse.cause shouldBe defined
-
-        val errMap = errResponse.cause
-          .getOrElse(Json.fromString("{}"))
-          .as[Map[String, String]]
-          .getOrElse(Map.empty[String, String])
-        errMap.keys should contain("missingDeviceUuids")
-        errMap.keys should contain("missingOemIds")
-        errMap("missingOemIds") should not be empty
-        errMap("missingDeviceUuids") should not be empty
+        status shouldBe OK
+        val resp = responseAs[List[Device]].map(_.deviceId)
+        resp.length shouldBe devices.length
+        resp shouldNot contain(DeviceOemId("not-real-deviceId"))
       }
     }
   }
@@ -496,6 +470,45 @@ class SearchResourceSpec
         responseDevices.length shouldBe devices.length
         responseDevices should contain theSameElementsAs devicesResponse
       }
+    }
+  }
+
+  test("can search by device tag") {
+    val ns = Namespace("search_tag_device")
+
+    val count = 3
+    val deviceTs = genConflictFreeDeviceTs(count).sample.get
+    val ids = deviceTs.map {
+      createDeviceInNamespaceOk(_, ns)
+    }
+
+    val first = deviceTs.head
+    val firstId = ids.head
+    val second = deviceTs(1)
+
+    val csvRows = Seq(
+      Seq(first.deviceId.underlying, "Germany", "Premium"),
+      Seq(second.deviceId.underlying, "China", "Deluxe")
+    )
+
+    postDeviceTags(csvRows, ns = ns) ~> routes ~> check {
+      status shouldBe NoContent
+    }
+
+    val query = Query("tags" -> "market=Germany,trim=pt/not-premium", "sortBy" -> "activatedAt")
+
+    Get(DeviceRegistryResourceUri.uri(api).withQuery(query)).withNs(ns) ~> routes ~> check {
+      status shouldBe OK
+      val result = responseAs[PaginationResult[Device]]
+
+      result.total shouldBe 1
+      result.values.length shouldBe 1
+
+      val firstIndex = result.values.indexWhere(_.uuid == firstId)
+      result.values(firstIndex).attributes shouldEqual Map(
+        TagId("market") -> "Germany",
+        TagId("trim") -> "Premium"
+      )
     }
   }
 

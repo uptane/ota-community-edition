@@ -16,9 +16,6 @@ import java.time.Instant
 
 object Schema {
 
-  protected[db] implicit val DeviceStatusColumnType: BaseColumnType[DeviceStatus.Value] =
-    MappedColumnType.base[DeviceStatus.Value, String](_.toString, DeviceStatus.withName)
-
   // scalastyle:off
   class DeviceTable(tag: Tag) extends Table[DeviceDB](tag, "Device") {
     def namespace = column[Namespace]("namespace")

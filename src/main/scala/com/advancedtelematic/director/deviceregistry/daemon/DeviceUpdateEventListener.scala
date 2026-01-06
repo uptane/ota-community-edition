@@ -1,7 +1,7 @@
 package com.advancedtelematic.director.deviceregistry.daemon
 
 import java.time.Instant
-import akka.http.scaladsl.util.FastFuture
+import org.apache.pekko.http.scaladsl.util.FastFuture
 import com.advancedtelematic.director.db.deviceregistry.{
   DeviceRepository,
   InstallationReportRepository
@@ -80,14 +80,16 @@ class DeviceUpdateEventListener(messageBus: MessageBusPublisher)(
 
   private def wasCompleted(deviceId: DeviceId, correlationId: CorrelationId): Future[Boolean] = {
     val existingReport =
-      db.run(InstallationReportRepository.fetchDeviceInstallationResultFor(deviceId, correlationId))
+      db.run(InstallationReportRepository.fetchDeviceInstallationResultByCorrelationId(deviceId, correlationId))
     existingReport.map(_.exists(_.success)) // if we handle success event - other should be ignored
   }
 
   private def handleEvent(event: DeviceUpdateEvent): Future[DeviceStatus] = event match {
-    case _: DeviceUpdateAssigned    => FastFuture.successful(DeviceStatus.Outdated)
-    case _: DeviceUpdateCanceled    => FastFuture.successful(DeviceStatus.UpToDate)
-    case _: DeviceUpdateInFlight    => FastFuture.successful(DeviceStatus.UpdatePending)
+    case msg: DeviceUpdateAssigned if msg.scheduledFor.isEmpty =>
+      FastFuture.successful(DeviceStatus.Outdated)
+    case _: DeviceUpdateAssigned => FastFuture.successful(DeviceStatus.UpdateScheduled)
+    case _: DeviceUpdateCanceled => FastFuture.successful(DeviceStatus.UpToDate)
+    case _: DeviceUpdateInFlight => FastFuture.successful(DeviceStatus.UpdatePending)
     case msg: DeviceUpdateCompleted =>
       db.run {
         InstallationReportRepository
@@ -98,7 +100,7 @@ class DeviceUpdateEventListener(messageBus: MessageBusPublisher)(
             msg.result.success,
             msg.ecuReports,
             msg.eventTime,
-            msg.asJson
+            msg.asJson // TODO: Should not be here. if we need data from here, provide it parsed
           )
           .map(_ => if (msg.result.success) DeviceStatus.UpToDate else DeviceStatus.Error)
       }

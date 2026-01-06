@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.util
 
-import akka.http.scaladsl.testkit.RouteTestTimeout
+import org.apache.pekko.http.scaladsl.testkit.RouteTestTimeout
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.time.{Millis, Seconds, Span}
 

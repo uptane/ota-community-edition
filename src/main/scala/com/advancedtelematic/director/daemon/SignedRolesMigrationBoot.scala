@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.daemon
 
-import akka.http.scaladsl.server.Directives
+import org.apache.pekko.http.scaladsl.server.Directives
 import com.advancedtelematic.director.db.SignedRoleMigration
 import com.advancedtelematic.director.{Settings, VersionInfo}
 import com.advancedtelematic.libats.http.{BootApp, BootAppDatabaseConfig, BootAppDefaultConfig}

@@ -10,8 +10,8 @@ import com.advancedtelematic.director.data.DeviceRequest.{
 }
 import com.advancedtelematic.director.db.EcuRepositorySupport
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
+import com.advancedtelematic.libats.messaging_datatype.DataType.EcuIdentifier
 import com.advancedtelematic.libtuf.data.TufDataType.{SignedPayload, TufKey}
 import io.circe.Decoder.Result
 import io.circe.{Decoder, Json}
@@ -33,6 +33,7 @@ object DeviceManifestProcess {
 
   def fromJsonV1(manifest: Json): Result[DeviceManifest] = {
     import com.advancedtelematic.libtuf.data.TufCodecs.signedPayloadDecoder
+    import com.advancedtelematic.libats.codecs.CirceRefined.*
     import cats.implicits._
 
     final case class DeviceManifestV1(primary_ecu_serial: EcuIdentifier,
@@ -101,7 +102,7 @@ class DeviceManifestProcess()(implicit val db: Database, val ec: ExecutionContex
     val verify = deviceManifest.ecu_version_manifests
       .map { case (ecuSerial, ecuManifest) =>
         deviceEcuKeys.get(ecuSerial) match {
-          case None      => Invalid(NonEmptyList.of(s"Device has no ECU with $ecuSerial"))
+          case None => Invalid(NonEmptyList.of(s"Device has no ECU with $ecuSerial"))
           case Some(key) =>
             if (ecuManifest.isValidFor(key))
               Valid(ecuManifest)

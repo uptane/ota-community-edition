@@ -8,7 +8,7 @@
 
 package com.advancedtelematic.director.db.deviceregistry
 
-import akka.Done
+import org.apache.pekko.Done
 import cats.data.State
 import cats.implicits._
 import com.advancedtelematic.director.http.deviceregistry.Errors

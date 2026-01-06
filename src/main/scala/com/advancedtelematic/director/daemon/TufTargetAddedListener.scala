@@ -1,24 +1,14 @@
 package com.advancedtelematic.director.daemon
 
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.util.FastFuture
-import com.advancedtelematic.director.data.DbDataType.{
-  Assignment,
-  AutoUpdateDefinition,
-  EcuTarget,
-  EcuTargetId
-}
-import com.advancedtelematic.director.db.{
-  AssignmentsRepositorySupport,
-  AutoUpdateDefinitionRepositorySupport,
-  EcuTargetsRepositorySupport,
-  ProvisionedDeviceRepositorySupport
-}
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.util.FastFuture
+import com.advancedtelematic.director.data.DbDataType.{Assignment, AutoUpdateDefinition, EcuTarget, EcuTargetId}
+import com.advancedtelematic.director.db.{AssignmentsRepositorySupport, AutoUpdateDefinitionRepositorySupport, EcuTargetsRepositorySupport, ProvisionedDeviceRepositorySupport}
 import com.advancedtelematic.libats.data.DataType.{AutoUpdateId, Namespace}
 import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libtuf_server.data.Messages.TufTargetAdded
 import org.slf4j.LoggerFactory
-import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.MySQLProfile.api.*
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}

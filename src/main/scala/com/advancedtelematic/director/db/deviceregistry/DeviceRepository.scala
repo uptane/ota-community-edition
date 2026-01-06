@@ -206,6 +206,18 @@ object DeviceRepository {
       .update(status)
       .handleSingleUpdateError(Errors.MissingDevice)
 
+  // updates device status if current status matches `currentStatus`
+  protected[db] def compareAndSetDeviceStatusAction(uuid: DeviceId,
+                                                    currentStatus: DeviceStatus,
+                                                    status: DeviceStatus)(
+    implicit ec: ExecutionContext): DBIO[Unit] =
+    devices
+      .filter(_.id === uuid)
+      .filter(_.deviceStatus === currentStatus)
+      .map(_.deviceStatus)
+      .update(status)
+      .map(_ => ())
+
   // Returns the previous hibernation status
   def setHibernationStatus(ns: Namespace, id: DeviceId, status: HibernationStatus)(
     implicit ec: ExecutionContext): DBIO[HibernationStatus] =

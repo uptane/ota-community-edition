@@ -8,9 +8,9 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.*
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.model.*
+import org.apache.pekko.http.scaladsl.model.Uri.Query
+import org.apache.pekko.http.scaladsl.server.Route
 import cats.instances.int.*
 import cats.instances.string.*
 import cats.syntax.option.*
@@ -35,14 +35,14 @@ import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace}
 import com.advancedtelematic.libats.http.HttpOps.*
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libtuf.data.TufDataType.HardwareIdentifier
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
 import org.scalatest.matchers.should.Matchers
 
 import java.time.{Instant, OffsetDateTime}
 
 // Default patience required here so the RouteTestTimeout implicit defined in DefaultPatience has priority over the
-// one defined by akka-testkit
+// one defined by pekko-testkit
 trait RegistryDeviceRequests { self: DefaultPatience & ResourceSpec & Matchers =>
 
   import StatusCodes.*
@@ -239,8 +239,8 @@ trait RegistryDeviceRequests { self: DefaultPatience & ResourceSpec & Matchers =
     Get(DeviceRegistryResourceUri.uri(api, deviceUuid.show, "events").withQuery(query))
   }
 
-  def getEventsV2(deviceUuid: DeviceId, updateId: Option[CorrelationId] = None): HttpRequest = {
-    val query = Query(updateId.map("updateId" -> _.toString).toMap)
+  def getEventsV2(deviceUuid: DeviceId, TargetSpecId: Option[CorrelationId] = None): HttpRequest = {
+    val query = Query(TargetSpecId.map("TargetSpecId" -> _.toString).toMap)
     Get(DeviceRegistryResourceUri.uriV2(api, deviceUuid.show, "events").withQuery(query))
   }
 
@@ -284,6 +284,10 @@ trait RegistryDeviceRequests { self: DefaultPatience & ResourceSpec & Matchers =
     require(tags.map(_.length == headers.length).reduce(_ && _))
 
     val csv = (headers +: tags).map(_.mkString(";")).mkString("\n")
+
+    println(csv)
+
+
     val multipartForm = Multipart.FormData(
       Multipart.FormData.BodyPart.Strict(
         "custom-device-fields",

@@ -1,8 +1,8 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.ContentType.WithFixedCharset
-import akka.http.scaladsl.model.HttpCharsets.`UTF-8`
-import akka.http.scaladsl.model.MediaType
+import org.apache.pekko.http.scaladsl.model.ContentType.WithFixedCharset
+import org.apache.pekko.http.scaladsl.model.HttpCharsets.`UTF-8`
+import org.apache.pekko.http.scaladsl.model.MediaType
 
 object TomlSupport {
 

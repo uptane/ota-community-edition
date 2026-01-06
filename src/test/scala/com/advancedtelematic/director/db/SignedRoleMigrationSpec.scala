@@ -1,7 +1,7 @@
 package com.advancedtelematic.director.db
 
 import java.util.UUID
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.advancedtelematic.director.util.DirectorSpec
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.test.MysqlDatabaseSpec

@@ -1,8 +1,8 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.{Directive1, Route}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
 import com.advancedtelematic.director.deviceregistry.data.Codecs.ObservationPublishResultCodec
 import com.advancedtelematic.director.deviceregistry.data.DataType.ObservationPublishResult
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -12,7 +12,7 @@ import com.advancedtelematic.libats.messaging_datatype.Messages.{
   deviceMetricsObservationMessageLike,
   DeviceMetricsObservation
 }
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.{Decoder, Json}
 import org.slf4j.LoggerFactory
 
@@ -40,7 +40,7 @@ class DeviceMonitoringResource(namespaceExtractor: Directive1[Namespace],
                                deviceNamespaceAuthorizer: Directive1[DataType.DeviceId],
                                messageBus: MessageBusPublisher)(implicit system: ActorSystem) {
 
-  import akka.http.scaladsl.server.Directives.*
+  import org.apache.pekko.http.scaladsl.server.Directives.*
   import system.dispatcher
 
   private lazy val log = LoggerFactory.getLogger(this.getClass)

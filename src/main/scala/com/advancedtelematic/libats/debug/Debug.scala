@@ -1,12 +1,12 @@
 package com.advancedtelematic.libats.debug
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.JavaUUID
-import akka.http.scaladsl.server.{PathMatcher1, Route}
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives.JavaUUID
+import org.apache.pekko.http.scaladsl.server.{PathMatcher1, Route}
 import cats.Show
 import cats.syntax.show.*
 import com.advancedtelematic.libats.data.DataType.Namespace
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.{Codec, Json}
 
 import scala.concurrent.Future
@@ -41,7 +41,7 @@ object DebugDatatype {
 object DebugRoutes {
 
   import DebugDatatype.*
-  import akka.http.scaladsl.server.Directives.*
+  import org.apache.pekko.http.scaladsl.server.Directives.*
 
   def buildNavigation(resourceGroup: ResourceGroup[?]*): Route =
     path("navigation.json") {

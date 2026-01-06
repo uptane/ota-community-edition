@@ -1,7 +1,7 @@
 package com.advancedtelematic.director
 
-import akka.event.Logging
-import akka.http.scaladsl.model.Uri
+import org.apache.pekko.event.Logging
+import org.apache.pekko.http.scaladsl.model.Uri
 import com.typesafe.config.ConfigFactory
 
 trait Settings {

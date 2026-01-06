@@ -1,12 +1,8 @@
 package com.advancedtelematic.director.db
 
-import akka.http.scaladsl.util.FastFuture
+import org.apache.pekko.http.scaladsl.util.FastFuture
 import cats.implicits.toShow
-import com.advancedtelematic.director.data.AdminDataType.{
-  EcuInfoImage,
-  EcuInfoResponse,
-  RegisterEcu
-}
+import com.advancedtelematic.director.data.AdminDataType.{EcuInfoImage, EcuInfoResponse, RegisterEcu}
 import com.advancedtelematic.director.data.UptaneDataType.Hashes
 import com.advancedtelematic.director.db.ProvisionedDeviceRepository.DeviceCreateResult
 import com.advancedtelematic.director.db.deviceregistry.{DeviceRepository, EcuReplacementRepository}
@@ -16,8 +12,7 @@ import com.advancedtelematic.director.http.Errors.AssignmentExistsError
 import com.advancedtelematic.director.http.deviceregistry.Errors.MissingDevice
 import com.advancedtelematic.director.repo.DeviceRoleGeneration
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier}
 import com.advancedtelematic.libtuf.data.TufDataType.RepoId
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
 import org.slf4j.LoggerFactory

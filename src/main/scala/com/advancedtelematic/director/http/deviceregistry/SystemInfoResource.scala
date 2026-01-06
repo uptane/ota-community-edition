@@ -8,12 +8,12 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.Done
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.StatusCodes.*
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.server.{Directive1, Route}
-import akka.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
+import org.apache.pekko.Done
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
+import org.apache.pekko.http.scaladsl.unmarshalling.{FromEntityUnmarshaller, Unmarshaller}
 import cats.syntax.option.*
 import com.advancedtelematic.director.db.deviceregistry.SystemInfoRepository
 import com.advancedtelematic.director.db.deviceregistry.SystemInfoRepository.NetworkInfo
@@ -21,7 +21,7 @@ import com.advancedtelematic.director.deviceregistry.SystemInfoUpdatePublisher
 import com.advancedtelematic.director.http.deviceregistry.Errors.{Codes, MissingSystemInfo}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.http.Errors.RawError
-import com.advancedtelematic.libats.http.UUIDKeyAkka.*
+import com.advancedtelematic.libats.http.UUIDKeyPekko.*
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.messaging_datatype.Messages.{
@@ -74,7 +74,7 @@ class SystemInfoResource(
   deviceNamespaceAuthorizer: Directive1[DeviceId])(implicit db: Database, ec: ExecutionContext) {
 
   import SystemInfoResource.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   private val systemInfoUpdatePublisher = new SystemInfoUpdatePublisher(messageBus)
 
@@ -83,7 +83,7 @@ class SystemInfoResource(
       .map { s =>
         parseAktualizrConfigToml(s) match {
           case scala.util.Success(aktualizrConfig) => aktualizrConfig
-          case scala.util.Failure(t)               =>
+          case scala.util.Failure(t) =>
             throw RawError(Codes.MalformedInput, StatusCodes.BadRequest, t.getMessage)
         }
       }

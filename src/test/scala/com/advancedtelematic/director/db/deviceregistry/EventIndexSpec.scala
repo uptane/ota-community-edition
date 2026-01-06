@@ -4,8 +4,18 @@ import cats.syntax.option.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.{IndexedEvent, IndexedEventType}
 import com.advancedtelematic.director.deviceregistry.data.GeneratorOps.*
 import com.advancedtelematic.director.util.DirectorSpec
-import com.advancedtelematic.libats.data.DataType.{CampaignId, CorrelationId, MultiTargetUpdateId}
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Event, EventType}
+import com.advancedtelematic.libats.data.DataType.{
+  CorrelationId,
+  MultiTargetUpdateCorrelationId,
+  TargetSpecCorrelationId
+}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{
+  DeviceId,
+  Event,
+  EventType,
+  ValidEcuIdentifier
+}
+import eu.timepit.refined.refineMV
 import io.circe.Json
 import io.circe.syntax.*
 import org.scalacheck.Gen
@@ -13,18 +23,30 @@ import org.scalatest.EitherValues.*
 
 import java.time.Instant
 import java.util.UUID
+import com.advancedtelematic.director.data.Generators.GenEcuIdentifier
 
 class EventIndexSpec extends DirectorSpec {
 
   val genCorrelationId: Gen[CorrelationId] =
-    Gen.uuid.flatMap(uuid => Gen.oneOf(CampaignId(uuid), MultiTargetUpdateId(uuid)))
+    Gen.uuid.flatMap(uuid =>
+      Gen.oneOf(TargetSpecCorrelationId(uuid), MultiTargetUpdateCorrelationId(uuid))
+    )
 
   val eventGen: Gen[Event] = for {
     device <- Gen.uuid.map(DeviceId.apply)
     eventId <- Gen.uuid.map(_.toString)
     eventType = EventType("", 0)
+    ecu <- Gen.option(GenEcuIdentifier)
     json = Json.obj()
-  } yield Event(device, eventId, eventType, Instant.now, Instant.now, json)
+  } yield Event(
+    device,
+    eventId,
+    eventType,
+    Instant.now,
+    Instant.now,
+    ecu,
+    json
+  )
 
   val downloadCompleteEventGen: Gen[Event] =
     eventGen.map(_.copy(eventType = EventType("DownloadComplete", 0)))
@@ -55,25 +77,6 @@ class EventIndexSpec extends DirectorSpec {
 
     eventTypeMap.foreach { case (eventType, indexedEventType) =>
       val (event, correlationId) = eventWithCorrelationIdGen(eventType).generate
-      val indexedEvent = EventIndex.index(event).value
-      indexedEvent shouldBe IndexedEvent(
-        event.deviceUuid,
-        event.eventId,
-        indexedEventType,
-        correlationId.some
-      )
-    }
-  }
-
-  test("indexes an event with campaign ID by type") {
-    val eventTypeMap = Map(
-      EventType("campaign_accepted", 0) -> IndexedEventType.CampaignAccepted,
-      EventType("campaign_declined", 0) -> IndexedEventType.CampaignDeclined,
-      EventType("campaign_postponed", 0) -> IndexedEventType.CampaignPostponed
-    )
-    eventTypeMap.foreach { case (eventType, indexedEventType) =>
-      val (event, campaignId) = eventWithCampaignIdGen(eventType).generate
-      val correlationId = CampaignId(campaignId)
       val indexedEvent = EventIndex.index(event).value
       indexedEvent shouldBe IndexedEvent(
         event.deviceUuid,

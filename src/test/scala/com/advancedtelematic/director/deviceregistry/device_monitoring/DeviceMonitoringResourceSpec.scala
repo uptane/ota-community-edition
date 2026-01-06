@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.deviceregistry.device_monitoring
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import cats.syntax.show.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.ObservationPublishResult
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators
@@ -13,7 +13,7 @@ import com.advancedtelematic.libats.messaging.test.MockMessageBus
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId.*
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceMetricsObservation
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import org.scalatest.EitherValues.*
 import org.scalatest.OptionValues.*
 import org.scalatest.time.{Seconds, Span}
@@ -132,10 +132,7 @@ object TestPayloads {
 
 }
 
-class DeviceMonitoringResourceSpec
-    extends DirectorSpec
-    with ResourceSpec
-    with RegistryDeviceRequests {
+class DeviceMonitoringResourceSpec extends DirectorSpec with ResourceSpec with RegistryDeviceRequests {
 
   import DeviceGenerators.*
   import com.advancedtelematic.director.deviceregistry.data.GeneratorOps.*

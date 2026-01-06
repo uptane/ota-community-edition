@@ -1,17 +1,16 @@
 package com.advancedtelematic.director.db
 
-import com.advancedtelematic.director.data.DataType.ScheduledUpdate.Status
+import com.advancedtelematic.director.data.DataType.Update.Status
 import com.advancedtelematic.director.data.DbDataType.{Device, DeviceKnownState, EcuTargetId}
 import com.advancedtelematic.director.manifest.ManifestCompiler.ManifestCompileResult
-import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.http.Errors.MissingEntity
-import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import com.advancedtelematic.libats.slick.db.SlickAnyVal.*
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier}
 import com.advancedtelematic.libats.slick.db.SlickUUIDKey.*
-import SlickMapping.scheduledUpdatesMapper
+import SlickMapping.updateStatusMapper
 import org.slf4j.LoggerFactory
 import slick.jdbc.MySQLProfile.api.*
 import slick.jdbc.TransactionIsolation
+import com.advancedtelematic.libats.slick.codecs.SlickRefined.*
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -33,12 +32,12 @@ class CompiledManifestExecutor()(implicit val db: Database, val ec: ExecutionCon
         .filter(_.id === deviceId)
         .result
         .failIfNotSingle(MissingEntity[Device]())
-      scheduledUpdates <- Schema.scheduledUpdates
+      updates <- Schema.updates
         .filter(_.deviceId === deviceId)
         .filterNot(_.status.inSet(Set(Status.Completed, Status.Cancelled)))
         .result
       hardwareUpdatesEcuTargetIds <- Schema.hardwareUpdates
-        .filter(_.id.inSet(scheduledUpdates.map(_.updateId).toSet))
+        .filter(_.id.inSet(updates.map(_.targetSpecId).toSet))
         .map(t => t.id -> t.toTarget)
         .result
       ecuTargetIds = ecuStatus.flatMap(_._2) ++ assignments.map(
@@ -52,7 +51,7 @@ class CompiledManifestExecutor()(implicit val db: Database, val ec: ExecutionCon
       ecuTargets.toMap,
       assignments.toSet,
       processed.toSet,
-      scheduledUpdates.toSet,
+      updates.toSet,
       hardwareUpdatesEcuTargetIds.groupBy(_._1).view.mapValues(_.map(_._2)).toMap,
       device.generatedMetadataOutdated
     )
@@ -90,7 +89,7 @@ class CompiledManifestExecutor()(implicit val db: Database, val ec: ExecutionCon
           .filter(_.ecuId.inSet(assignmentsToDelete))
           .delete
 
-    val newScheduledUpdates = newStatus.scheduledUpdates -- oldStatus.scheduledUpdates
+    val newUpdates = newStatus.updates -- oldStatus.updates
 
     for {
       _ <- DBIO.sequence(newEcuTargets.values.map(Schema.ecuTargets.insertOrUpdate))
@@ -100,7 +99,7 @@ class CompiledManifestExecutor()(implicit val db: Database, val ec: ExecutionCon
       _ <- deleteAssignmentsIO
       _ <- DBIO.sequence(newProcessedAssignments.map(Schema.processedAssignments += _).toList)
       _ <- updateMetadataOutdatedFlagAction(deviceId, oldStatus, newStatus)
-      _ <- DBIO.sequence(newScheduledUpdates.map(Schema.scheduledUpdates.insertOrUpdate).toList)
+      _ <- DBIO.sequence(newUpdates.map(Schema.updates.insertOrUpdate).toList)
     } yield ()
   }
 

@@ -1,11 +1,11 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import cats.syntax.show.*
 import com.advancedtelematic.director.util.{DirectorSpec, RepositorySpec, ResourceSpec}
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
 import com.advancedtelematic.libtuf.data.TufDataType.TargetName
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
 class AutoUpdateResourceSpec
     extends DirectorSpec

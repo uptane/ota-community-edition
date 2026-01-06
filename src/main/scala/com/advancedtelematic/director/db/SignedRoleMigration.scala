@@ -4,10 +4,10 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 
-import akka.http.scaladsl.util.FastFuture
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Sink, Source}
-import akka.{Done, NotUsed}
+import org.apache.pekko.http.scaladsl.util.FastFuture
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Flow, Sink, Source}
+import org.apache.pekko.{Done, NotUsed}
 import com.advancedtelematic.libats.codecs.CirceCodecs.checkSumCodec
 import com.advancedtelematic.libats.data.DataType.Checksum
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId

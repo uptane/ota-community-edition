@@ -10,12 +10,9 @@ package com.advancedtelematic.director.db.deviceregistry
 
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.slick.codecs.{SlickEnumMapper, SlickEnumeratum}
-import com.advancedtelematic.director.deviceregistry.data.DataType.{
-  IndexedEventType,
-  MqttStatus,
-  PackageListItemCount
-}
-import com.advancedtelematic.director.deviceregistry.data.{CredentialsType, GroupType, PackageId}
+import com.advancedtelematic.director.deviceregistry.data.DataType.{IndexedEventType, MqttStatus, PackageListItemCount}
+import com.advancedtelematic.director.deviceregistry.data.Device.DeviceType
+import com.advancedtelematic.director.deviceregistry.data.{CredentialsType, DeviceStatus, GroupType, PackageId}
 import slick.jdbc.MySQLProfile.api.*
 
 object SlickMappings {
@@ -53,4 +50,13 @@ object SlickMappings {
   implicit val mqttStatusMapper: BaseColumnType[MqttStatus] =
     SlickEnumeratum.enumeratumMapper(MqttStatus)
 
+  implicit val deviceStatusColumnType: BaseColumnType[DeviceStatus.Value] =
+    MappedColumnType.base[DeviceStatus.Value, String](_.toString, DeviceStatus.withName)
+
+  // TODO: We should encode Enums as strings, not Ints
+  // Moved this from SlickEnum, because this should **NOT** be used
+  // It's difficult to read this when reading from the database and the Id is not stable when we add/remove
+  // values from the enum
+  implicit val deviceTypeMaper: slick.jdbc.MySQLProfile.BaseColumnType[DeviceType.Value] =
+    MappedColumnType.base[DeviceType.Value, Int](_.id, DeviceType.apply)
 }

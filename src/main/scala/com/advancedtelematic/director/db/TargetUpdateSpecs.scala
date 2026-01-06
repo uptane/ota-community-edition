@@ -1,28 +1,34 @@
 package com.advancedtelematic.director.db
 
 import com.advancedtelematic.director.data.AdminDataType.{
-  MultiTargetUpdate,
   TargetUpdate,
-  TargetUpdateRequest
+  TargetUpdateRequest,
+  TargetUpdateSpec
 }
+import com.advancedtelematic.director.data.DataType.TargetSpecId
 import com.advancedtelematic.director.data.DbDataType.{EcuTarget, EcuTargetId, HardwareUpdate}
+import com.advancedtelematic.director.http.Errors.InvalidMtu
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateId
 import com.advancedtelematic.libtuf.data.TufDataType.HardwareIdentifier
-import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class MultiTargetUpdates(implicit val db: Database, val ec: ExecutionContext)
+class TargetUpdateSpecs(implicit val db: Database, val ec: ExecutionContext)
     extends HardwareUpdateRepositorySupport
     with EcuTargetsRepositorySupport {
 
-  def create(ns: Namespace, multiTargetUpdate: MultiTargetUpdate): Future[UpdateId] = {
-    require(multiTargetUpdate.targets.nonEmpty, "multiTargetUpdate.targets cannot be empty")
+  def create(ns: Namespace, targetUpdateSpec: TargetUpdateSpec): Future[TargetSpecId] =
+    db.run(createAction(ns, targetUpdateSpec).transactionally)
 
-    val updateId = UpdateId.generate()
+  protected[db] def createAction(ns: Namespace,
+                                 targetUpdateSpec: TargetUpdateSpec): DBIO[TargetSpecId] = {
+    if (targetUpdateSpec.targets.isEmpty)
+      throw InvalidMtu("multiTargetUpdate.targets cannot be empty")
 
-    val hardwareUpdates = multiTargetUpdate.targets.map { case (hwId, targetUpdateReq) =>
+    val targetSpecId = TargetSpecId.generate()
+
+    val hardwareUpdates = targetUpdateSpec.targets.map { case (hwId, targetUpdateReq) =>
       val toId = EcuTargetId.generate()
 
       val t = targetUpdateReq.to
@@ -55,17 +61,17 @@ class MultiTargetUpdates(implicit val db: Database, val ec: ExecutionContext)
         _ <- from.map(ecuTargetsRepository.persistAction).getOrElse(DBIO.successful(()))
         _ <- ecuTargetsRepository.persistAction(to)
         _ <- hardwareUpdateRepository.persistAction(
-          HardwareUpdate(ns, updateId, hwId, from.map(_.id), to.id)
+          HardwareUpdate(ns, targetSpecId, hwId, from.map(_.id), to.id)
         )
       } yield ()
     }.toVector
 
-    db.run(DBIO.sequence(hardwareUpdates).transactionally).map(_ => updateId)
+    DBIO.sequence(hardwareUpdates).map(_ => targetSpecId)
   }
 
-  def find(ns: Namespace, updateId: UpdateId): Future[MultiTargetUpdate] =
+  def find(ns: Namespace, TargetSpecId: TargetSpecId): Future[TargetUpdateSpec] =
     hardwareUpdateRepository
-      .findUpdateTargets(ns, updateId)
+      .findUpdateTargets(ns, TargetSpecId)
       .map { hardwareUpdates =>
         hardwareUpdates.foldLeft(Map.empty[HardwareIdentifier, TargetUpdateRequest]) {
           case (acc, (hu, fromO, toU)) =>
@@ -79,6 +85,6 @@ class MultiTargetUpdates(implicit val db: Database, val ec: ExecutionContext)
             acc + (hu.hardwareId -> TargetUpdateRequest(from, to))
         }
       }
-      .map(targets => MultiTargetUpdate(targets))
+      .map(targets => TargetUpdateSpec(targets))
 
 }

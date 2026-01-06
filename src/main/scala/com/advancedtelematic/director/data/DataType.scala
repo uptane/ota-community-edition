@@ -3,47 +3,25 @@ package com.advancedtelematic.director.data
 import java.security.PublicKey
 import java.time.{Duration, Instant}
 import java.util.UUID
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.server.PathMatcher
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.server.PathMatcher
 import cats.implicits.*
-import com.advancedtelematic.director.data.DataType.{AdminRoleName, ScheduledUpdate}
-import com.advancedtelematic.director.data.DataType.ScheduledUpdate.Status
+import com.advancedtelematic.director.data.DataType.{AdminRoleName, TargetSpecId, Update}
 import com.advancedtelematic.director.data.DbDataType.Ecu
 import com.advancedtelematic.director.data.UptaneDataType.{Hashes, TargetImage}
-import com.advancedtelematic.libats.data.DataType.{
-  Checksum,
-  CorrelationId,
-  HashMethod,
-  Namespace,
-  ValidChecksum
-}
+import com.advancedtelematic.director.deviceregistry.data.DataType.UpdateTagValue
+import com.advancedtelematic.director.deviceregistry.data.TagId
+import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, HashMethod, Namespace, UpdateCorrelationId, ValidChecksum}
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj, UuidKeyObjTimeBased}
-import com.advancedtelematic.libats.data.{EcuIdentifier, PaginationResult}
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
+import com.advancedtelematic.libats.data.PaginationResult
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier}
 import com.advancedtelematic.libats.messaging_datatype.MessageLike
 import com.advancedtelematic.libats.messaging_datatype.Messages.EcuAndHardwareId
 import com.advancedtelematic.libtuf.crypt.CanonicalJson.*
-import com.advancedtelematic.libtuf.data.ClientDataType.{
-  ClientHashes,
-  MetaPath,
-  TufRole,
-  ValidMetaPath
-}
+import com.advancedtelematic.libtuf.data.ClientDataType.{ClientHashes, MetaPath, TufRole, ValidMetaPath}
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
-import com.advancedtelematic.libtuf.data.TufDataType.{
-  HardwareIdentifier,
-  JsonSignedPayload,
-  KeyType,
-  RepoId,
-  SignedPayload,
-  TargetFilename,
-  TargetName,
-  TufKey
-}
-import com.advancedtelematic.libtuf.data.ValidatedString.{
-  ValidatedString,
-  ValidatedStringValidation
-}
+import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, KeyType, RepoId, SignedPayload, TargetFilename, TargetName, TufKey}
+import com.advancedtelematic.libtuf.data.ValidatedString.{ValidatedString, ValidatedStringValidation}
 import com.advancedtelematic.libtuf_server.crypto.Sha256Digest
 import com.advancedtelematic.libtuf_server.repo.server.DataType.SignedRole
 import eu.timepit.refined.api.Refined
@@ -51,6 +29,11 @@ import io.circe.Json
 import com.advancedtelematic.libats.data.RefinedUtils.*
 import com.advancedtelematic.libtuf.data.TufCodecs
 import enumeratum.EnumEntry.Camelcase
+import eu.timepit.refined.boolean.And
+import eu.timepit.refined.collection.{NonEmpty, Size}
+import eu.timepit.refined.generic.Equal
+import eu.timepit.refined.refineV
+import eu.timepit.refined.string.{HexStringSpec, MatchesRegex}
 
 import scala.annotation.nowarn
 
@@ -64,15 +47,18 @@ object DbDataType {
                                         ecuId: EcuIdentifier,
                                         targetName: TargetName)
 
-  final case class DeviceKnownState(deviceId: DeviceId,
-                                    primaryEcu: EcuIdentifier,
-                                    ecuStatus: Map[EcuIdentifier, Option[EcuTargetId]],
-                                    ecuTargets: Map[EcuTargetId, EcuTarget],
-                                    currentAssignments: Set[Assignment],
-                                    processedAssignments: Set[ProcessedAssignment],
-                                    scheduledUpdates: Set[ScheduledUpdate],
-                                    scheduledUpdatesEcuTargetIds: Map[UpdateId, Seq[EcuTargetId]],
-                                    generatedMetadataOutdated: Boolean)
+  final case class DeviceKnownState(
+                                     deviceId: DeviceId,
+                                     primaryEcu: EcuIdentifier,
+                                     ecuStatus: Map[EcuIdentifier, Option[EcuTargetId]],
+                                     ecuTargets: Map[EcuTargetId, EcuTarget],
+                                     currentAssignments: Set[Assignment],
+                                     processedAssignments: Set[ProcessedAssignment],
+                                     //    scheduledUpdates: Set[ScheduledUpdate],
+                                     //    scheduledUpdatesEcuTargetIds: Map[TargetSpecId, Seq[EcuTargetId]],
+                                     updates: Set[Update],
+                                     updatesTargetIds: Map[TargetSpecId, Seq[EcuTargetId]],
+                                     generatedMetadataOutdated: Boolean)
 
   final case class Device(ns: Namespace,
                           id: DeviceId,
@@ -158,7 +144,7 @@ object DbDataType {
   }
 
   final case class HardwareUpdate(namespace: Namespace,
-                                  id: UpdateId,
+                                  id: TargetSpecId,
                                   hardwareId: HardwareIdentifier,
                                   fromTarget: Option[EcuTargetId],
                                   toTarget: EcuTargetId)
@@ -216,6 +202,9 @@ object DbDataType {
                                  canceled: Boolean)
 
   type SHA256Checksum = Refined[String, ValidChecksum]
+
+  type ValidMurmurHash3Checksum = HexStringSpec And Size[Equal[8]]
+  type MurmurHash3Checksum = Refined[String, ValidMurmurHash3Checksum]
 }
 
 object AdminDataType {
@@ -234,7 +223,7 @@ object AdminDataType {
                                 uri: Option[Uri],
                                 userDefinedCustom: Option[Json])
 
-  final case class MultiTargetUpdate(targets: Map[HardwareIdentifier, TargetUpdateRequest])
+  final case class TargetUpdateSpec(targets: Map[HardwareIdentifier, TargetUpdateRequest])
 
   final case class RegisterEcu(ecu_serial: EcuIdentifier,
                                hardware_identifier: HardwareIdentifier,
@@ -253,7 +242,7 @@ object AdminDataType {
 
   final case class AssignUpdateRequest(correlationId: CorrelationId,
                                        devices: Seq[DeviceId],
-                                       mtuId: UpdateId,
+                                       mtuId: TargetSpecId, // mtuId for legacy compatibility
                                        dryRun: Option[Boolean] = None)
 
   final case class QueueResponse(correlationId: CorrelationId,
@@ -309,6 +298,8 @@ object Messages {
 }
 
 object DataType {
+  import enumeratum.*
+  
   final case class TargetItemCustomEcuData(hardwareId: HardwareIdentifier)
 
   final case class TargetItemCustom(uri: Option[Uri],
@@ -344,16 +335,24 @@ object DataType {
 
   }
 
-  case class ScheduledUpdate(ns: Namespace,
-                             id: ScheduledUpdateId,
-                             deviceId: DeviceId,
-                             updateId: UpdateId,
-                             scheduledAt: Instant,
-                             status: Status)
+  case class UpdateId(uuid: UUID) extends UUIDKey {
+    def toCorrelationId: UpdateCorrelationId = UpdateCorrelationId(uuid)
+  }
 
-  object ScheduledUpdate {
+  object UpdateId extends UuidKeyObjTimeBased[UpdateId]
 
-    import enumeratum.*
+  case class Update(ns: Namespace,
+                    id: UpdateId,
+                    deviceId: DeviceId,
+                    correlationId: CorrelationId,
+                    targetSpecId: TargetSpecId,
+                    createdAt: Instant,
+                    scheduledFor: Option[Instant],
+                    status: Update.Status,
+                    completedAt: Option[Instant] = None,
+                   )
+
+  object Update {
 
     sealed trait Status extends EnumEntry with Camelcase
 
@@ -364,20 +363,20 @@ object DataType {
 
       case object Assigned extends Status
 
-      case object Completed extends Status
+      case object Seen extends Status
 
       case object PartiallyCompleted extends Status
 
       case object Cancelled extends Status
+
+      case object Completed extends Status
     }
 
   }
 
-  trait StatusInfo
+  case class TargetSpecId(uuid: UUID) extends UUIDKey
 
-  case class ScheduledUpdateId(uuid: UUID) extends UUIDKey
-
-  object ScheduledUpdateId extends UuidKeyObjTimeBased[ScheduledUpdateId]
+  object TargetSpecId extends UuidKeyObjTimeBased[TargetSpecId]
 }
 
 object ClientDataType {
@@ -437,7 +436,17 @@ object ClientDataType {
   case class DevicesCurrentTarget(values: Map[DeviceId, Seq[EcuTarget]])
 
   case class CreateScheduledUpdateRequest(device: DeviceId,
-                                          updateId: UpdateId,
-                                          scheduledAt: Instant)
+                                          TargetSpecId: TargetSpecId,
+                                          scheduledFor: Instant)
 
+  type ValidTagSearchParam = MatchesRegex["[\\w\\-_]{1,20}+=[\\w\\-_/ ]{1,254}"]
+  type TagSearchParam = Refined[String, ValidTagSearchParam]
+
+  implicit class TagSearchOps(value: TagSearchParam) {
+    // (0) safe because Refined checks Regex
+    def tagId: TagId = TagId(value.value.split("=")(0))
+
+    // (1) safe because Refined checks Regex
+    def tagValue: String = value.value.split("=")(1)
+  }
 }

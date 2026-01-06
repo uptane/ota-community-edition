@@ -1,7 +1,7 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.StatusCodes.{Created, NoContent, NotFound, OK}
+import org.apache.pekko.http.scaladsl.model.HttpRequest
+import org.apache.pekko.http.scaladsl.model.StatusCodes.{Created, NoContent, NotFound, OK}
 import cats.syntax.show.*
 import com.advancedtelematic.director.deviceregistry.data.Codecs.{
   packageListItemCodec,
@@ -17,16 +17,13 @@ import com.advancedtelematic.director.deviceregistry.data.PackageId
 import com.advancedtelematic.director.http.deviceregistry.DeviceRegistryResourceUri.uri
 import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import org.scalacheck.{Arbitrary, Gen}
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*
 import com.advancedtelematic.director.deviceregistry.data.PackageIdGenerators.*
 import com.advancedtelematic.director.util.DirectorSpec
 
-class PackageListsResourceSpec
-    extends DirectorSpec
-    with ResourcePropSpec
-    with RegistryDeviceRequests {
+class PackageListsResourceSpec extends DirectorSpec with ResourcePropSpec with RegistryDeviceRequests {
 
   private val genNonConflictingDeviceTs = Gen.choose(0, 20).flatMap(genConflictFreeDeviceTs)
 

@@ -1,28 +1,18 @@
 package com.advancedtelematic.director.db
 
-import akka.http.scaladsl.model.Uri
-import com.advancedtelematic.director.data.DataType.{
-  AdminRoleName,
-  ScheduledUpdate,
-  ScheduledUpdateId
-}
+import org.apache.pekko.http.scaladsl.model.Uri
+import com.advancedtelematic.director.data.DataType.{AdminRoleName, TargetSpecId, Update, UpdateId}
 import com.advancedtelematic.director.data.DbDataType.*
 import com.advancedtelematic.libats.data.DataType.{Checksum, CorrelationId, Namespace}
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier}
 import com.advancedtelematic.libats.slick.db.SlickCirceMapper.jsonMapper
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
-import com.advancedtelematic.libtuf.data.TufDataType.{
-  HardwareIdentifier,
-  JsonSignedPayload,
-  RepoId,
-  TargetFilename,
-  TargetName,
-  TufKey
-}
+import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, RepoId, TargetFilename, TargetName, TufKey}
 import io.circe.Json
 import slick.jdbc.MySQLProfile.api.*
 import SlickMapping.*
+import com.advancedtelematic.libats.slick.codecs.SlickRefined
+import eu.timepit.refined.string.HexStringSpec
 
 import java.time.Instant
 
@@ -199,7 +189,7 @@ object Schema {
 
   class HardwareUpdatesTable(tag: Tag) extends Table[HardwareUpdate](tag, "hardware_updates") {
     def namespace = column[Namespace]("namespace")
-    def id = column[UpdateId]("id")
+    def id = column[TargetSpecId]("id")
     def hardwareId = column[HardwareIdentifier]("hardware_identifier")
     def toTarget = column[EcuTargetId]("to_target_id")
     def fromTarget = column[Option[EcuTargetId]]("from_target_id")
@@ -242,40 +232,49 @@ object Schema {
   protected[db] val autoUpdates = TableQuery[AutoUpdateDefinitionTable]
 
   class DeviceManifestsTable(tag: Tag)
-      extends Table[(DeviceId, Json, SHA256Checksum, Instant)](tag, "device_manifests") {
+      extends Table[(DeviceId, Json, MurmurHash3Checksum, Instant)](tag, "device_manifests") {
     def deviceId = column[DeviceId]("device_id")
     def targetName = column[TargetName]("target_name")
     def receivedAt = column[Instant]("received_at")(javaInstantMapping)
-    def sha256 = column[SHA256Checksum]("sha256")
+    def checksum = column[MurmurHash3Checksum]("checksum")
     def manifest = column[Json]("manifest")
 
-    def pk = primaryKey("device-manifests-pk", (deviceId, sha256))
+    def pk = primaryKey("device-manifests-pk", (deviceId, checksum))
 
-    override def * = (deviceId, manifest, sha256, receivedAt)
+    override def * = (deviceId, manifest, checksum, receivedAt)
   }
 
   protected[db] val deviceManifests = TableQuery[DeviceManifestsTable]
 
-  class ScheduledUpdatesTable(tag: Tag) extends Table[ScheduledUpdate](tag, "scheduled_updates") {
+  class UpdatesTable(tag: Tag) extends Table[Update](tag, "updates") {
     def namespace = column[Namespace]("namespace")
-    def id = column[ScheduledUpdateId]("id")
+    def id = column[UpdateId]("id")
     def deviceId = column[DeviceId]("device_id")
-    def updateId = column[UpdateId]("hardware_update_id")
-    def scheduledAt = column[Instant]("scheduled_at")(javaInstantMapping)
-    def status = column[ScheduledUpdate.Status]("status")
+    def correlationId = column[CorrelationId]("correlation_id")
+    def targetSpecId = column[TargetSpecId]("hardware_update_id")
+    def scheduledFor = column[Option[Instant]]("scheduled_for")(javaInstantMapping.optionType)
+    def status = column[Update.Status]("status")
     def statusInfo = column[Option[Json]]("status_info")
-
+    def completedAt = column[Option[Instant]]("completed_at")(javaInstantMapping.optionType)
     def createdAt = column[Instant]("created_at")(javaInstantMapping)
-    def updatedAt = column[Instant]("updated_at")(javaInstantMapping)
 
-    def pk = primaryKey("scheduled-updates-pk", id)
+    def pk = primaryKey("updates-pk", id -> deviceId)
 
-    override def * = (namespace, id, deviceId, updateId, scheduledAt, status) <> (
-      (ScheduledUpdate.apply _).tupled,
-      ScheduledUpdate.unapply
-    )
+    override def * =
+      (
+        namespace,
+        id,
+        deviceId,
+        correlationId,
+        targetSpecId,
+        createdAt,
+        scheduledFor,
+        status,
+        completedAt
+      ) <> ((Update.apply _).tupled, Update.unapply)
 
   }
 
-  protected[db] val scheduledUpdates = TableQuery[ScheduledUpdatesTable]
+  protected[db] val updates = TableQuery[UpdatesTable]
+
 }

@@ -1,9 +1,9 @@
 package com.advancedtelematic.director.daemon
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.Directives
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.Http.ServerBinding
+import org.apache.pekko.http.scaladsl.server.Directives
 import com.advancedtelematic.director.{Settings, VersionInfo}
 import com.advancedtelematic.libats.http.{BootApp, BootAppDatabaseConfig, BootAppDefaultConfig}
 import com.advancedtelematic.libats.messaging.{
@@ -67,6 +67,8 @@ class DirectorDaemonBoot(override val globalConfig: Config,
     startMonitoredListener[DeviceEventMessage](new DeviceEventListener)
     startMonitoredListener[DeviceUpdateEvent](new DeviceUpdateEventListener(messageBus))
     startMonitoredListener[DeviceMqttLifecycle](new MqttLifecycleListener)
+
+    new DeviceManifestReportedListener(globalConfig).start()
 
     val routes = versionHeaders(version) {
       prometheusMetricsRoutes ~

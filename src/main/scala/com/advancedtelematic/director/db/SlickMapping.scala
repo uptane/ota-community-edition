@@ -2,15 +2,12 @@ package com.advancedtelematic.director.db
 
 import com.advancedtelematic.director.data.AdminDataType.TargetUpdate
 import com.advancedtelematic.director.data.Codecs.*
-import com.advancedtelematic.director.data.DataType.{AdminRoleName, ScheduledUpdate}
+import com.advancedtelematic.director.data.DataType.{AdminRoleName, Update}
 import com.advancedtelematic.libats.data.DataType.HashMethod
 import com.advancedtelematic.libats.data.DataType.HashMethod.HashMethod
 import com.advancedtelematic.libats.slick.codecs.SlickEnumeratum.enumeratumMapper
 import com.advancedtelematic.libats.slick.db.SlickCirceMapper
-import com.advancedtelematic.libtuf.data.ValidatedString.{
-  ValidatedString,
-  ValidatedStringValidation
-}
+import com.advancedtelematic.libtuf.data.ValidatedString.{ValidatedString, ValidatedStringValidation}
 import slick.jdbc.MySQLProfile.api.*
 
 import java.time.Instant
@@ -40,9 +37,7 @@ object SlickMapping {
   implicit val adminRoleNameMapper: BaseColumnType[AdminRoleName] =
     validatedStringMapper[AdminRoleName]
 
-  implicit val scheduledUpdatesMapper: BaseColumnType[ScheduledUpdate.Status] = enumeratumMapper(
-    ScheduledUpdate.Status
-  )
+  implicit val updateStatusMapper: BaseColumnType[Update.Status] = enumeratumMapper(Update.Status)
 
   implicit def instantOrdering: Ordering[Instant] = Ordering.fromLessThan(_ isBefore _)
 }

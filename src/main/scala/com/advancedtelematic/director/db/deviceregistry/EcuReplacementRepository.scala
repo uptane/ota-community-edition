@@ -1,30 +1,26 @@
 package com.advancedtelematic.director.db.deviceregistry
 
+import com.advancedtelematic.libats.data.PaginationResult.*
 import java.time.Instant
-
-import cats.instances.option._
-import cats.syntax.apply._
-import cats.syntax.option._
+import cats.instances.option.*
+import cats.syntax.apply.*
+import cats.syntax.option.*
 import com.advancedtelematic.director.http.deviceregistry.Errors
-import com.advancedtelematic.libats.data.{EcuIdentifier, PaginationResult}
-import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
+import com.advancedtelematic.libats.data.PaginationResult
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier}
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs.ecuReplacementCodec
-import com.advancedtelematic.libats.messaging_datatype.Messages.{
-  EcuAndHardwareId,
-  EcuReplaced,
-  EcuReplacement,
-  EcuReplacementFailed
-}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed}
 import com.advancedtelematic.libats.slick.codecs.SlickRefined.refinedMappedType
 import com.advancedtelematic.libats.slick.db.SlickExtensions.javaInstantMapping
-import com.advancedtelematic.libats.slick.db.SlickResultExtensions._
+import com.advancedtelematic.libats.slick.db.SlickResultExtensions.*
 import com.advancedtelematic.libats.slick.db.SlickUUIDKey.dbMapping
 import com.advancedtelematic.libats.slick.db.SlickValidatedGeneric.validatedStringMapper
 import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, ValidHardwareIdentifier}
 import eu.timepit.refined.refineV
 import io.circe.Json
-import io.circe.syntax._
-import slick.jdbc.MySQLProfile.api._
+import io.circe.syntax.*
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.ExecutionContext
 
@@ -97,7 +93,7 @@ object EcuReplacementRepository {
       .filter(_.deviceId === deviceId)
       .result
 
-  def deviceHistory(deviceId: DeviceId, offset: Long, limit: Long)(
+  def deviceHistory(deviceId: DeviceId, offset: Offset, limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[Json]] =
     for {
       installations <- InstallationReportRepository.queryInstallationHistory(deviceId).result

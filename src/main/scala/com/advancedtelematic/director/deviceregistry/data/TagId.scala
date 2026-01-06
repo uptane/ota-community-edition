@@ -20,7 +20,7 @@ object TagId {
   }
 
   def from(s: String): Either[ValidationError, TagId] =
-    if (s.length <= 20 && s.matches("[\\w\\-_ ]+"))
+    if (s.length <= 20 && s.matches("[\\w\\-_]+"))
       Right(new TagId(s))
     else
       Left(

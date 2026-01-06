@@ -9,18 +9,18 @@
 package com.advancedtelematic.director.db.deviceregistry
 
 import java.time.Instant
-
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.slick.db.SlickExtensions._
-import SlickMappings._
-import com.advancedtelematic.libats.slick.db.SlickUUIDKey._
+import com.advancedtelematic.libats.slick.db.SlickExtensions.*
+import SlickMappings.*
+import com.advancedtelematic.libats.slick.db.SlickUUIDKey.*
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.{PackageId, PackageStat}
 import com.advancedtelematic.director.deviceregistry.data.PackageId.Name
-import DbOps.PaginationResultOps
-import slick.jdbc.MySQLProfile.api._
+import DbOps.*
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.ExecutionContext
 
@@ -79,8 +79,8 @@ object InstalledPackages {
 
   def installedOn(device: DeviceId,
                   nameContains: Option[String],
-                  offset: Option[Long],
-                  limit: Option[Long])(
+                  offset: Offset,
+                  limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[InstalledPackage]] =
     installedPackages
       .filter(_.device === device)
@@ -88,7 +88,7 @@ object InstalledPackages {
         ip => ip.name.mappedTo[String] ++ "-" ++ ip.version.mappedTo[String],
         nameContains
       )
-      .paginateResult(offset.orDefaultOffset, limit.orDefaultLimit)
+      .paginateResult(offset, limit)
 
   def getDevicesCount(pkg: PackageId, ns: Namespace)(
     implicit ec: ExecutionContext): DBIO[DevicesCount] =
@@ -132,10 +132,10 @@ object InstalledPackages {
       PackageId(name, version)
     })
 
-  def getInstalledForAllDevices(ns: Namespace, offset: Option[Long], limit: Option[Long])(
+  def getInstalledForAllDevices(ns: Namespace, offset: Offset, limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[PackageId]] = {
     val query = installedForAllDevicesQuery(ns)
-      .paginateAndSortResult(identity, offset.orDefaultOffset, limit.orDefaultLimit)
+      .paginateAndSortResult(identity, offset, limit)
     query.map { nameVersionResult =>
       PaginationResult(
         nameVersionResult.values.map(nameVersion => PackageId(nameVersion._1, nameVersion._2)),
@@ -164,8 +164,8 @@ object InstalledPackages {
 
   def listAllWithPackageByName(ns: Namespace,
                                name: Name,
-                               offset: Option[Long],
-                               limit: Option[Long])(
+                               offset: Offset,
+                               limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[PackageStat]] = {
     val query = installedPackages
       .filter(_.name === name)
@@ -176,12 +176,12 @@ object InstalledPackages {
       .map { case (version, installedPkg) => (version, installedPkg.length) }
 
     val pkgResult = query
-      .paginate(offset.orDefaultOffset, limit.orDefaultLimit)
+      .paginate(offset, limit)
       .result
       .map(_.map { case (version, count) => PackageStat(version, count) })
 
     query.length.result.zip(pkgResult).map { case (total, values) =>
-      PaginationResult(values, total, offset.orDefaultOffset, limit.orDefaultLimit)
+      PaginationResult(values, total, offset, limit)
     }
   }
 

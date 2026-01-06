@@ -1,8 +1,8 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.StatusCodes.{Created, NoContent}
-import akka.http.scaladsl.server.*
-import akka.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.model.StatusCodes.{Created, NoContent}
+import org.apache.pekko.http.scaladsl.server.*
+import org.apache.pekko.http.scaladsl.server.Directives.*
 import com.advancedtelematic.director.db.deviceregistry.PackageListItemRepository
 import com.advancedtelematic.director.deviceregistry.data.Codecs.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.{
@@ -11,7 +11,7 @@ import com.advancedtelematic.director.deviceregistry.data.DataType.{
 }
 import com.advancedtelematic.director.deviceregistry.data.PackageId
 import com.advancedtelematic.libats.data.DataType.Namespace
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.generic.auto.*
 import slick.jdbc.MySQLProfile.api.*
 

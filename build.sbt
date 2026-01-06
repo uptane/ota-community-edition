@@ -15,32 +15,32 @@ scalacOptions := Seq(
   "-Wconf:cat=other-match-analysis:error"
 )
 
-resolvers += "sonatype-snapshots".at("https://s01.oss.sonatype.org/content/repositories/snapshots")
-resolvers += "sonatype-releases".at("https://s01.oss.sonatype.org/content/repositories/releases")
+resolvers += Resolver.mavenCentral
+resolvers += "maven-snapshots"at "https://central.sonatype.com/repository/maven-snapshots"
 
 Global / bloopAggregateSourceDependencies := true
 
 libraryDependencies ++= {
-  val akkaV = "2.8.5"
-  val akkaHttpV = "10.5.2"
-  val tufV = "3.2.11"
+  val pekkoV = "1.1.5"
+  val pekkoHttpV = "1.2.0"
+  val tufV = "5.0.0"
   val scalaTestV = "3.2.19"
-  val bouncyCastleV = "1.83"
-  val libatsV = "2.6.6"
+  val bouncyCastleV = "1.80"
+  val libatsV = "5.0.0"
 
   Seq(
-    "com.typesafe.akka" %% "akka-actor" % akkaV,
-    "com.typesafe.akka" %% "akka-stream" % akkaV,
-    "com.typesafe.akka" %% "akka-http" % akkaHttpV,
-    "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
-    "com.typesafe.akka" %% "akka-stream-testkit" % akkaV,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaV,
+    "org.apache.pekko" %% "pekko-actor" % pekkoV,
+    "org.apache.pekko" %% "pekko-stream" % pekkoV,
+    "org.apache.pekko" %% "pekko-http" % pekkoHttpV,
+    "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpV,
+    "org.apache.pekko" %% "pekko-stream-testkit" % pekkoV,
+    "org.apache.pekko" %% "pekko-slf4j" % pekkoV,
     "org.scalatest" %% "scalatest" % scalaTestV % Test,
-    "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
     "io.github.uptane" %% "libats" % libatsV,
     "io.github.uptane" %% "libats-messaging" % libatsV,
     "io.github.uptane" %% "libats-messaging-datatype" % libatsV,
-    "io.github.uptane" %% "libats-metrics-akka" % libatsV,
+    "io.github.uptane" %% "libats-metrics-pekko" % libatsV,
     "io.github.uptane" %% "libats-metrics-prometheus" % libatsV,
     "io.github.uptane" %% "libats-http-tracing" % libatsV,
     "io.github.uptane" %% "libats-slick" % libatsV,
@@ -51,13 +51,13 @@ libraryDependencies ++= {
     "org.bouncycastle" % "bcpkix-jdk18on" % bouncyCastleV,
     "org.scala-lang.modules" %% "scala-async" % "1.0.1",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.7",
-    "com.beachape" %% "enumeratum" % "1.9.0",
-    "com.beachape" %% "enumeratum-circe" % "1.9.0",
+    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.3",
+    "com.beachape" %% "enumeratum" % "1.7.6",
+    "com.beachape" %% "enumeratum-circe" % "1.7.5",
 
     // Device registry specific dependencies
-    "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "2.0.0",
-    "io.circe" %% "circe-testing" % "0.14.15",
+    "org.apache.pekko" %% "pekko-connectors-csv" % "1.0.0",
+    "io.circe" %% "circe-testing" % "0.14.13",
     "tech.sparse" %% "toml-scala" % "0.2.2",
     "org.tpolecat" %% "atto-core" % "0.9.5",
     "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test

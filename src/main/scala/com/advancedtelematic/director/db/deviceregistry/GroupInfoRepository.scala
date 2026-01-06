@@ -8,13 +8,7 @@
 
 package com.advancedtelematic.director.db.deviceregistry
 
-import com.advancedtelematic.director.deviceregistry.data.{
-  Group,
-  GroupExpression,
-  GroupName,
-  GroupType,
-  TagId
-}
+import com.advancedtelematic.director.deviceregistry.data.{Group, GroupExpression, GroupName, GroupType, TagId}
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.GroupSortBy.GroupSortBy
 
@@ -26,9 +20,10 @@ import com.advancedtelematic.libats.slick.db.SlickUUIDKey.*
 import com.advancedtelematic.libats.slick.db.SlickValidatedGeneric.validatedStringMapper
 import com.advancedtelematic.director.deviceregistry.data
 import com.advancedtelematic.director.deviceregistry.data.GroupType.GroupType
-import DbOps.{PaginationResultOps, SortBySlickOrderedGroupConversion}
+import DbOps.SortBySlickOrderedGroupConversion
 import SlickMappings.*
 import com.advancedtelematic.director.http.deviceregistry.{ErrorHandlers, Errors}
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -56,15 +51,15 @@ object GroupInfoRepository {
   val groupInfos = TableQuery[GroupInfoTable]
 
   def list(namespace: Namespace,
-           offset: Option[Long],
-           limit: Option[Long],
+           offset: Offset,
+           limit: Limit,
            sortBy: GroupSortBy,
            nameContains: Option[String])(
     implicit ec: ExecutionContext): DBIO[PaginationResult[Group]] =
     groupInfos
       .filter(_.namespace === namespace)
       .maybeContains(_.groupName, nameContains)
-      .paginateAndSortResult(sortBy.orderedConv(), offset.orDefaultOffset, limit.orDefaultLimit)
+      .paginateAndSortResult(sortBy.orderedConv(), offset, limit)
 
   def findById(id: GroupId)(implicit db: Database, ec: ExecutionContext): Future[Group] =
     db.run(findByIdAction(id))
