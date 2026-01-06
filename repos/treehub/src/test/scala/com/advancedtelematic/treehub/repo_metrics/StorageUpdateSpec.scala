@@ -1,6 +1,6 @@
 package com.advancedtelematic.treehub.repo_metrics
 
-import akka.testkit.TestActorRef
+import org.apache.pekko.testkit.TestActorRef
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter.UpdateStorage
 import com.advancedtelematic.util.TreeHubSpec

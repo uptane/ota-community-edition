@@ -1,9 +1,9 @@
 package com.advancedtelematic.treehub.object_store
 
-import akka.Done
-import akka.http.scaladsl.model.*
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import org.apache.pekko.Done
+import org.apache.pekko.http.scaladsl.model.*
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.object_store.BlobStore.OutOfBandStoreResult
