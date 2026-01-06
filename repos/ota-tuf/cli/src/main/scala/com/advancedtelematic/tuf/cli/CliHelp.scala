@@ -21,14 +21,12 @@ object CliHelp {
 
       System.err.println(ex.remoteError.asJson.noSpaces)
 
-      System.err.println(
-        s"""Server could not validate the root role:
+      System.err.println(s"""Server could not validate the root role:
            |  ${causes.getOrElse(ex.msg)}
           """.stripMargin)
 
     case ex: TargetsPullError =>
-      System.err.println(
-        s"""
+      System.err.println(s"""
           | ${ex.msg}
           |
           |Common causes for this error include:
@@ -48,9 +46,14 @@ object CliHelp {
           |""".stripMargin)
 
     case CommandNotSupportedByRepositoryType(repoType, msg) =>
-      _log.error(s"The local repository is of type $repoType which does not support this command: $msg")
+      _log.error(
+        s"The local repository is of type $repoType which does not support this command: $msg"
+      )
 
     case PastDate() =>
-      _log.error("The metadata expiration date lies in the past, use --force if you really want to use it")
+      _log.error(
+        "The metadata expiration date lies in the past, use --force if you really want to use it"
+      )
   }
+
 }

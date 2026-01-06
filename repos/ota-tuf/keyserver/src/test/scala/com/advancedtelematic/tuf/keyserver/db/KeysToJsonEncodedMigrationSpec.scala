@@ -1,25 +1,33 @@
 package com.advancedtelematic.tuf.keyserver.db
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKitBase
-import com.advancedtelematic.libats.data.RefinedUtils._
-import com.advancedtelematic.libats.test.LongTest
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.testkit.TestKitBase
+import com.advancedtelematic.libats.data.RefinedUtils.*
+import com.advancedtelematic.libats.test.{LongTest, MysqlDatabaseSpec}
 import com.advancedtelematic.libtuf.data.TufDataType.{RSATufKey, ValidKeyId}
 import com.advancedtelematic.tuf.util.TufKeyserverSpec
 import org.scalatest.concurrent.PatienceConfiguration
-import slick.jdbc.MySQLProfile.api._
-import com.advancedtelematic.libats.test.MysqlDatabaseSpec
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.ExecutionContext
 
-class KeysToJsonEncodedMigrationSpec extends TufKeyserverSpec with TestKitBase with MysqlDatabaseSpec with PatienceConfiguration with LongTest
-  with KeyRepositorySupport {
+class KeysToJsonEncodedMigrationSpec
+    extends TufKeyserverSpec
+    with TestKitBase
+    with MysqlDatabaseSpec
+    with PatienceConfiguration
+    with LongTest
+    with KeyRepositorySupport {
 
   override implicit lazy val system: ActorSystem = ActorSystem(this.getClass.getSimpleName)
 
-  implicit val ec = ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
-  val migration = new KeysToJsonEncodedMigration()
+  val migration = new KeysToJsonEncodedMigration()(
+    db.asInstanceOf[slick.jdbc.JdbcBackend.Database],
+    implicitly,
+    implicitly
+  )
 
   def runFreshMigration = {
     db.run(sqlu"drop table rsa_keys_pem").futureValue
@@ -27,7 +35,8 @@ class KeysToJsonEncodedMigrationSpec extends TufKeyserverSpec with TestKitBase w
   }
 
   test("updates a key from old encoding to new encoding") {
-    val keyId = "fdd99c4f6447e10d6d5373d80622d4e26b227e67a22b2b3963914b8ed75f7555".refineTry[ValidKeyId].get
+    val keyId =
+      "fdd99c4f6447e10d6d5373d80622d4e26b227e67a22b2b3963914b8ed75f7555".refineTry[ValidKeyId].get
 
     val sql =
       sqlu"""insert into `keys` (key_id, repo_id, role_type, key_type, public_key, private_key) VALUES (
@@ -45,4 +54,5 @@ class KeysToJsonEncodedMigrationSpec extends TufKeyserverSpec with TestKitBase w
 
     keyRepo.find(keyId).futureValue.publicKey shouldBe a[RSATufKey]
   }
+
 }

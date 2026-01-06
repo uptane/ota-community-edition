@@ -9,7 +9,6 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-
 abstract class TufReposerverSpec extends AnyFunSuite with Matchers with ScalaFutures {
   Security.addProvider(new BouncyCastleProvider)
 
@@ -19,4 +18,5 @@ abstract class TufReposerverSpec extends AnyFunSuite with Matchers with ScalaFut
     test(name + " Ed25519")(fn(Ed25519KeyType))
     test(name + " RSA")(fn(RsaKeyType))
   }
+
 }

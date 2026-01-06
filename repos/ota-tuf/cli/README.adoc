@@ -2,48 +2,48 @@
 
 == Obtaining the binary
 
-Binaries are compiled for each push to `master` and stored in https://tuf-cli-releases.ota.here.com/index.html[s3].
+Binaries are compiled for with each release, and are available on the https://github.com/uptane/ota-tuf/releases/[github releases page].
 
 Download the archive file, unpack and run:
 
     tar xvf <file>
-    cd garage-sign/
-    bin/garage-sign --help
+    cd uptane-sign/
+    bin/uptane-sign --help
 
 == Delegations
 
 There are two actors in a delegations use case. The OEM, which owns the remote repository managed by ota-tuf, and the Supplier, which will sign metadata about a component they build.
 
-The OEM runs garage-sign against a local repository initialized using `garage-sign init`. The changes can then be pushed as normal to a remote `ota-tuf` repository.
+The OEM runs uptane-sign against a local repository initialized using `uptane-sign init`. The changes can then be pushed as normal to a remote `ota-tuf` repository.
 
-The Supplier runs garage-sign but does not have a local repository, instead the supplier edits metadata files using garage-sign. The resulting files can then be sent to the OEM using a secure channel (e.g. encrypted email), which adds that data to their local and remote repositories.
+The Supplier runs uptane-sign but does not have a local repository, instead the supplier edits metadata files using uptane-sign. The resulting files can then be sent to the OEM using a secure channel (e.g. encrypted email), which adds that data to their local and remote repositories.
 
 The basic use case for delegations works as follows.
 
 1. The OEM manages a local repository as normal:
 
-   garage-sign init --repo paris -c credentials-paris.zip
-   garage-sign targets pull --repo paris
+   uptane-sign init --repo paris -c credentials-paris.zip
+   uptane-sign targets pull --repo paris
 
 2. The supplier generates a key that they will use to sign their metadata:
 
-    garage-sign user-keys gen --key-name supplier01-key --type ed25519
+    uptane-sign user-keys gen --key-name supplier01-key --type ed25519
 
 3. The supplier sends the *Public* part of the key to the OEM using a secure channel.
 
 4. The OEM adds the delegation to their local targets.json, using the new key
 
-    garage-sign targets delegations add --name supplier01 --prefix 'supplier01*' --key tuf/user-keys/supplier01-key.pub --repo paris
+    uptane-sign targets delegations add --name supplier01 --prefix 'supplier01*' --key tuf/user-keys/supplier01-key.pub --repo paris
 
 5. The OEM signs the new targets.json and pushes it to the remote repository:
 
-    garage-sign targets sign --repo paris --key-name targets
-    garage-sign targets push --repo paris
+    uptane-sign targets sign --repo paris --key-name targets
+    uptane-sign targets push --repo paris
 
 6. The Supplier initializes a delegations file and adds metadata about their images to the file.
 
-    garage-sign delegations init > delegations01.json
-    garage-sign delegations add-target --input delegations01.json  --inplace \
+    uptane-sign delegations init > delegations01.json
+    uptane-sign delegations add-target --input delegations01.json  --inplace \
        --length 1024 \
        --name supplier01-target01.tar.gz \
        --version 0.0.1 \
@@ -53,7 +53,7 @@ The basic use case for delegations works as follows.
 
 7. The supplier signs the delegations metadata and sends it to the OEM:
 
-     garage-sign delegations sign --inplace --input delegations01.json --key-name supplier01-key
+     uptane-sign delegations sign --inplace --input delegations01.json --key-name supplier01-key
 
 +
 After signing the delegations the file will need to be converted back to an unsigned file to be modified, for example to add another target. This can be done with:
@@ -62,12 +62,12 @@ After signing the delegations the file will need to be converted back to an unsi
 
 8. The OEM pushes the signed role to the remote repository:
 
-   garage-sign delegations push --repo paris --input delegations01.json --name supplier01
+   uptane-sign delegations push --repo paris --input delegations01.json --name supplier01
 
 9. The delegation and targets are ready for the client to validate:
 
-   garage-sign targets pull --repo paris
-   garage-sign delegations pull --repo paris --name supplier01
+   uptane-sign targets pull --repo paris
+   uptane-sign delegations pull --repo paris --name supplier01
 
 
 == Offline signing use case
@@ -79,11 +79,11 @@ pulled/pushed.
 
 2. Pull targets
 
-    garage-sign targets pull --repo myrepo
+    uptane-sign targets pull --repo myrepo
 
 3. Add a target
 
-   garage-sign targets add --repo myrepo \
+   uptane-sign targets add --repo myrepo \
    --format binary \
    --length 5877 \
    --name dashboards \
@@ -94,11 +94,11 @@ pulled/pushed.
 
 4. Sign new targets.json
 
-   garage-sign targets sign --repo myrepo --key-name <targets key used to rotate>
+   uptane-sign targets sign --repo myrepo --key-name <targets key used to rotate>
 
 5. Push new targets.json
 
-   garage-sign targets push --repo myrepo
+   uptane-sign targets push --repo myrepo
 
 == Rotate Root Keys
 
@@ -107,21 +107,21 @@ pulled/pushed.
 1. Initialize a local ota-plus cache using credentials.zip downloaded
 from ATS Garage:
 
-    garage-sign init --repo myrepo --servertype reposerver --credentials credentials.zip --reposerver <reposerver uri>
+    uptane-sign init --repo myrepo --servertype reposerver --credentials credentials.zip --reposerver <reposerver uri>
 +
 or
 +
-    garage-sign init --repo myrepo --servertype reposerver --credentials credentials.zip
+    uptane-sign init --repo myrepo --servertype reposerver --credentials credentials.zip
 
 2. Generate new root and target keys
 
-    garage-sign key generate --repo myrepo --name myrepo-root --type ed25519
+    uptane-sign key generate --repo myrepo --name myrepo-root --type ed25519
 
-    garage-sign key generate --repo myrepo --name myrepo-targets --type ed25519
+    uptane-sign key generate --repo myrepo --name myrepo-targets --type ed25519
 
 3. Rotate Root Keys
 
-    garage-sign move-offline --repo myrepo --new-root myrepo-root \
+    uptane-sign move-offline --repo myrepo --new-root myrepo-root \
     --new-targets myrepo-targets --old-root-alias old-root
 
 4. Check repository
@@ -152,9 +152,9 @@ the server, with the new `root.json`.
     # verify unsigned targets.json, this should have been pulled
     # during `rotate`.
 
-    garage-sign targets sign --repo myrepo --key-name targets
+    uptane-sign targets sign --repo myrepo --key-name targets
 
-    garage-sign targets push --repo myrepo
+    uptane-sign targets push --repo myrepo
 
 ==== Exporting credentials
 
@@ -163,7 +163,7 @@ to sign targets using `targets-sign`. If the user signing the new
 targets is not the same as the user rotating the root keys, you'll
 need to export the new credentials:
 
-    garage-sign  export-credentials --repo myrepo --target-key-name targets --to creds_export.zip
+    uptane-sign  export-credentials --repo myrepo --target-key-name targets --to creds_export.zip
 
 === Rotate Director Root Keys
 
@@ -173,19 +173,19 @@ need to be dealt with here.
 1. Initialize a local ota-plus cache using credentials.zip downloaded
 from ATS Garage:
 
-    garage-sign init --repo myrepo --servertype director --credentials credentials.zip --reposerver <reposerver uri>
+    uptane-sign init --repo myrepo --servertype director --credentials credentials.zip --reposerver <reposerver uri>
 +
 or
 +
-    garage-sign init --repo myrepo --servertype director --credentials credentials.zip
+    uptane-sign init --repo myrepo --servertype director --credentials credentials.zip
 
 2. Generate new root key
 
-    garage-sign key generate --repo myrepo --name myrepo-root --type ed25519
+    uptane-sign key generate --repo myrepo --name myrepo-root --type ed25519
 
 3. Rotate Root Key
 
-    garage-sign move-offline --repo myrepo --new-root myrepo-root --old-root-alias old-root
+    uptane-sign move-offline --repo myrepo --new-root myrepo-root --old-root-alias old-root
 
 4. Check repository
 
@@ -212,7 +212,7 @@ If you haven't previously created any targets - `targets init` will create the u
 
 == Managing an offline root.json
 
-A root.json can be managed entirely offline by a user using `garage-sign`.
+A root.json can be managed entirely offline by a user using `uptane-sign`.
 
 This can be done by pulling a root with `root pull`, editing the root
 using the `root key` commands, or directly editing the unsigned root
@@ -227,13 +227,13 @@ If you already have an initialized repository, you can use the `import-client-ce
 
 If you have a valid `credentials.zip` containing a client certificate, you can add this certificate to an already initialized repository using the following command
 
-   unzip -p -l <path to credentials.zip> client_cert.p12 | garage-sign --tuf-repo ... import-client-cert --client-cert /dev/stdin
+   unzip -p -l <path to credentials.zip> client_cert.p12 | uptane-sign --tuf-repo ... import-client-cert --client-cert /dev/stdin
 
-All subsequent `garage-sign` operations will use this certificate for authentication to a tuf repository.
+All subsequent `uptane-sign` operations will use this certificate for authentication to a tuf repository.
 
 == Appendix: Giving expiration dates on the command line
 
-The commands `garage-sign sign root` and `garage-sign sign targets`
+The commands `uptane-sign sign root` and `uptane-sign sign targets`
 take the date from the unsigned metadata by default. If the date lies
 in the past, they refuse to sign. The expired date can still be used in that case by
 giving the option `--force`. If you want to change the date of the
@@ -247,16 +247,16 @@ again be overwritten with `--force`.
 
 == Uploading a target binary to reposerver
 
-The `garage-sign` tool supports uploading binary files to
+The `uptane-sign` tool supports uploading binary files to
 reposerver. These binaries can then be easily added to the user's
 targets.json.
 
-    garage-sign targets pull --repo dev
+    uptane-sign targets pull --repo dev
 
-    garage-sign targets upload --repo dev --input bigfile.bin --name name-of-target --version 0.0.2
+    uptane-sign targets upload --repo dev --input bigfile.bin --name name-of-target --version 0.0.2
 
-    garage-sign targets add-uploaded --repo dev --input bigfile.bin- --name name-of-target --version 0.0.2 --hardwareids <hardware-id1>,<hardware-id2>
+    uptane-sign targets add-uploaded --repo dev --input bigfile.bin- --name name-of-target --version 0.0.2 --hardwareids <hardware-id1>,<hardware-id2>
 
-    garage-sign targets sign --repo dev --key-name targets
+    uptane-sign targets sign --repo dev --key-name targets
 
-    garage-sign targets push --repo dev
+    uptane-sign targets push --repo dev

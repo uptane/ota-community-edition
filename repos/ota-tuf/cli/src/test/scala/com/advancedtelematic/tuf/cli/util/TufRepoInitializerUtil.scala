@@ -41,15 +41,20 @@ object TufRepoInitializerUtil {
   }
 
   implicit val reposerverRepoBuilder: TufRepoBuilder[RepoServerRepo] = () => {
-    val repo = new RepoServerRepo(Files.createTempDirectory(s"tuf-repo-${RandomNames()}").resolve("repo"))
+    val repo = new RepoServerRepo(
+      Files.createTempDirectory(s"tuf-repo-${RandomNames()}").resolve("repo")
+    )
     repo.initRepoDirs().get
     repo.initTargets(11, Instant.now).get
     repo
   }
 
   implicit val directorRepoBuilder: TufRepoBuilder[DirectorRepo] = () => {
-    val repo =  new DirectorRepo(Files.createTempDirectory(s"director-repo${RandomNames()}").resolve("repo"))
+    val repo = new DirectorRepo(
+      Files.createTempDirectory(s"director-repo${RandomNames()}").resolve("repo")
+    )
     repo.initRepoDirs().get
     repo
   }
+
 }

@@ -2,7 +2,13 @@ package com.advancedtelematic.libtuf.data
 
 import cats.data.Validated.Valid
 import com.advancedtelematic.libtuf.crypt.TufCrypto
-import com.advancedtelematic.libtuf.data.TufDataType.{Ed25519TufKey, Ed25519TufKeyPair, Ed25519TufPrivateKey, KeyType, SignedPayload}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  Ed25519TufKey,
+  Ed25519TufKeyPair,
+  Ed25519TufPrivateKey,
+  KeyType,
+  SignedPayload
+}
 import io.circe.Json
 
 class TufCryptoSpec extends LibtufSpec {
@@ -14,8 +20,14 @@ class TufCryptoSpec extends LibtufSpec {
   val sig01 = TufCrypto.signPayload(key01.privkey, json)
   val sig02 = TufCrypto.signPayload(key02.privkey, json)
 
-  test("1 valid signature is enough with threshold = 1 and the public key for one of the signatures is missing") {
-    val signedPayload = SignedPayload(List(sig01.toClient(key01.pubkey.id), sig02.toClient(key02.pubkey.id)), json, json)
+  test(
+    "1 valid signature is enough with threshold = 1 and the public key for one of the signatures is missing"
+  ) {
+    val signedPayload = SignedPayload(
+      List(sig01.toClient(key01.pubkey.id), sig02.toClient(key02.pubkey.id)),
+      json,
+      json
+    )
 
     val keyMap = Map(key01.pubkey.id -> key01.pubkey)
 
@@ -23,7 +35,11 @@ class TufCryptoSpec extends LibtufSpec {
   }
 
   test("2 valid signatures are required when threshold = 2") {
-    val signedPayload = SignedPayload(List(sig01.toClient(key01.pubkey.id), sig02.toClient(key02.pubkey.id)), json, json)
+    val signedPayload = SignedPayload(
+      List(sig01.toClient(key01.pubkey.id), sig02.toClient(key02.pubkey.id)),
+      json,
+      json
+    )
 
     val keyMap = List(key01.pubkey, key02.pubkey).map(k => k.id -> k).toMap
 
@@ -40,4 +56,5 @@ class TufCryptoSpec extends LibtufSpec {
     parsePublic(encode(pub)).get shouldBe pub
     parsePrivate(encode(priv)).get shouldBe priv
   }
+
 }

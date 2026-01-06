@@ -6,6 +6,7 @@ import java.nio.file.Path
 import io.circe.Json
 
 object DataType {
+
   case class KeyName(value: String) extends AnyVal {
     def publicKeyName: String = value + ".pub"
     def privateKeyName: String = value + ".sec"
@@ -16,7 +17,13 @@ object DataType {
   case class TreehubConfig(oauth2: Option[OAuthConfig], no_auth: Boolean, ostree: Json)
 
   sealed trait CliAuth
-  case class OAuthConfig(server: URI, client_id: String, client_secret: String, scope: String = "none") extends CliAuth
+
+  case class OAuthConfig(server: URI,
+                         client_id: String,
+                         client_secret: String,
+                         scope: String = "none")
+      extends CliAuth
+
   case class MutualTlsConfig(certPath: Path, serverCertPath: Option[Path]) extends CliAuth
 
   sealed trait TufServerType

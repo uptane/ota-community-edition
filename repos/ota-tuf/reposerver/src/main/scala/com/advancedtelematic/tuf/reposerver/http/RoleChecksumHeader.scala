@@ -1,7 +1,7 @@
 package com.advancedtelematic.tuf.reposerver.http
 
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.{Directive0, Directive1, Directives}
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.http.scaladsl.server.{Directive0, Directive1, Directives}
 import com.advancedtelematic.libats.data.DataType.ValidChecksum
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.refineV
@@ -21,5 +21,6 @@ object RoleChecksumHeader {
     }
 
   def respondWithCheckSum(checksum: RoleChecksum): Directive0 =
-    mapResponse { _.addHeader(apply(checksum)) }
+    mapResponse(_.addHeader(apply(checksum)))
+
 }

@@ -1,3 +1,5 @@
 <configuration>
     <include resource="logback-libats.xml"/>
+
+<!--    <logger name="slick.jdbc.JdbcBackend.statement" level="debug" />-->
 </configuration>

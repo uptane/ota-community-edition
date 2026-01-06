@@ -5,7 +5,6 @@ import com.advancedtelematic.tuf.cli.Errors.PastDate
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-
 class CommandHandlerExpirationDateSpec extends AnyFunSuite with Matchers {
   val now = Instant.EPOCH
   val oneDay = Period.ofDays(1)
@@ -38,7 +37,10 @@ class CommandHandlerExpirationDateSpec extends AnyFunSuite with Matchers {
   }
 
   test("expirationDate from expireOn in the past, but forced") {
-    val d = CommandHandler.expirationDate(Config(cmd, force = true, expireOn = Some(now.minusSeconds(1))), now)(aDayAgo)
+    val d = CommandHandler.expirationDate(
+      Config(cmd, force = true, expireOn = Some(now.minusSeconds(1))),
+      now
+    )(aDayAgo)
     d shouldBe now.minusSeconds(1)
   }
 
@@ -49,12 +51,16 @@ class CommandHandlerExpirationDateSpec extends AnyFunSuite with Matchers {
 
   test("expirationDate from expireAfter in the past") {
     intercept[PastDate] {
-      CommandHandler.expirationDate(Config(cmd, expireAfter = Some(Period.ofDays(-1))), now)(aDayAgo)
+      CommandHandler
+        .expirationDate(Config(cmd, expireAfter = Some(Period.ofDays(-1))), now)(aDayAgo)
     }
   }
 
   test("expirationDate from expireAfter in the past, but forced") {
-    val d = CommandHandler.expirationDate(Config(cmd, force = true, expireAfter = Some(Period.ofDays(-1))), now)(aDayAgo)
+    val d = CommandHandler.expirationDate(
+      Config(cmd, force = true, expireAfter = Some(Period.ofDays(-1))),
+      now
+    )(aDayAgo)
     d shouldBe now.minus(oneDay)
   }
 

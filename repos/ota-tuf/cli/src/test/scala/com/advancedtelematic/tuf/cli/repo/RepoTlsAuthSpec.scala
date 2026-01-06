@@ -12,15 +12,24 @@ import com.typesafe.config.ConfigFactory
 class RepoTlsAuthSpec extends CliSpec with KeyTypeSpecSupport {
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  lazy val credentialsZipTlsAuthEd25519 = Paths.get(this.getClass.getResource("/credentials_tls-auth_ed25519.zip").toURI)
+  lazy val credentialsZipTlsAuthEd25519 =
+    Paths.get(this.getClass.getResource("/credentials_tls-auth_ed25519.zip").toURI)
 
   def randomRepoPath = Files.createTempDirectory("tuf-repo").resolve("repo")
 
-  lazy val mtlsReposerverUri = new URI(ConfigFactory.load().getString("ats.tuf.cli.test.mtlsReposerverUri"))
+  lazy val mtlsReposerverUri = new URI(
+    ConfigFactory.load().getString("ats.tuf.cli.test.mtlsReposerverUri")
+  )
 
   test("can pull targets when authenticated using tls") {
-    val repo = RepoManagement.initialize(RepoServer, randomRepoPath, credentialsZipTlsAuthEd25519,
-      repoUri = Some(mtlsReposerverUri)).get
+    val repo = RepoManagement
+      .initialize(
+        RepoServer,
+        randomRepoPath,
+        credentialsZipTlsAuthEd25519,
+        repoUri = Some(mtlsReposerverUri)
+      )
+      .get
     val repo2 = new RepoServerRepo(repo.repoPath)
 
     val client = TufRepoCliClient.forRepo[ReposerverClient](repo2).futureValue
@@ -29,4 +38,5 @@ class RepoTlsAuthSpec extends CliSpec with KeyTypeSpecSupport {
 
     repo2.pullTargets(client).futureValue
   }
+
 }

@@ -1,22 +1,25 @@
 package com.advancedtelematic.tuf.keyserver.data
 
-import java.security.PublicKey
+import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
+import com.advancedtelematic.libtuf.data.ClientDataType.{RootRole, TufRole}
+import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  KeyId,
+  KeyType,
+  RepoId,
+  SignedPayload,
+  TufKey,
+  TufKeyPair,
+  TufPrivateKey
+}
+import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.KeyGenRequestStatus.KeyGenRequestStatus
+
 import java.time.Instant
 import java.util.UUID
-
-import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}
-import com.advancedtelematic.libats.slick.db.SlickEncryptedColumn.EncryptedColumn
-import com.advancedtelematic.libtuf.data.ClientDataType.RootRole
-import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
-import com.advancedtelematic.libtuf.data.TufDataType.{KeyId, KeyType, RepoId, JsonSignedPayload, SignedPayload, TufKey, TufKeyPair, TufPrivateKey}
-import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.KeyGenRequestStatus.KeyGenRequestStatus
-import com.advancedtelematic.tuf.keyserver.http.Errors
-import io.circe.{Decoder, Json}
-
-import scala.concurrent.Future
 import scala.util.Try
 
 object KeyServerDataType {
+
   object KeyGenRequestStatus extends Enumeration {
     type KeyGenRequestStatus = Value
 
@@ -26,8 +29,10 @@ object KeyServerDataType {
   case class KeyGenId(uuid: UUID) extends UUIDKey
   object KeyGenId extends UUIDKeyObj[KeyGenId]
 
-  case class KeyGenRequest(id: KeyGenId, repoId: RepoId,
-                           status: KeyGenRequestStatus, roleType: RoleType,
+  case class KeyGenRequest(id: KeyGenId,
+                           repoId: RepoId,
+                           status: KeyGenRequestStatus,
+                           roleType: RoleType,
                            keySize: Int,
                            keyType: KeyType,
                            threshold: Int = 1,
@@ -35,18 +40,32 @@ object KeyServerDataType {
     require(keyType.crypto.validKeySize(keySize), s"Invalid keysize ($keySize) for $keyType")
   }
 
-  object SignedRootRole {
-    import com.advancedtelematic.libtuf.data.ClientCodecs._
+  implicit class SignedPayloadDbOps(value: SignedPayload[RootRole]) {
 
-    def fromSignedPayload(repoId: RepoId, payload: SignedPayload[RootRole]): SignedRootRole = {
-      val content = SignedPayload(payload.signatures, payload.signed, payload.json)
-      SignedRootRole(repoId, content, payload.signed.expires, payload.signed.version)
-    }
+    def toDbSignedRole(repoId: RepoId): SignedRootRole =
+      SignedRootRole(repoId, value, value.signed.expires, value.signed.version)
+
   }
 
-  case class SignedRootRole(repoId: RepoId, content: SignedPayload[RootRole], expiresAt: Instant, version: Int)
+  case class SignedRootRole(repoId: RepoId,
+                            content: SignedPayload[RootRole],
+                            expiresAt: Instant,
+                            version: Int)
 
-  case class Key(id: KeyId, repoId: RepoId, roleType: RoleType, keyType: KeyType, publicKey: TufKey, privateKey: TufPrivateKey) {
+  case class Key(id: KeyId,
+                 repoId: RepoId,
+                 roleType: RoleType,
+                 keyType: KeyType,
+                 publicKey: TufKey,
+                 privateKey: TufPrivateKey) {
     def toTufKeyPair: Try[TufKeyPair] = keyType.crypto.castToKeyPair(publicKey, privateKey)
   }
+
+  implicit class TufKeyDbOps(value: TufKeyPair) {
+
+    def toDbKey(repoId: RepoId, roleType: RoleType): Key =
+      Key(value.pubkey.id, repoId, roleType, value.pubkey.keytype, value.pubkey, value.privkey)
+
+  }
+
 }

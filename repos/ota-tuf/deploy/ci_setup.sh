@@ -2,6 +2,7 @@
 
 set -u
 
+MARIADB_VERSION=10.11
 docker rm --force ota_tuf-mariadb
 
 # Some jobs don't behave, nuke them all
@@ -18,7 +19,7 @@ function start_mariadb() {
            -e MYSQL_ROOT_PASSWORD=root \
            -e MYSQL_USER=ota_tuf \
            -e MYSQL_PASSWORD=ota_tuf \
-           mariadb:10.2 \
+           mariadb:${MARIADB_VERSION} \
            --character-set-server=utf8 --collation-server=utf8_unicode_ci \
            --max_connections=1000
 }
@@ -27,7 +28,7 @@ function mysqladmin_alive {
     docker run \
            --rm \
            --link ota_tuf-mariadb \
-           mariadb:10.2 \
+           mariadb:${MARIADB_VERSION} \
            mysqladmin ping --protocol=TCP -h ota_tuf-mariadb -P 3306 -u root -proot
 }
 

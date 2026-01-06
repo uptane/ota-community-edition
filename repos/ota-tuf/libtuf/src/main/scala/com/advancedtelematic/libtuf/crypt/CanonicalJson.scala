@@ -15,11 +15,12 @@ object CanonicalJson {
       array => Json.fromValues(array.map(generate)),
       obj =>
         JsonObject.fromIterable {
-          obj
-            .toList
+          obj.toList
             .map { case (k, v) =>
               k -> generate(v)
-            }.sortBy(_._1)
+            }
+            .sortBy(_._1)
         }.asJson
     )
+
 }

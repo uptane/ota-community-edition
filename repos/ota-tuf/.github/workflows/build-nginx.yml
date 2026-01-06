@@ -2,7 +2,7 @@ name: build ci nginx
 on:
   push:
     paths:
-      - cli/src/test/resources/*
+      - 'cli/src/test/resources/*'
       - deploy/ci.nginx.Dockerfile
 jobs:
   build-image:
@@ -12,8 +12,8 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: actions/checkout@v2
       - run: cd deploy && ./build-tuf-nginx.sh
       - run: docker push uptane/tuf-nginx:latest

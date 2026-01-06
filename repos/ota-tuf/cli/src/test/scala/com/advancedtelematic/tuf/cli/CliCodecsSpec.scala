@@ -1,4 +1,5 @@
 package com.advancedtelematic.tuf.cli
+
 import CliCodecs._
 import com.advancedtelematic.tuf.cli.DataType.RepoServer
 import io.circe.Json
@@ -14,7 +15,8 @@ class CliCodecsSpec extends AnyFunSuite {
 
   test("decode config without repo type") {
     val missingRepoServerType: io.circe.Json =
-        io.circe.parser.parse("""{
+      io.circe.parser
+        .parse("""{
                 "reposerver" : "https://tuf-reposerver-pub.gw.staging.atsgarage.com:443",
                 "auth" : {
                   "server" : "https://ota-test.auth.eu-west-1.amazoncognito.com/oauth2/token",
@@ -34,8 +36,12 @@ class CliCodecsSpec extends AnyFunSuite {
                     "server" : "https://treehub-pub.gw.staging.atsgarage.com:443/api/v3"
                   }
                }
-        }""").value
+        }""")
+        .value
 
-    assert(repoConfigCodec.decodeJson(missingRepoServerType).right.get.repoServerType == RepoServer)
+    assert(
+      repoConfigCodec.decodeJson(missingRepoServerType).toOption.get.repoServerType == RepoServer
+    )
   }
+
 }

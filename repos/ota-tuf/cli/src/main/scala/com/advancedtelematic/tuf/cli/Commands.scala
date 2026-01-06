@@ -29,6 +29,8 @@ object Commands {
   case object CreateDelegation extends Command
   case object SignDelegation extends Command
   case object GenUserKey extends Command
+  case object SignUserJson extends Command
+  case object VerifyUserJson extends Command
   case object IdUserKey extends Command
   case object PushDelegation extends Command
   case object PullDelegation extends Command
@@ -39,4 +41,3 @@ object Commands {
   case object IncrementRootJsonVersion extends Command
   case object IncrementTargetJsonVersion extends Command
 }
-

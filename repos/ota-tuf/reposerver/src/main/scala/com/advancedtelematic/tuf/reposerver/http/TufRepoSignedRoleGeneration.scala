@@ -6,9 +6,13 @@ import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.ExecutionContext
 
-
 object TufRepoSignedRoleGeneration {
-  def apply(keyserverClient: KeyserverClient)(implicit db: Database, ec: ExecutionContext) = {
-    new SignedRoleGeneration(keyserverClient, new TufRepoTargetItemsProvider(), new TufRepoSignedRoleProvider())
-  }
+
+  def apply(keyserverClient: KeyserverClient)(implicit db: Database, ec: ExecutionContext) =
+    new SignedRoleGeneration(
+      keyserverClient,
+      new TufRepoTargetItemsProvider(),
+      new TufRepoSignedRoleProvider()
+    )
+
 }

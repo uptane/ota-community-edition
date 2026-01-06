@@ -1,9 +1,9 @@
 package com.advancedtelematic.libtuf_server.db
 
-import akka.Done
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Flow, Sink, Source}
-import akka.stream.Materializer
+import org.apache.pekko.Done
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.scaladsl.{Flow, Sink, Source}
+import org.apache.pekko.stream.Materializer
 import com.advancedtelematic.libtuf.data.TufDataType.RepoId
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
 import com.advancedtelematic.libtuf_server.db.SignatureMethodMigration.Row
@@ -19,14 +19,12 @@ object SignatureMethodMigration {
 }
 
 class SignatureMethodMigration(dBIO: StreamingDBIO[Vector[Row], Row],
-                               replaceFn: Row => Future[Unit])
-                              (implicit
-                               val db: Database,
-                               val mat: Materializer,
-                               val system: ActorSystem
-                              ) {
+                               replaceFn: Row => Future[Unit])(
+  implicit val db: Database,
+  val mat: Materializer,
+  val system: ActorSystem) {
 
-  implicit val ec = system.dispatcher
+  implicit val ec: scala.concurrent.ExecutionContextExecutor = system.dispatcher
 
   private val _log = LoggerFactory.getLogger(this.getClass)
 
@@ -35,7 +33,8 @@ class SignatureMethodMigration(dBIO: StreamingDBIO[Vector[Row], Row],
     val source = Source.fromPublisher(db.stream(dBIO))
 
     val convertFlow = Flow[Row].mapAsync(3) { row =>
-      val oldMethodE = row.payload.hcursor.downField("signatures").downArray.downField("method").as[String]
+      val oldMethodE =
+        row.payload.hcursor.downField("signatures").downArray.downField("method").as[String]
 
       oldMethodE match {
         case Left(err) =>
@@ -59,6 +58,5 @@ class SignatureMethodMigration(dBIO: StreamingDBIO[Vector[Row], Row],
 
     source.via(convertFlow).runWith(sink)
   }
+
 }
-
-

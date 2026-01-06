@@ -1,7 +1,7 @@
 name: Test & Build
 on: [push, pull_request]
 env:
-  SBT_OPTS: "-sbt-launch-dir .sbt/launchers -sbt-dir .sbt -ivy .ivy2 -Dsbt.color=true -Dscala.color=true"
+  JVM_OPTS: "-XX:+UnlockExperimentalVMOptions" # Needed to override default `JVM_OPTS`, because of error "JVMCI compiler: No JVMCI compiler found"
 jobs:
   run-tests:
     name: Run tests
@@ -12,7 +12,7 @@ jobs:
         image: uptane/tuf-nginx:latest
 
       db:
-        image: mariadb:10.4
+        image: mariadb:10.11
         env:
           MYSQL_ROOT_PASSWORD: "root"
           MYSQL_DATABASE: "ota_tuf"
@@ -29,12 +29,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Cache sbt dependencies
-        uses: actions/cache@v2
+      - uses: coursier/setup-action@v1
         with:
-          path: |
-            .sbt
-            .ivy2
-          key: ${{ runner.os }}-sbt-deps-1.5
+          jvm: 'temurin:1.17.0.3'
+      - uses: coursier/cache-action@v6
       - run: ./deploy/gitlab-db-setup.sh mysql db
-      - run: sbt clean ut:test
+      - run: sbtn 'clean; Ut / test'

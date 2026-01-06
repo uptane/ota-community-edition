@@ -1,15 +1,16 @@
 package com.advancedtelematic.tuf.reposerver.http
 
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.server.Route
 import com.advancedtelematic.tuf.reposerver.util.ResourceSpec
-import sttp.client.SttpBackend
-import sttp.client.akkahttp.{AkkaHttpBackend, AkkaHttpClient}
+import sttp.client4.Backend
+import sttp.client4.pekkohttp.{PekkoHttpBackend, PekkoHttpClient}
+
 import scala.concurrent.Future
 
 trait FakeCliHttpClient {
-  self: ResourceSpec ⇒
+  self: ResourceSpec =>
 
-  val testBackend: SttpBackend[Future, Nothing, Nothing] = {
-    AkkaHttpBackend.usingClient(system, http = AkkaHttpClient.stubFromRoute(Route.seal(routes)))
-  }
+  val testBackend: Backend[Future] =
+    PekkoHttpBackend.usingClient(system, http = PekkoHttpClient.stubFromRoute(Route.seal(routes)))
+
 }

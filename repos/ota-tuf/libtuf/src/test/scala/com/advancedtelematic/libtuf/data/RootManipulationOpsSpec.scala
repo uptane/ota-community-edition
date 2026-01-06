@@ -31,7 +31,11 @@ class RootManipulationOpsSpec extends AnyFunSuite with Matchers {
   test("target keys get only added once with threshold") {
     val rootRole: RootRole = generateRoot
     val newKey = TufCrypto.rsaCrypto.generateKeyPair().pubkey
-    rootRole.withRoleKeys(TARGETS, 1, newKey, newKey).roles(TARGETS).keyids.count(_ == newKey.id) shouldBe 1
+    rootRole
+      .withRoleKeys(TARGETS, 1, newKey, newKey)
+      .roles(TARGETS)
+      .keyids
+      .count(_ == newKey.id) shouldBe 1
   }
 
 }

@@ -1,38 +1,42 @@
 package com.advancedtelematic.tuf.cli.http
 
 import java.net.URI
-
 import com.advancedtelematic.libtuf.http.CliHttpClient
 import com.advancedtelematic.libtuf.http.CliHttpClient.CliHttpBackend
 import com.advancedtelematic.tuf.cli.DataType.{OAuth2Token, OAuthConfig}
 import io.circe.Decoder
-import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
+import sttp.client4.httpclient.HttpClientFutureBackend
 import sttp.model.Uri
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object OAuth2Client {
+
   def apply(conf: OAuthConfig)(implicit ec: ExecutionContext): OAuth2Client =
-    new OAuth2Client(conf, AsyncHttpClientFutureBackend())
+    new OAuth2Client(conf, HttpClientFutureBackend())
 
   def tokenFor(conf: OAuthConfig)(implicit ec: ExecutionContext): Future[OAuth2Token] =
     apply(conf).authToken()
+
 }
 
-protected class OAuth2Client(val config: OAuthConfig, httpBackend: CliHttpBackend)(implicit ec: ExecutionContext)
-  extends CliHttpClient(httpBackend) {
+protected class OAuth2Client(val config: OAuthConfig, httpBackend: CliHttpBackend)(
+  implicit ec: ExecutionContext)
+    extends CliHttpClient(httpBackend) {
 
   private def cognitoTokenRequest =
     http
       .post(Uri(URI.create(config.server.toString)))
-      .auth.basic(config.client_id, config.client_secret)
-      .body("grant_type" → "client_credentials", "scope" -> config.scope)
+      .auth
+      .basic(config.client_id, config.client_secret)
+      .body("grant_type" -> "client_credentials", "scope" -> config.scope)
 
   private def authPlusTokenRequest =
     http
       .post(Uri(URI.create(config.server.toString + "/token")))
-      .auth.basic(config.client_id, config.client_secret)
-      .body("grant_type" → "client_credentials")
+      .auth
+      .basic(config.client_id, config.client_secret)
+      .body("grant_type" -> "client_credentials")
 
   private val tokenResponseDecoder =
     Decoder.decodeString.prepare(_.downField("access_token")).map(OAuth2Token.apply)
@@ -55,4 +59,5 @@ protected class OAuth2Client(val config: OAuthConfig, httpBackend: CliHttpBacken
     implicit val _decoder = tokenResponseDecoder
     execHttp[OAuth2Token](request)().map(_.body)
   }
+
 }

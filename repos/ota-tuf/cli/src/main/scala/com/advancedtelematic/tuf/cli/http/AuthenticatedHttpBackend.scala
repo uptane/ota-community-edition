@@ -3,24 +3,26 @@ package com.advancedtelematic.tuf.cli.http
 import java.io.FileInputStream
 import java.nio.file.Path
 import java.security.{KeyStore, SecureRandom}
-
 import com.advancedtelematic.libtuf.http.CliHttpClient.CliHttpBackend
 import com.advancedtelematic.tuf.cli.DataType.OAuth2Token
-import io.netty.handler.ssl.{SslContextBuilder, SupportedCipherSuiteFilter}
+import sttp.capabilities
+import sttp.client4.{Backend, GenericRequest, Request, Response, WebSocketStreamBackend}
+
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory, X509TrustManager}
-import sttp.client.{SttpBackend, _}
-import sttp.client.asynchttpclient.future.AsyncHttpClientFutureBackend
-import sttp.client.logging.slf4j.{Slf4jCurlBackend, Slf4jLoggingBackend}
-import sttp.client.monad.MonadError
-import sttp.client.ws.WebSocketResponse
+import sttp.client4.httpclient.HttpClientFutureBackend
+import sttp.client4.logging.slf4j.Slf4jLoggingBackend
+import sttp.monad.MonadError
 
-import scala.collection.JavaConverters._
+import java.net.http.HttpClient
+import scala.jdk.CollectionConverters.*
 import scala.concurrent.Future
-import scala.language.higherKinds
 
-protected class AuthPlusCliHttpBackend[F[_], S, WS_HANDLER[_]](token: OAuth2Token, delegate: SttpBackend[F, S, WS_HANDLER]) extends SttpBackend[F, S, WS_HANDLER] {
-  override def send[T](request: Request[T, S]): F[Response[T]] = {
-    val authReq = if(request.uri.host.endsWith(".amazonaws.com")) {
+protected class AuthPlusCliHttpBackend[F[_]](token: OAuth2Token, delegate: Backend[F])
+    extends Backend[F] {
+
+  override def send[T](
+    request: GenericRequest[T, Any with capabilities.Effect[F]]): F[Response[T]] = {
+    val authReq = if (request.uri.host.exists(_.endsWith(".amazonaws.com"))) {
       request
     } else {
       request.auth.bearer(token.value)
@@ -28,14 +30,10 @@ protected class AuthPlusCliHttpBackend[F[_], S, WS_HANDLER[_]](token: OAuth2Toke
     delegate.send(authReq)
   }
 
-  override def openWebsocket[T, WS_RESULT](request: Request[T, S], handler: WS_HANDLER[WS_RESULT]): F[WebSocketResponse[WS_RESULT]] = {
-    val authReq = request.auth.bearer(token.value)
-    delegate.openWebsocket(authReq, handler)
-  }
-
   override def close(): F[Unit] = delegate.close()
 
-  override def responseMonad: MonadError[F] = delegate.responseMonad
+  override def monad: MonadError[F] = delegate.monad
+
 }
 
 object AuthenticatedHttpBackend {
@@ -44,13 +42,12 @@ object AuthenticatedHttpBackend {
 
   def none: CliHttpBackend = defaultSttpBackend
 
-  def authPlusHttpBackend(token: OAuth2Token): CliHttpBackend = {
-    new AuthPlusCliHttpBackend[Future, Nothing, Nothing](token, defaultSttpBackend)
-  }
+  def authPlusHttpBackend(token: OAuth2Token): CliHttpBackend =
+    new AuthPlusCliHttpBackend[Future](token, defaultSttpBackend)
 
   private def defaultSttpBackend = {
-    val sttpBackend = AsyncHttpClientFutureBackend()
-    Slf4jLoggingBackend[Future, Nothing, Nothing](Slf4jCurlBackend[Future, Nothing, Nothing](sttpBackend))
+    val sttpBackend = HttpClientFutureBackend()
+    Slf4jLoggingBackend[Future](sttpBackend)
   }
 
   def mutualTls(tlsCertPath: Path, serverCertPath: Option[Path]): CliHttpBackend = {
@@ -73,15 +70,9 @@ object AuthenticatedHttpBackend {
     val context = SSLContext.getInstance("TLS")
     context.init(keyManagerFactory.getKeyManagers, trustManagers.orNull, new SecureRandom())
 
-    val trustManager = trustManagers.flatMap(_.headOption).map(_.asInstanceOf[X509TrustManager]).orNull
+    val client = HttpClient.newBuilder().sslContext(context).build()
 
-    val sslContext = SslContextBuilder.forClient.startTls(true)
-      .ciphers(context.getDefaultSSLParameters.getCipherSuites.toIterable.asJava, SupportedCipherSuiteFilter.INSTANCE)
-      .trustManager(trustManager)
-      .protocols(context.getDefaultSSLParameters.getProtocols.toIterable.asJava)
-      .keyManager(keyManagerFactory)
-      .build()
-
-    AsyncHttpClientFutureBackend.usingConfigBuilder(builder => builder.setSslContext(sslContext))
+    HttpClientFutureBackend.usingClient(client)
   }
+
 }

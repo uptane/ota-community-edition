@@ -1,21 +1,19 @@
-package db.migration
+package db.migration.keyserver
 
-import java.security.Security
-
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import org.apache.pekko.actor.ActorSystem
 import com.advancedtelematic.libats.slick.db.AppMigration
 import com.advancedtelematic.tuf.keyserver.db.KeysToJsonEncodedMigration
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.MySQLProfile.api.*
+import slick.jdbc.JdbcBackend.Database
 
-class R__MigrateKeysToJsonEncoded extends AppMigration  {
+import java.security.Security
+
+class R__MigrateKeysToJsonEncoded extends AppMigration {
   Security.addProvider(new BouncyCastleProvider)
 
-  implicit val system = ActorSystem(this.getClass.getSimpleName)
+  implicit val system: ActorSystem = ActorSystem(this.getClass.getSimpleName)
   import system.dispatcher
 
   override def migrate(implicit db: Database) = new KeysToJsonEncodedMigration().run.map(_ => ())
 }
-
-

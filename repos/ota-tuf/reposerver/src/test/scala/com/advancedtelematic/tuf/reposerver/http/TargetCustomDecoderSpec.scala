@@ -12,7 +12,8 @@ class TargetCustomDecoderSpec extends AnyFunSuite with Matchers {
 
   test("decoder can decode new json") {
     val instant = Instant.parse("2017-07-10T13:27:28Z")
-    val str = """{"name":"qemux86-64-ota","version":"ffd79847609f2c979deed5d81ec87833bd88f35bb15aa860454442db05d3129c","hardwareIds":["qemux86-64-ota"],"targetFormat":null,"createdAt":"2017-07-10T13:27:28Z","updatedAt":"2017-07-10T13:27:28Z"}"""
+    val str =
+      """{"name":"qemux86-64-ota","version":"ffd79847609f2c979deed5d81ec87833bd88f35bb15aa860454442db05d3129c","hardwareIds":["qemux86-64-ota"],"targetFormat":null,"createdAt":"2017-07-10T13:27:28Z","updatedAt":"2017-07-10T13:27:28Z"}"""
     val tc = parse(str).flatMap(_.as[TargetCustom]).valueOr(throw _)
     tc shouldBe a[TargetCustom]
 

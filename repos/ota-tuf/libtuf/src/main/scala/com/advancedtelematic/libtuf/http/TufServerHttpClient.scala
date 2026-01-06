@@ -10,15 +10,31 @@ import com.advancedtelematic.libtuf.data.ClientCodecs._
 import com.advancedtelematic.libtuf.data.ClientDataType.{DelegatedRoleName, RootRole, TargetsRole}
 import com.advancedtelematic.libtuf.data.ErrorCodes
 import com.advancedtelematic.libtuf.data.TufCodecs._
-import com.advancedtelematic.libtuf.data.TufDataType.{CompleteUploadRequest, ETag, GetSignedUrlResult, InitMultipartUploadResult, KeyId, MultipartUploadId, SignedPayload, TargetFilename, TufKeyPair, UploadPartETag}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  CompleteUploadRequest,
+  ETag,
+  GetSignedUrlResult,
+  InitMultipartUploadResult,
+  KeyId,
+  MultipartUploadId,
+  SignedPayload,
+  TargetFilename,
+  TufKeyPair,
+  UploadPartETag
+}
 import com.advancedtelematic.libtuf.http.CliHttpClient.{CliHttpBackend, CliHttpClientError}
-import com.advancedtelematic.libtuf.http.TufServerHttpClient.{RoleChecksumNotValid, RoleNotFound, TargetsResponse, UploadTargetTooBig}
+import com.advancedtelematic.libtuf.http.TufServerHttpClient.{
+  RoleChecksumNotValid,
+  RoleNotFound,
+  TargetsResponse,
+  UploadTargetTooBig
+}
 import com.azure.storage.blob.BlobClientBuilder
 import eu.timepit.refined._
 import eu.timepit.refined.api.Refined
 import org.slf4j.LoggerFactory
-import sttp.client._
-import sttp.model.{Header, HeaderNames, Headers, StatusCode, Uri}
+import sttp.client4.*
+import sttp.model.{Header, HeaderNames, StatusCode, Uri}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future, _}
@@ -26,9 +42,15 @@ import scala.util.control.NoStackTrace
 import scala.util.{Failure, Success, Try}
 
 object TufServerHttpClient {
-  case class TargetsResponse(targets: SignedPayload[TargetsRole], checksum: Option[Refined[String, ValidChecksum]])
 
-  case object RoleChecksumNotValid extends Exception("could not overwrite targets, trying to update an older version of role. Did you run `targets pull` ?") with NoStackTrace
+  case class TargetsResponse(targets: SignedPayload[TargetsRole],
+                             checksum: Option[Refined[String, ValidChecksum]])
+
+  case object RoleChecksumNotValid
+      extends Exception(
+        "could not overwrite targets, trying to update an older version of role. Did you run `targets pull` ?"
+      )
+      with NoStackTrace
 
   case class RoleNotFound(msg: String) extends Exception(s"role not found: $msg") with NoStackTrace
 
@@ -52,15 +74,17 @@ trait ReposerverClient extends TufServerClient {
 
   def targets(): Future[TargetsResponse]
 
-  def pushTargets(role: SignedPayload[TargetsRole], previousChecksum: Option[Refined[String, ValidChecksum]]): Future[Unit]
+  def pushTargets(role: SignedPayload[TargetsRole],
+                  previousChecksum: Option[Refined[String, ValidChecksum]]): Future[Unit]
 
   def uploadTarget(targetFilename: TargetFilename, inputPath: Path, timeout: Duration): Future[Unit]
 }
 
 trait DirectorClient extends TufServerClient
 
-abstract class TufServerHttpClient(uri: URI, httpBackend: CliHttpBackend)
-                                  (implicit ec: ExecutionContext) extends CliHttpClient(httpBackend) {
+abstract class TufServerHttpClient(uri: URI, httpBackend: CliHttpBackend)(
+  implicit ec: ExecutionContext)
+    extends CliHttpClient(httpBackend) {
 
   protected def uriPath: String
 
@@ -72,14 +96,14 @@ abstract class TufServerHttpClient(uri: URI, httpBackend: CliHttpBackend)
 
   def root(version: Option[Int] = None): Future[SignedPayload[RootRole]] = {
     val filename = version match {
-      case Some(v) => v + ".root.json"
-      case None => "root.json"
+      case Some(v) => s"$v.root.json"
+      case None    => "root.json"
     }
 
     val req = http.get(apiUri(filename))
 
-    execHttp[SignedPayload[RootRole]](req) {
-      case (404, error) => Future.failed(RoleNotFound(error.description))
+    execHttp[SignedPayload[RootRole]](req) { case (404, error) =>
+      Future.failed(RoleNotFound(error.description))
     }.map(_.body)
   }
 
@@ -94,7 +118,8 @@ abstract class TufServerHttpClient(uri: URI, httpBackend: CliHttpBackend)
 }
 
 class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: ExecutionContext)
-  extends TufServerHttpClient(uri, httpBackend) with ReposerverClient {
+    extends TufServerHttpClient(uri, httpBackend)
+    with ReposerverClient {
 
   private val _log = LoggerFactory.getLogger(this.getClass)
 
@@ -113,12 +138,14 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
   def targets(): Future[TargetsResponse] = {
     val req = http.get(apiUri("targets.json"))
     execHttp[SignedPayload[TargetsRole]](req)().map { response =>
-      val checksumO = response.header("x-ats-role-checksum").flatMap { v => refineV[ValidChecksum](v).toOption }
+      val checksumO =
+        response.header("x-ats-role-checksum").flatMap(v => refineV[ValidChecksum](v).toOption)
       TargetsResponse(response.body, checksumO)
     }
   }
 
-  def pushTargets(role: SignedPayload[TargetsRole], previousChecksum: Option[Refined[String, ValidChecksum]]): Future[Unit] = {
+  def pushTargets(role: SignedPayload[TargetsRole],
+                  previousChecksum: Option[Refined[String, ValidChecksum]]): Future[Unit] = {
     val put = http.put(apiUri("targets"))
     val req = previousChecksum.map(e => put.header("x-ats-role-checksum", e.value)).getOrElse(put)
 
@@ -130,7 +157,8 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     }
   }
 
-  override def pushDelegation(name: DelegatedRoleName, delegation: SignedPayload[TargetsRole]): Future[Unit] = {
+  override def pushDelegation(name: DelegatedRoleName,
+                              delegation: SignedPayload[TargetsRole]): Future[Unit] = {
     val req = http.put(apiUri(s"delegations/${name.value}.json"))
     execJsonHttp[Unit, SignedPayload[TargetsRole]](req, delegation)()
   }
@@ -140,16 +168,24 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     execHttp[SignedPayload[TargetsRole]](req)().map(_.body)
   }
 
-  override def uploadTarget(targetFilename: TargetFilename, inputPath: Path, timeout: Duration): Future[Unit] = {
+  override def uploadTarget(targetFilename: TargetFilename,
+                            inputPath: Path,
+                            timeout: Duration): Future[Unit] = {
     val multipartUploadResult = for {
       inputFile <- Future.fromTry(Try(inputPath.toFile))
       initResult <- initMultipartUpload(targetFilename, inputFile.length())
-      result <- s3MultipartUpload(targetFilename, inputFile, initResult.uploadId, initResult.partSize, timeout)
+      result <- s3MultipartUpload(
+        targetFilename,
+        inputFile,
+        initResult.uploadId,
+        initResult.partSize,
+        timeout
+      )
     } yield result
 
     multipartUploadResult.recoverWith {
       case e: CliHttpClientError if e.remoteError.code == ErrorCodes.Reposerver.NotImplemented =>
-        //Multipart upload is not supported for Azure Blob Storage.
+        // Multipart upload is not supported for Azure Blob Storage.
         uploadByPreSignedUrl(targetFilename, inputPath, timeout)
     }
   }
@@ -162,20 +198,24 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     Future.fromTry(uploadResult)
   }
 
-  private def uploadByPreSignedUrl(targetFilename: TargetFilename, inputPath: Path, timeout: Duration): Future[Unit] = {
-    val req = basicRequest.put(apiUri(s"uploads/" + targetFilename.value))
+  private def uploadByPreSignedUrl(targetFilename: TargetFilename,
+                                   inputPath: Path,
+                                   timeout: Duration): Future[Unit] = {
+    val req = basicRequest
+      .put(apiUri(s"uploads/" + targetFilename.value))
       .body(inputPath)
       .readTimeout(timeout)
       .followRedirects(false)
       .response(asByteArrayAlways)
 
     val httpF: Future[Unit] = httpBackend.send(req).flatMap {
-      case r @ Response(_, StatusCode.Found, _, _, _) =>
-        r.header("Location").fold[Either[String, Uri]](Left("No 'Location' header found."))(x => Uri.parse(x)) match {
+      case r @ Response(_, StatusCode.Found, _, _, _, _) =>
+        r.header("Location")
+          .fold[Either[String, Uri]](Left("No 'Location' header found."))(x => Uri.parse(x)) match {
           case Left(err) =>
             Future.failed(new Throwable(err))
 
-          case Right(uri) if uri.host.endsWith("core.windows.net") =>
+          case Right(uri) if uri.host.exists(_.endsWith("core.windows.net")) =>
             uploadToAzure(uri, inputPath, timeout)
 
           case Right(uri) =>
@@ -184,15 +224,16 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
 
       case resp =>
         handleResponse[Unit](req, resp) {
-          case (StatusCode.PayloadTooLarge.code, err) if err.code == ErrorCodes.Reposerver.PayloadTooLarge =>
+          case (StatusCode.PayloadTooLarge.code, err)
+              if err.code == ErrorCodes.Reposerver.PayloadTooLarge =>
             _log.debug(s"Error from server: $err")
             Future.failed(UploadTargetTooBig(err.description))
         }.map(_ => ())
     }
     _log.info("Uploading file, this may take a while")
 
-    def wait(): Future[Unit] = {
-      if(httpF.isCompleted) {
+    def wait(): Future[Unit] =
+      if (httpF.isCompleted) {
         println("")
         httpF
       } else {
@@ -203,17 +244,23 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
           }
         }.flatMap(_ => wait())
       }
-    }
 
     wait()
   }
 
-  private def s3MultipartUpload(targetFilename: TargetFilename, inputFile: File, uploadId: MultipartUploadId, partSize: Long, timeout: Duration): Future[Unit] = {
+  private def s3MultipartUpload(targetFilename: TargetFilename,
+                                inputFile: File,
+                                uploadId: MultipartUploadId,
+                                partSize: Long,
+                                timeout: Duration): Future[Unit] = {
 
     val totalSize = inputFile.length()
     val inputStream: FileInputStream = new FileInputStream(inputFile)
 
-    def processChunk(inputStream: FileInputStream, part: Int = 1, bytesProcessed: Long = 0, eTags: Seq[UploadPartETag] = Seq.empty): Future[Seq[UploadPartETag]] = {
+    def processChunk(inputStream: FileInputStream,
+                     part: Int = 1,
+                     bytesProcessed: Long = 0,
+                     eTags: Seq[UploadPartETag] = Seq.empty): Future[Seq[UploadPartETag]] = {
 
       val available = inputStream.available()
       val bufferSize = Math.min(partSize, available).toInt
@@ -235,27 +282,34 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     for {
       tags <- processChunk(inputStream)
       _ <- completeMultipartUpload(targetFilename, uploadId, tags)
-    } yield {
-      _log.info(s"Upload completed")
-    }
+    } yield _log.info(s"Upload completed")
   }
 
   private def printProgress(total: Long, current: Long): Unit = {
-    def toMb(value: Long) = BigDecimal(value.toDouble / 1024 / 1024).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+    def toMb(value: Long) =
+      BigDecimal(value.toDouble / 1024 / 1024).setScale(2, BigDecimal.RoundingMode.HALF_UP)
 
     val str = s"Uploading: uploaded ${toMb(current)}Mb of ${toMb(total)}Mb"
     _log.info(str)
   }
 
-  private def initMultipartUpload(targetFilename: TargetFilename, fileSize: Long): Future[InitMultipartUploadResult] = {
+  private def initMultipartUpload(targetFilename: TargetFilename,
+                                  fileSize: Long): Future[InitMultipartUploadResult] = {
     val req = http
-      .post(apiUri(s"multipart/initiate/" + targetFilename.value).params("fileSize" -> fileSize.toString))
+      .post(
+        apiUri(s"multipart/initiate/" + targetFilename.value)
+          .params("fileSize" -> fileSize.toString)
+      )
       .followRedirects(false)
 
     execHttp[InitMultipartUploadResult](req)().map(_.body)
   }
 
-  private def getSignedUrlAndUploadPart(targetFilename: TargetFilename, uploadId: MultipartUploadId, part: Int, data: Array[Byte], timeout: Duration): Future[UploadPartETag] = {
+  private def getSignedUrlAndUploadPart(targetFilename: TargetFilename,
+                                        uploadId: MultipartUploadId,
+                                        part: Int,
+                                        data: Array[Byte],
+                                        timeout: Duration): Future[UploadPartETag] = {
     val digest = MessageDigest.getInstance("MD5").digest(data)
     val md5Hash = Base64.getEncoder.encodeToString(digest)
     val contentLength = data.length
@@ -266,12 +320,18 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     } yield eTag
   }
 
-  private def getSignedUrl(targetFilename: TargetFilename, uploadId: MultipartUploadId, part: Int, md5Hash: String, length: Int): Future[URI] = {
+  private def getSignedUrl(targetFilename: TargetFilename,
+                           uploadId: MultipartUploadId,
+                           part: Int,
+                           md5Hash: String,
+                           length: Int): Future[URI] = {
     val url = apiUri(s"multipart/url/${targetFilename.value}")
-      .params(("part" -> part.toString),
-        ("uploadId" -> uploadId.value),
-        ("md5" -> md5Hash),
-        ("contentLength" -> length.toString))
+      .params(
+        "part" -> part.toString,
+        "uploadId" -> uploadId.value,
+        "md5" -> md5Hash,
+        "contentLength" -> length.toString
+      )
 
     val req = http.get(url).followRedirects(false)
 
@@ -285,9 +345,14 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     rs.map(_.uri)
   }
 
-  private def uploadPart(uri: URI, part: Int, data: Array[Byte], md5Hash: String, timeout: Duration): Future[UploadPartETag] = {
+  private def uploadPart(uri: URI,
+                         part: Int,
+                         data: Array[Byte],
+                         md5Hash: String,
+                         timeout: Duration): Future[UploadPartETag] = {
 
-    val req = http.put(Uri(uri))
+    val req = http
+      .put(Uri(uri))
       .body(data)
       .readTimeout(timeout)
       .header(HeaderNames.ContentMd5, md5Hash)
@@ -305,12 +370,18 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
     }
   }
 
-  def completeMultipartUpload(targetFilename: TargetFilename, uploadId: MultipartUploadId, partETags: Seq[UploadPartETag]): Future[Unit] = {
+  def completeMultipartUpload(targetFilename: TargetFilename,
+                              uploadId: MultipartUploadId,
+                              partETags: Seq[UploadPartETag]): Future[Unit] = {
     val req = http
       .put(apiUri(s"multipart/complete/" + targetFilename.value))
       .followRedirects(false)
 
-    val rs = execJsonHttp[Unit, CompleteUploadRequest](req, CompleteUploadRequest(uploadId, partETags), retryingHttpClient())()
+    val rs = execJsonHttp[Unit, CompleteUploadRequest](
+      req,
+      CompleteUploadRequest(uploadId, partETags),
+      retryingHttpClient()
+    )()
 
     rs.onComplete {
       case Success(v) => _log.debug(s"Complete multipart upload response: $v")
@@ -319,10 +390,12 @@ class ReposerverHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: E
 
     rs.map(_ => ())
   }
+
 }
 
-class DirectorHttpClient(uri: URI, httpBackend: CliHttpBackend)
-                        (implicit ec: ExecutionContext) extends TufServerHttpClient(uri, httpBackend) with DirectorClient {
+class DirectorHttpClient(uri: URI, httpBackend: CliHttpBackend)(implicit ec: ExecutionContext)
+    extends TufServerHttpClient(uri, httpBackend)
+    with DirectorClient {
 
   // assumes talking to the Director through the API gateway
   protected def uriPath: String = "/api/v1/director/admin/repo/"
@@ -336,4 +409,5 @@ class DirectorHttpClient(uri: URI, httpBackend: CliHttpBackend)
     val req = http.delete(apiUri("private_keys/" + keyId.value))
     execHttp[Unit](req)().map(_.body)
   }
+
 }

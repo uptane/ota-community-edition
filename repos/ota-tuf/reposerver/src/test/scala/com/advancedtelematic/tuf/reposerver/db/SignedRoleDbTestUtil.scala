@@ -11,7 +11,9 @@ import com.advancedtelematic.libtuf_server.repo.server.DataType.SignedRole
 import scala.concurrent.Future
 
 object SignedRoleDbTestUtil {
+
   implicit class SignedRoleRepositoryTestOps(value: SignedRoleRepository) {
+
     def update[T: TufRole](repoId: RepoId, signedRole: SignedRole[T]): Future[Int] =
       value.db.run {
         Schema.signedRoles
@@ -19,5 +21,7 @@ object SignedRoleDbTestUtil {
           .filter(_.roleType === signedRole.tufRole.roleType)
           .update(signedRole.asDbSignedRole(repoId))
       }
+
   }
+
 }

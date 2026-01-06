@@ -1,6 +1,6 @@
 package io.github.uptane.tuf.tuf_server
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.advancedtelematic.libats.boot.{VersionInfo, VersionInfoProvider}
 import com.advancedtelematic.libats.http.BootAppDefaultConfig
 import com.advancedtelematic.tuf.keyserver.KeyserverBoot
@@ -22,13 +22,18 @@ object TufServerBoot extends BootAppDefaultConfig with VersionInfo {
 
     val keyserverDbConfig = globalConfig.getConfig("ats.keyserver.database")
     val keyserverActorSystem = ActorSystem("keyserver-actor-system")
-    val keyserverBind = new KeyserverBoot(globalConfig, keyserverDbConfig, new MetricRegistry)(keyserverActorSystem).bind()
+    val keyserverBind = new KeyserverBoot(globalConfig, keyserverDbConfig, new MetricRegistry)(
+      keyserverActorSystem
+    ).bind()
 
     val reposerverDbConfig = globalConfig.getConfig("ats.reposerver.database")
-    val reposerverBind = new ReposerverBoot(globalConfig, reposerverDbConfig, new MetricRegistry)(ActorSystem("reposerver-actor-system")).bind()
+    val reposerverBind = new ReposerverBoot(globalConfig, reposerverDbConfig, new MetricRegistry)(
+      ActorSystem("reposerver-actor-system")
+    ).bind()
 
     val bind = Future.sequence(List(keyserverBind, reposerverBind))
 
     Await.result(bind, Duration.Inf)
   }
+
 }

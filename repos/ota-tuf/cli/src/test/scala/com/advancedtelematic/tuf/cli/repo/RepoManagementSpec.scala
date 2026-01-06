@@ -8,9 +8,19 @@ import cats.syntax.either._
 import com.advancedtelematic.libtuf.data.ClientCodecs._
 import com.advancedtelematic.libtuf.data.ClientDataType.RootRole
 import com.advancedtelematic.libtuf.data.TufCodecs._
-import com.advancedtelematic.libtuf.data.TufDataType.{Ed25519KeyType, KeyType, RsaKeyType, SignedPayload, TufKey, TufPrivateKey}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  Ed25519KeyType,
+  KeyType,
+  RsaKeyType,
+  SignedPayload,
+  TufKey,
+  TufPrivateKey
+}
 import com.advancedtelematic.tuf.cli.DataType._
-import com.advancedtelematic.tuf.cli.repo.TufRepo.{MissingCredentialsZipFile, RepoAlreadyInitialized}
+import com.advancedtelematic.tuf.cli.repo.TufRepo.{
+  MissingCredentialsZipFile,
+  RepoAlreadyInitialized
+}
 import com.advancedtelematic.tuf.cli.util.{CliSpec, KeyTypeSpecSupport}
 import io.circe.jawn._
 import io.circe.syntax._
@@ -20,12 +30,24 @@ import org.scalatest.TryValues._
 import scala.util.{Success, Try}
 
 class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
-  lazy val credentialsZipNoTargets = Paths.get(this.getClass.getResource("/credentials_no_targets.zip").toURI)
-  lazy val credentialsZipEd25519 = Paths.get(this.getClass.getResource("/credentials_ed25519.zip").toURI)
-  lazy val credentialsZipNoTufRepoEd25519 = Paths.get(this.getClass.getResource("/credentials_no_tufrepo_ed25519.zip").toURI)
-  lazy val credentialsZipNoAuthEd25519 = Paths.get(this.getClass.getResource("/credentials_no_auth_ed25519.zip").toURI)
-  lazy val credentialsZipTlsAuthEd25519 = Paths.get(this.getClass.getResource("/credentials_tls-auth_ed25519.zip").toURI)
-  lazy val credentialsZipAuthPlusLegacy = Paths.get(this.getClass.getResource("/credentials_auth_plus_legacy.zip").toURI)
+
+  lazy val credentialsZipNoTargets =
+    Paths.get(this.getClass.getResource("/credentials_no_targets.zip").toURI)
+
+  lazy val credentialsZipEd25519 =
+    Paths.get(this.getClass.getResource("/credentials_ed25519.zip").toURI)
+
+  lazy val credentialsZipNoTufRepoEd25519 =
+    Paths.get(this.getClass.getResource("/credentials_no_tufrepo_ed25519.zip").toURI)
+
+  lazy val credentialsZipNoAuthEd25519 =
+    Paths.get(this.getClass.getResource("/credentials_no_auth_ed25519.zip").toURI)
+
+  lazy val credentialsZipTlsAuthEd25519 =
+    Paths.get(this.getClass.getResource("/credentials_tls-auth_ed25519.zip").toURI)
+
+  lazy val credentialsZipAuthPlusLegacy =
+    Paths.get(this.getClass.getResource("/credentials_auth_plus_legacy.zip").toURI)
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -34,7 +56,8 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
   def randomRepoPath = Files.createTempDirectory("tuf-repo").resolve("repo")
 
   test("credentials.zip without tufrepo.url throws proper error") {
-    val repoT = RepoManagement.initialize(RepoServer, randomRepoPath, credentialsZipNoTufRepoEd25519)
+    val repoT =
+      RepoManagement.initialize(RepoServer, randomRepoPath, credentialsZipNoTufRepoEd25519)
     repoT.failure.exception shouldBe MissingCredentialsZipFile("tufrepo.url")
   }
 
@@ -59,7 +82,12 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
   }
 
   test("can initialize repo from ZIP file specifying custom repo") {
-    val repoT = RepoManagement.initialize(RepoServer, randomRepoPath, credentialsZipEd25519, repoUri = Some(new URI("https://ats.com")))
+    val repoT = RepoManagement.initialize(
+      RepoServer,
+      randomRepoPath,
+      credentialsZipEd25519,
+      repoUri = Some(new URI("https://ats.com"))
+    )
     repoT.success.value.repoServerUri.get.toString shouldBe "https://ats.com"
   }
 
@@ -87,7 +115,7 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
     val setupFor = (keyType: KeyType) => {
       val zipName = keyType match {
         case Ed25519KeyType => "Ed25519"
-        case RsaKeyType => "RSA"
+        case RsaKeyType     => "RSA"
         case t => throw new IllegalArgumentException("[test]: Unknown key type for zip file: " + t)
       }
 
@@ -104,8 +132,14 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
     val repo = repoT.get
 
     repo.authConfig.get.get shouldBe a[OAuthConfig]
-    parseFile(repo.repoPath.resolve("keys/targets.pub").toFile).flatMap(_.as[TufKey]).valueOr(throw _).keytype shouldBe keyType
-    parseFile(repo.repoPath.resolve("keys/targets.sec").toFile).flatMap(_.as[TufPrivateKey]).valueOr(throw _).keytype shouldBe keyType
+    parseFile(repo.repoPath.resolve("keys/targets.pub").toFile)
+      .flatMap(_.as[TufKey])
+      .valueOr(throw _)
+      .keytype shouldBe keyType
+    parseFile(repo.repoPath.resolve("keys/targets.sec").toFile)
+      .flatMap(_.as[TufPrivateKey])
+      .valueOr(throw _)
+      .keytype shouldBe keyType
   }
 
   keyTypeZipTest("export includes root.json") { (zip, keyType) =>
@@ -116,7 +150,7 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
 
     val rootRole = RootRole(Map.empty, Map.empty, 2, expires = Instant.now())
 
-    val signedPayload = SignedPayload(Seq.empty,rootRole, rootRole.asJson)
+    val signedPayload = SignedPayload(Seq.empty, rootRole, rootRole.asJson)
 
     repo.writeSignedRole(signedPayload).get
 
@@ -135,21 +169,34 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
 
     // test the exported zip file by creating another repo from it:
     val repoFromExported = RepoManagement.initialize(RepoServer, randomRepoPath, tempPath).get
-    repoFromExported.authConfig.get.map(_.asInstanceOf[OAuthConfig].client_id).get shouldBe "8f505046-bf38-4e17-a0bc-8a289bbd1403"
-    val server = repoFromExported.treehubConfig.get.ostree.hcursor.downField("server").as[String].valueOr(throw _)
+    repoFromExported.authConfig.get
+      .map(_.asInstanceOf[OAuthConfig].client_id)
+      .get shouldBe "8f505046-bf38-4e17-a0bc-8a289bbd1403"
+    val server = repoFromExported.treehubConfig.get.ostree.hcursor
+      .downField("server")
+      .as[String]
+      .valueOr(throw _)
     server shouldBe "https://treehub-pub.gw.staging.atsgarage.com/api/v3"
   }
 
-  keyTypeZipTest("export uses configured tuf url, not what came in the original file") { (zip, keyType) =>
-    val repo = RepoManagement.initialize(RepoServer, randomRepoPath, zip, repoUri = Some(new URI("https://someotherrepo.com"))).get
-    repo.genKeys(KeyName("default-key"), keyType)
+  keyTypeZipTest("export uses configured tuf url, not what came in the original file") {
+    (zip, keyType) =>
+      val repo = RepoManagement
+        .initialize(
+          RepoServer,
+          randomRepoPath,
+          zip,
+          repoUri = Some(new URI("https://someotherrepo.com"))
+        )
+        .get
+      repo.genKeys(KeyName("default-key"), keyType)
 
-    val tempPath = Files.createTempFile("tuf-repo-spec-export", ".zip")
-    RepoManagement.export(repo, KeyName("default-key"), tempPath) shouldBe Try(())
+      val tempPath = Files.createTempFile("tuf-repo-spec-export", ".zip")
+      RepoManagement.export(repo, KeyName("default-key"), tempPath) shouldBe Try(())
 
-    // test the exported zip file by creating another repo from it:
-    val repoFromExported = RepoManagement.initialize(RepoServer, randomRepoPath, tempPath).get
-    repoFromExported.repoServerUri.get.toString shouldBe "https://someotherrepo.com"
+      // test the exported zip file by creating another repo from it:
+      val repoFromExported = RepoManagement.initialize(RepoServer, randomRepoPath, tempPath).get
+      repoFromExported.repoServerUri.get.toString shouldBe "https://someotherrepo.com"
   }
 
   keyTypeZipTest("creates base credentials.zip if one does not exist") { (zip, keyType) =>
@@ -188,4 +235,5 @@ class RepoManagementSpec extends CliSpec with KeyTypeSpecSupport {
     Files.exists(repo.repoPath.resolve(tlsConfig.certPath)) shouldBe true
     Files.exists(repo.repoPath.resolve(tlsConfig.serverCertPath.get)) shouldBe true
   }
+
 }

@@ -1,9 +1,16 @@
 package com.advancedtelematic.tuf.keyserver.daemon
 
-import akka.actor.{ActorSystem, Props, Status}
-import akka.testkit.{ImplicitSender, TestKitBase, TestProbe}
+import org.apache.pekko.actor.{ActorSystem, Props, Status}
+import org.apache.pekko.testkit.{ImplicitSender, TestKitBase, TestProbe}
 import com.advancedtelematic.libats.http.Errors.MissingEntity
-import com.advancedtelematic.libtuf.data.TufDataType.{Ed25519TufKey, KeyId, KeyType, RSATufKey, RepoId, RoleType}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  Ed25519TufKey,
+  KeyId,
+  KeyType,
+  RSATufKey,
+  RepoId,
+  RoleType
+}
 import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.{KeyGenRequestStatus, _}
 import com.advancedtelematic.tuf.keyserver.db.{KeyGenRequestSupport, KeyRepositorySupport}
 import com.advancedtelematic.tuf.util.{KeyTypeSpecSupport, TufKeyserverSpec}
@@ -14,15 +21,18 @@ import com.advancedtelematic.libats.test.MysqlDatabaseSpec
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
-
-class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with MysqlDatabaseSpec with ImplicitSender
-  with KeyRepositorySupport
-  with KeyGenRequestSupport
-  with KeyTypeSpecSupport
-  with PatienceConfiguration {
+class KeyGeneratorWorkerSpec
+    extends TufKeyserverSpec
+    with TestKitBase
+    with MysqlDatabaseSpec
+    with ImplicitSender
+    with KeyRepositorySupport
+    with KeyGenRequestSupport
+    with KeyTypeSpecSupport
+    with PatienceConfiguration {
   override implicit lazy val system: ActorSystem = ActorSystem("KeyGeneratorWorkerIntegrationSpec")
 
-  implicit val ec = ExecutionContext.global
+  implicit val ec: scala.concurrent.ExecutionContextExecutor = ExecutionContext.global
 
   val actorRef = system.actorOf(KeyGeneratorWorker.props(DefaultKeyGenerationOp()))
 
@@ -31,14 +41,21 @@ class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with Mysq
   def findKey(keyId: KeyId): Future[Key] =
     keyRepo.findAll(Seq(keyId)).map(_.head)
 
-  override implicit def patienceConfig =
+  override implicit def patienceConfig: PatienceConfig =
     PatienceConfig().copy(timeout = timeout, interval = Span(300, Milliseconds))
 
   def keyGenRequest(threshold: Int = 1)(implicit keyType: KeyType): Future[KeyGenRequest] = {
     val keyGenId = KeyGenId.generate()
     val repoId = RepoId.generate()
-    val request = KeyGenRequest(keyGenId, repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT,
-      keySize = keyType.crypto.defaultKeySize, keyType = keyType, threshold = threshold)
+    val request = KeyGenRequest(
+      keyGenId,
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keySize = keyType.crypto.defaultKeySize,
+      keyType = keyType,
+      threshold = threshold
+    )
     keyGenRepo.persist(request)
   }
 
@@ -47,8 +64,8 @@ class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with Mysq
     actorRef ! keyGenReq
 
     val key = expectMsgPF(timeout) {
-      case Status.Success(t: Seq[Key]@unchecked) => t.head
-      case Status.Failure(ex) ⇒ throw ex
+      case Status.Success(t: Seq[Key] @unchecked) => t.head
+      case Status.Failure(ex)                     => throw ex
     }
 
     keyGenRepo.find(keyGenReq.id).futureValue.status shouldBe KeyGenRequestStatus.GENERATED
@@ -56,15 +73,15 @@ class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with Mysq
     val dbKey = keyRepo.findAll(Seq(key.id)).futureValue.head
 
     dbKey.keyType shouldBe keyType
-    dbKey.publicKey should (be (a[Ed25519TufKey]) or be (a[RSATufKey]))
+    dbKey.publicKey should (be(a[Ed25519TufKey]).or(be(a[RSATufKey])))
   }
 
   keyTypeTest("associates new key with role") { implicit keyType =>
     val keyGenReq = keyGenRequest().futureValue
     actorRef ! keyGenReq
 
-    val key = expectMsgPF(timeout) {
-      case Status.Success(t: Seq[Key]@unchecked) => t.head
+    val key = expectMsgPF(timeout) { case Status.Success(t: Seq[Key] @unchecked) =>
+      t.head
     }
 
     val keys = keyRepo.repoKeys(keyGenReq.repoId).futureValue
@@ -74,8 +91,14 @@ class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with Mysq
 
   keyTypeTest("sends back Failure if something bad happens ") { implicit keyType =>
     val repoId = RepoId.generate()
-    actorRef ! KeyGenRequest(KeyGenId.generate(), repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT,
-      keyType = keyType, keySize = keyType.crypto.defaultKeySize)
+    actorRef ! KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keyType = keyType,
+      keySize = keyType.crypto.defaultKeySize
+    )
     val exception = expectMsgType[Status.Failure](3.seconds)
     exception.cause shouldBe a[MissingEntity[_]]
   }
@@ -86,12 +109,22 @@ class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with Mysq
 
     val probe = TestProbe()
 
-    val alwaysErrorActor = system.actorOf(Props(new KeyGeneratorWorker(
-      _ => Future.failed(new Exception("test: key gen failed"))
-    )))
+    val alwaysErrorActor = system.actorOf(
+      Props(new KeyGeneratorWorker(_ => Future.failed(new Exception("test: key gen failed"))))
+    )
 
-    val kgr = keyGenRepo.persist(KeyGenRequest(keyGenId, repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT,
-      keyType = keyType, keySize = keyType.crypto.defaultKeySize)).futureValue
+    val kgr = keyGenRepo
+      .persist(
+        KeyGenRequest(
+          keyGenId,
+          repoId,
+          KeyGenRequestStatus.REQUESTED,
+          RoleType.ROOT,
+          keyType = keyType,
+          keySize = keyType.crypto.defaultKeySize
+        )
+      )
+      .futureValue
     alwaysErrorActor.tell(kgr, probe.ref)
 
     val exception = probe.expectMsgType[Status.Failure](3.seconds)
@@ -104,8 +137,8 @@ class KeyGeneratorWorkerSpec extends TufKeyserverSpec with TestKitBase with Mysq
     actorRef ! keyGenRequest(5).futureValue
 
     val keys = expectMsgPF(timeout) {
-      case Status.Success(t: Seq[Key]@unchecked) => t
-      case Status.Failure(ex) => fail(ex)
+      case Status.Success(t: Seq[Key] @unchecked) => t
+      case Status.Failure(ex)                     => fail(ex)
     }
 
     keys.map(_.id).distinct.size shouldBe 5

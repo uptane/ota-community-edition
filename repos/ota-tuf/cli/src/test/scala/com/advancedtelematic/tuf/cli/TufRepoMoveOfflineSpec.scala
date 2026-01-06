@@ -3,9 +3,15 @@ package com.advancedtelematic.tuf.cli
 import java.nio.file.{Files, Paths}
 import java.time.Instant
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import com.advancedtelematic.libtuf.data.ClientDataType.{RootRole, TargetsRole, TufRole}
-import com.advancedtelematic.libtuf.data.TufDataType.{KeyType, RoleType, SignedPayload, TufKey, TufPrivateKey}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  KeyType,
+  RoleType,
+  SignedPayload,
+  TufKey,
+  TufPrivateKey
+}
 import com.advancedtelematic.libtuf.http.{DirectorClient, ReposerverClient, TufServerClient}
 import com.advancedtelematic.tuf.cli.DataType.KeyName
 import com.advancedtelematic.tuf.cli.repo.{CliKeyStorage, DirectorRepo, RepoServerRepo, TufRepo}
@@ -24,22 +30,32 @@ class TufRepoMoveOfflineSpec extends CliSpec {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private def moveOfflineTest(name: String)
-                     (fn: (TufRepo[TufServerClient], FakeReposerverTufServerClient, => Future[(TufKey, TufKey, SignedPayload[RootRole])]) => Any)
-                     (implicit pos: Position): Unit = {
+  private def moveOfflineTest(name: String)(
+    fn: (TufRepo[TufServerClient],
+         FakeReposerverTufServerClient,
+         => Future[(TufKey, TufKey, SignedPayload[RootRole])]) => Any)(
+    implicit pos: Position): Unit = {
 
     test(name + " reposerver") {
       val repo = initRepo[RepoServerRepo](KeyType.default)
       val client = new FakeReposerverTufServerClient(KeyType.default)
 
-      fn(repo.asInstanceOf[TufRepo[TufServerClient]], client, OfflineMover.reposerver(repo, KeyType.default, client))
+      fn(
+        repo.asInstanceOf[TufRepo[TufServerClient]],
+        client,
+        OfflineMover.reposerver(repo, KeyType.default, client)
+      )
     }
 
     test(name + " director") {
       val repo = initRepo[DirectorRepo](KeyType.default)
       val client = new FakeReposerverTufServerClient(KeyType.default)
 
-      fn(repo.asInstanceOf[TufRepo[TufServerClient]], client, OfflineMover.director(repo, KeyType.default, client))
+      fn(
+        repo.asInstanceOf[TufRepo[TufServerClient]],
+        client,
+        OfflineMover.director(repo, KeyType.default, client)
+      )
     }
   }
 
@@ -95,7 +111,8 @@ class TufRepoMoveOfflineSpec extends CliSpec {
     val repo = initRepo[RepoServerRepo](KeyType.default)
     val client = FakeReposerverTufServerClient(KeyType.default)
 
-    val (pub, pubT, signedPayload) = OfflineMover.reposerver(repo, KeyType.default, client).futureValue
+    val (pub, pubT, signedPayload) =
+      OfflineMover.reposerver(repo, KeyType.default, client).futureValue
 
     val rootRole = signedPayload.signed
 
@@ -107,7 +124,10 @@ class TufRepoMoveOfflineSpec extends CliSpec {
     val client = FakeReposerverTufServerClient(KeyType.default)
     val (_, pubTargets, _) = OfflineMover.reposerver(repo, KeyType.default, client).futureValue
     repo.signTargets(Seq(KeyName(s"targets${repo.name}")), _ => Instant.now().plusSeconds(60)).get
-    Files.write(repo.repoPath.resolve("roles").resolve(TufRole.targetsTufRole.checksumPath), Seq("997890bc85c5796408ceb20b0ca75dabe6fe868136e926d24ad0f36aa424f99d").asJava)
+    Files.write(
+      repo.repoPath.resolve("roles").resolve(TufRole.targetsTufRole.checksumPath),
+      Seq("997890bc85c5796408ceb20b0ca75dabe6fe868136e926d24ad0f36aa424f99d").asJava
+    )
 
     val payload = repo.pushTargets(client).futureValue
 
@@ -117,7 +137,8 @@ class TufRepoMoveOfflineSpec extends CliSpec {
   test("new root role contains new root id") {
     val repo = initRepo[RepoServerRepo](KeyType.default)
     val client = new FakeReposerverTufServerClient(KeyType.default)
-    val (pub, pubT, signedPayload) = OfflineMover.reposerver(repo, KeyType.default, client).futureValue
+    val (pub, pubT, signedPayload) =
+      OfflineMover.reposerver(repo, KeyType.default, client).futureValue
     val rootRole = signedPayload.signed
 
     rootRole.roles(RoleType.ROOT).keyids should contain(pub.id)
@@ -130,8 +151,10 @@ class TufRepoMoveOfflineSpec extends CliSpec {
   test("new root role does not contain old targets keys") {
     val repo = initRepo[RepoServerRepo](KeyType.default)
     val client = FakeReposerverTufServerClient(KeyType.default)
-    val oldTargetsKeyId = client.root().map(_.signed.roles(RoleType.TARGETS).keyids.head).futureValue
-    val (_, pubT, signedPayload) = OfflineMover.reposerver(repo, KeyType.default, client).futureValue
+    val oldTargetsKeyId =
+      client.root().map(_.signed.roles(RoleType.TARGETS).keyids.head).futureValue
+    val (_, pubT, signedPayload) =
+      OfflineMover.reposerver(repo, KeyType.default, client).futureValue
     val rootRole = signedPayload.signed
 
     rootRole.keys.keys should contain(pubT.id)
@@ -172,7 +195,7 @@ class TufRepoMoveOfflineSpec extends CliSpec {
     val result = OfflineMover.reposerverWithoutRoot(repo, client)
 
     ScalaFutures.whenReady(result.failed) { e =>
-      e shouldBe a [NoSuchElementException]
+      e shouldBe a[NoSuchElementException]
     }
   }
 
@@ -182,28 +205,31 @@ class TufRepoMoveOfflineSpec extends CliSpec {
     val result = OfflineMover.directorWithoutRoot(repo, client)
 
     ScalaFutures.whenReady(result.failed) { e =>
-      e shouldBe a [NoSuchElementException]
+      e shouldBe a[NoSuchElementException]
     }
   }
+
 }
 
-
 private object OfflineMover {
-  def reposerverWithoutRoot(repo: TufRepo[ReposerverClient], client: FakeReposerverTufServerClient)
-                           (implicit ec: ExecutionContext): Future[SignedPayload[RootRole]] = {
+
+  def reposerverWithoutRoot(repo: TufRepo[ReposerverClient], client: FakeReposerverTufServerClient)(
+    implicit ec: ExecutionContext): Future[SignedPayload[RootRole]] = {
     val oldRootName = KeyName(s"oldroot${repo.name}")
     repo.moveRootOffline(client, None, oldRootName, None, None, Instant.now().plusSeconds(60))
   }
 
-  def directorWithoutRoot(repo: TufRepo[DirectorClient], client: FakeReposerverTufServerClient)
-                           (implicit ec: ExecutionContext): Future[SignedPayload[RootRole]] = {
+  def directorWithoutRoot(repo: TufRepo[DirectorClient], client: FakeReposerverTufServerClient)(
+    implicit ec: ExecutionContext): Future[SignedPayload[RootRole]] = {
     val oldRootName = KeyName(s"oldroot${repo.name}")
 
     repo.moveRootOffline(client, None, oldRootName, None, None, Instant.now().plusSeconds(60))
   }
 
-  def reposerver(repo: TufRepo[ReposerverClient], keyType: KeyType, client: FakeReposerverTufServerClient)
-           (implicit ec: ExecutionContext): Future[(TufKey, TufKey, SignedPayload[RootRole])] = {
+  def reposerver(repo: TufRepo[ReposerverClient],
+                 keyType: KeyType,
+                 client: FakeReposerverTufServerClient)(
+    implicit ec: ExecutionContext): Future[(TufKey, TufKey, SignedPayload[RootRole])] = {
     val oldRootName = KeyName(s"oldroot${repo.name}")
     // newRootName is optional for `move-offline` and required for `generate key`
     val newRootName = Some(KeyName(s"newroot${repo.name}"))
@@ -212,24 +238,36 @@ private object OfflineMover {
     val pub = repo.genKeys(newRootName.get, keyType).get.pubkey
     val pubT = repo.genKeys(newTargetsName, keyType).get.pubkey
 
-    repo.moveRootOffline(client, newRootName, oldRootName, None, Option(newTargetsName), Instant.now().plusSeconds(60))
-      .map { s => (pub, pubT, s) }
+    repo
+      .moveRootOffline(
+        client,
+        newRootName,
+        oldRootName,
+        None,
+        Option(newTargetsName),
+        Instant.now().plusSeconds(60)
+      )
+      .map(s => (pub, pubT, s))
   }
 
-  def director(repo: TufRepo[DirectorClient], keyType: KeyType, client: FakeReposerverTufServerClient)
-           (implicit ec: ExecutionContext): Future[(TufKey, TufKey, SignedPayload[RootRole])] = {
+  def director(repo: TufRepo[DirectorClient],
+               keyType: KeyType,
+               client: FakeReposerverTufServerClient)(
+    implicit ec: ExecutionContext): Future[(TufKey, TufKey, SignedPayload[RootRole])] = {
     val oldRootName = KeyName(s"oldroot${repo.name}")
     // newRootName is optional for `move-offline` and required for `generate key`
     val newRootName = Some(KeyName(s"newroot${repo.name}"))
 
     val pub = repo.genKeys(newRootName.get, keyType).get.pubkey
 
-    repo.moveRootOffline(client, newRootName, oldRootName, None, None, Instant.now().plusSeconds(60))
+    repo
+      .moveRootOffline(client, newRootName, oldRootName, None, None, Instant.now().plusSeconds(60))
       .flatMap { s =>
         client
           .fetchKeyPair(s.signed.roles(RoleType.TARGETS).keyids.head)
           .map(_.pubkey)
-          .map { pubT => (pub, pubT, s) }
+          .map(pubT => (pub, pubT, s))
       }
   }
+
 }

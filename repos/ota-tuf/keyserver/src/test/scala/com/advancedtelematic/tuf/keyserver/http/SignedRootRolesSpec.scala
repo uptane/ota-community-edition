@@ -1,6 +1,5 @@
 package com.advancedtelematic.tuf.keyserver.http
 
-
 import java.time.temporal.ChronoUnit
 import java.time.{Duration, Instant}
 import com.advancedtelematic.libtuf.crypt.CanonicalJson._
@@ -10,8 +9,16 @@ import com.advancedtelematic.libtuf.data.RootManipulationOps._
 import com.advancedtelematic.libtuf.data.TufCodecs._
 import com.advancedtelematic.libtuf.data.TufDataType.{RepoId, _}
 import com.advancedtelematic.tuf.keyserver.daemon.DefaultKeyGenerationOp
-import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.{KeyGenId, KeyGenRequest, KeyGenRequestStatus}
-import com.advancedtelematic.tuf.keyserver.db.{KeyGenRequestSupport, KeyRepositorySupport, SignedRootRoleSupport}
+import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.{
+  KeyGenId,
+  KeyGenRequest,
+  KeyGenRequestStatus
+}
+import com.advancedtelematic.tuf.keyserver.db.{
+  KeyGenRequestSupport,
+  KeyRepositorySupport,
+  SignedRootRoleSupport
+}
 import com.advancedtelematic.tuf.keyserver.roles.SignedRootRoles
 import com.advancedtelematic.tuf.util.{KeyTypeSpecSupport, TufKeyserverSpec}
 import io.circe.syntax._
@@ -22,24 +29,34 @@ import scala.async.Async._
 import scala.concurrent.{ExecutionContext, Future}
 import com.advancedtelematic.libats.test.MysqlDatabaseSpec
 
-class SignedRootRolesSpec extends TufKeyserverSpec with MysqlDatabaseSpec
-  with Inspectors with PatienceConfiguration
-  with KeyGenRequestSupport
-  with KeyTypeSpecSupport
-  with SignedRootRoleSupport
-  with KeyRepositorySupport {
+class SignedRootRolesSpec
+    extends TufKeyserverSpec
+    with MysqlDatabaseSpec
+    with Inspectors
+    with PatienceConfiguration
+    with KeyGenRequestSupport
+    with KeyTypeSpecSupport
+    with SignedRootRoleSupport
+    with KeyRepositorySupport {
 
-  implicit val ec = ExecutionContext.global
+  implicit val ec: scala.concurrent.ExecutionContextExecutor = ExecutionContext.global
 
-  override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(10, Seconds))
+  override implicit def patienceConfig: PatienceConfig =
+    PatienceConfig().copy(timeout = Span(10, Seconds))
 
   val signedRootRoles = new SignedRootRoles()
   val keyGenerationOp = DefaultKeyGenerationOp()
 
   keyTypeTest("root role payload must be signed with root key") { keyType =>
     val repoId = RepoId.generate()
-    val rootKeyGenRequest = KeyGenRequest(KeyGenId.generate(),
-      repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT, keyType.crypto.defaultKeySize, keyType)
+    val rootKeyGenRequest = KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keyType.crypto.defaultKeySize,
+      keyType
+    )
 
     async {
       await(keyGenRepo.persist(rootKeyGenRequest))
@@ -60,8 +77,14 @@ class SignedRootRolesSpec extends TufKeyserverSpec with MysqlDatabaseSpec
 
   keyTypeTest("persists signed payload when finding") { keyType =>
     val repoId = RepoId.generate()
-    val rootKeyGenRequest = KeyGenRequest(KeyGenId.generate(),
-      repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT, keyType.crypto.defaultKeySize, keyType)
+    val rootKeyGenRequest = KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keyType.crypto.defaultKeySize,
+      keyType
+    )
 
     async {
       await(keyGenRepo.persist(rootKeyGenRequest))
@@ -69,17 +92,24 @@ class SignedRootRolesSpec extends TufKeyserverSpec with MysqlDatabaseSpec
 
       val signed = await(signedRootRoles.findFreshAndPersist(repoId))
 
-      await(signedRootRoleRepo.findLatest(repoId)).content.signed.asJson shouldBe signed.signed.asJson
+      await(
+        signedRootRoleRepo.findLatest(repoId)
+      ).content.signed.asJson shouldBe signed.signed.asJson
       await(signedRootRoleRepo.findLatest(repoId)).content.asJson shouldBe signed.asJson
     }.futureValue
   }
 
   keyTypeTest("returns renewed root.json when old one expired") { keyType =>
-
     val expiredSignedRootRoles = new SignedRootRoles(Duration.ofMillis(1))
     val repoId = RepoId.generate()
-    val rootKeyGenRequest = KeyGenRequest(KeyGenId.generate(),
-      repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT, keyType.crypto.defaultKeySize, keyType)
+    val rootKeyGenRequest = KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keyType.crypto.defaultKeySize,
+      keyType
+    )
 
     async {
       await(keyGenRepo.persist(rootKeyGenRequest))
@@ -98,8 +128,14 @@ class SignedRootRolesSpec extends TufKeyserverSpec with MysqlDatabaseSpec
   keyTypeTest("persists renewed root.json when old one expired") { keyType =>
     val expiredSignedRootRoles = new SignedRootRoles(Duration.ofMillis(1))
     val repoId = RepoId.generate()
-    val rootKeyGenRequest = KeyGenRequest(KeyGenId.generate(),
-      repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT, keyType.crypto.defaultKeySize, keyType)
+    val rootKeyGenRequest = KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keyType.crypto.defaultKeySize,
+      keyType
+    )
 
     async {
       await(keyGenRepo.persist(rootKeyGenRequest))
@@ -117,8 +153,14 @@ class SignedRootRolesSpec extends TufKeyserverSpec with MysqlDatabaseSpec
   keyTypeTest("returns old role when when keys are not online") { keyType =>
     val expiredSignedRootRoles = new SignedRootRoles(Duration.ofMillis(1))
     val repoId = RepoId.generate()
-    val rootKeyGenRequest = KeyGenRequest(KeyGenId.generate(),
-      repoId, KeyGenRequestStatus.REQUESTED, RoleType.ROOT, keyType.crypto.defaultKeySize, keyType)
+    val rootKeyGenRequest = KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.ROOT,
+      keyType.crypto.defaultKeySize,
+      keyType
+    )
 
     val rootRole = for {
       _ <- keyGenRepo.persist(rootKeyGenRequest)
@@ -135,4 +177,5 @@ class SignedRootRolesSpec extends TufKeyserverSpec with MysqlDatabaseSpec
 
     fetchedRole.futureValue.signed.asJson shouldBe rootRole.futureValue.signed.asJson
   }
+
 }

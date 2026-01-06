@@ -4,12 +4,23 @@ import java.time.Instant
 
 import cats.syntax.option._
 import cats.syntax.either._
-import akka.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.model.Uri
 import io.circe.syntax._
 import cats.data.Validated.Valid
 import cats.data.ValidatedNel
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, TargetCustom, TargetsRole}
-import com.advancedtelematic.libtuf.data.TufDataType.{RepoId, RoleType, SignedPayload, TargetFilename, TargetFormat, ValidTargetFilename}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  ClientTargetItem,
+  TargetCustom,
+  TargetsRole
+}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  RepoId,
+  RoleType,
+  SignedPayload,
+  TargetFilename,
+  TargetFormat,
+  ValidTargetFilename
+}
 import com.advancedtelematic.tuf.reposerver.util._
 import com.advancedtelematic.libtuf.data.ClientCodecs._
 import com.advancedtelematic.libats.codecs.CirceCodecs._
@@ -18,7 +29,7 @@ import com.advancedtelematic.tuf.reposerver.db.TargetItemRepositorySupport
 import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
 import com.advancedtelematic.libtuf_server.repo.server.DataType.SignedRole
-import com.advancedtelematic.tuf.reposerver.data.RepositoryDataType.{StorageMethod, TargetItem}
+import com.advancedtelematic.tuf.reposerver.data.RepoDataType.{StorageMethod, TargetItem}
 import io.circe.Json
 import com.advancedtelematic.libats.test.MysqlDatabaseSpec
 
@@ -26,12 +37,17 @@ import scala.concurrent.Future
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.time.{Seconds, Span}
 
-class OfflineSignedRoleStorageSpec extends TufReposerverSpec with MysqlDatabaseSpec with PatienceConfiguration
-  with TargetItemRepositorySupport {
+class OfflineSignedRoleStorageSpec
+    extends TufReposerverSpec
+    with MysqlDatabaseSpec
+    with PatienceConfiguration
+    with TargetItemRepositorySupport {
 
-  implicit val ec = scala.concurrent.ExecutionContext.global
+  implicit val ec: scala.concurrent.ExecutionContextExecutor =
+    scala.concurrent.ExecutionContext.global
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig().copy(timeout = Span(5, Seconds))
+  override implicit def patienceConfig: PatienceConfig =
+    PatienceConfig().copy(timeout = Span(5, Seconds))
 
   val mockUri = Uri("https://example.com")
 
@@ -44,7 +60,10 @@ class OfflineSignedRoleStorageSpec extends TufReposerverSpec with MysqlDatabaseS
     "updatedAt" -> Instant.now().asJson
   ).asJson
 
-  val mockChecksum = Checksum(HashMethod.SHA256, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03".refineTry[ValidChecksum].get)
+  val mockChecksum = Checksum(
+    HashMethod.SHA256,
+    "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03".refineTry[ValidChecksum].get
+  )
 
   val mockHashes = Map(HashMethod.SHA256 -> mockChecksum.hash)
 
@@ -61,7 +80,10 @@ class OfflineSignedRoleStorageSpec extends TufReposerverSpec with MysqlDatabaseS
   val signedRoleGeneration = TufRepoSignedRoleGeneration(keyserver)
   val targetRoleEdit = new TargetRoleEdit(signedRoleGeneration)
 
-  def storeOffline(repoId: RepoId, targets: Map[TargetFilename, ClientTargetItem], version: Int): Future[ValidatedNel[String, (Seq[TargetItem], SignedRole[TargetsRole])]] = {
+  def storeOffline(
+    repoId: RepoId,
+    targets: Map[TargetFilename, ClientTargetItem],
+    version: Int): Future[ValidatedNel[String, (Seq[TargetItem], SignedRole[TargetsRole])]] = {
     val targetsRole = TargetsRole(Instant.now.plusSeconds(3600), targets, version)
     val payload = keyserver.sign(repoId, targetsRole).futureValue
     subject.store(repoId, SignedPayload(payload.signatures, targetsRole, targetsRole.asJson))
@@ -71,10 +93,28 @@ class OfflineSignedRoleStorageSpec extends TufReposerverSpec with MysqlDatabaseS
     val repoId = RepoId.generate()
     keyserver.createRoot(repoId).futureValue
 
-    targetRoleEdit.addTargetItem(TargetItem(repoId, mockFilename, mockUri.some, mockChecksum, 22, None, StorageMethod.Managed)).futureValue
+    targetRoleEdit
+      .addTargetItem(
+        TargetItem(
+          repoId,
+          mockFilename,
+          mockUri.some,
+          mockChecksum,
+          22,
+          None,
+          StorageMethod.Managed
+        )
+      )
+      .futureValue
     val existingItem = targetItemRepo.findByFilename(repoId, mockFilename).futureValue
 
-    val newTargetItems = Map(mockFilename -> ClientTargetItem(mockHashes, existingItem.length, existingItem.custom.map(_.asJson)))
+    val newTargetItems = Map(
+      mockFilename -> ClientTargetItem(
+        mockHashes,
+        existingItem.length,
+        existingItem.custom.map(_.asJson)
+      )
+    )
 
     storeOffline(repoId, newTargetItems, version = 2).futureValue shouldBe a[Valid[_]]
   }
@@ -84,32 +124,62 @@ class OfflineSignedRoleStorageSpec extends TufReposerverSpec with MysqlDatabaseS
 
     keyserver.createRoot(repoId).futureValue
 
-    val newCustom = defaultCustom.as[TargetCustom].valueOr(throw _).copy(targetFormat = TargetFormat.BINARY.some)
+    val newCustom =
+      defaultCustom.as[TargetCustom].valueOr(throw _).copy(targetFormat = TargetFormat.BINARY.some)
 
-    val oldTargetItem = TargetItem(repoId, mockFilename, mockUri.some, mockChecksum, 22, newCustom.some, StorageMethod.Managed)
+    val oldTargetItem = TargetItem(
+      repoId,
+      mockFilename,
+      mockUri.some,
+      mockChecksum,
+      22,
+      newCustom.some,
+      StorageMethod.Managed
+    )
     targetRoleEdit.addTargetItem(oldTargetItem).futureValue
 
-    val newTargetItems = Map(mockFilename -> ClientTargetItem(mockHashes, oldTargetItem.length, newCustom.asJson.some))
+    val newTargetItems =
+      Map(mockFilename -> ClientTargetItem(mockHashes, oldTargetItem.length, newCustom.asJson.some))
 
     storeOffline(repoId, newTargetItems, version = 2).futureValue shouldBe a[Valid[_]]
 
-    targetItemRepo.findByFilename(repoId, mockFilename).futureValue.custom.flatMap(_.targetFormat) should contain(TargetFormat.BINARY)
+    targetItemRepo
+      .findByFilename(repoId, mockFilename)
+      .futureValue
+      .custom
+      .flatMap(_.targetFormat) should contain(TargetFormat.BINARY)
   }
 
-  keyTypeTest("keeps some attributes of previously existing targets unchanged when storing new offline targets ") { keyType =>
+  keyTypeTest(
+    "keeps some attributes of previously existing targets unchanged when storing new offline targets "
+  ) { keyType =>
     val repoId = RepoId.generate()
 
     keyserver.createRoot(repoId).futureValue
 
     val oldFilename = "my/oldfilename".refineTry[ValidTargetFilename].get
 
-    val oldTargetItem = TargetItem(repoId, oldFilename, mockUri.some, mockChecksum, 22, defaultCustom.as[TargetCustom].toOption, StorageMethod.Managed)
+    val oldTargetItem = TargetItem(
+      repoId,
+      oldFilename,
+      mockUri.some,
+      mockChecksum,
+      22,
+      defaultCustom.as[TargetCustom].toOption,
+      StorageMethod.Managed
+    )
     targetRoleEdit.addTargetItem(oldTargetItem).futureValue
 
-    val newChecksum = "33a1e103ecb162181620d521915879e68736ea20e4eabe22cc243115d4d43563".refineTry[ValidChecksum].get
+    val newChecksum = "33a1e103ecb162181620d521915879e68736ea20e4eabe22cc243115d4d43563"
+      .refineTry[ValidChecksum]
+      .get
     val newHashes = Map(HashMethod.SHA256 -> newChecksum)
 
-    val newTargetItems = mockTargetItems + (oldFilename -> ClientTargetItem(newHashes, 44, oldTargetItem.custom.map(_.asJson)))
+    val newTargetItems = mockTargetItems + (oldFilename -> ClientTargetItem(
+      newHashes,
+      44,
+      oldTargetItem.custom.map(_.asJson)
+    ))
 
     storeOffline(repoId, newTargetItems, version = 2).futureValue shouldBe a[Valid[_]]
 
@@ -131,4 +201,5 @@ class OfflineSignedRoleStorageSpec extends TufReposerverSpec with MysqlDatabaseS
     storeOffline(repoId, Map.empty, version = 2).futureValue shouldBe a[Valid[_]]
     targetItemRepo.findFor(repoId).futureValue shouldBe empty
   }
+
 }

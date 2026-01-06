@@ -6,14 +6,28 @@ import com.advancedtelematic.libats.http.tracing.NullServerRequestTracing
 import com.advancedtelematic.libats.http.tracing.Tracing.ServerRequestTracing
 import com.advancedtelematic.libtuf.data.ClientCodecs._
 import com.advancedtelematic.libtuf.data.ClientDataType.{RootRole, TargetsRole}
-import com.advancedtelematic.libtuf.data.TufDataType.{EcPrime256TufKey, Ed25519KeyType, Ed25519TufKey, JsonSignedPayload, KeyId, KeyType, RepoId, RoleType, RsaKeyType, SignedPayload, ValidKeyId}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  EcPrime256TufKey,
+  Ed25519KeyType,
+  KeyId,
+  KeyType,
+  RepoId,
+  RoleType,
+  RsaKeyType,
+  SignedPayload,
+  ValidKeyId
+}
 import com.advancedtelematic.libtuf_server.keyserver.{KeyserverClient, KeyserverHttpClient}
-import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.{Key, KeyGenId, KeyGenRequest, KeyGenRequestStatus}
+import com.advancedtelematic.tuf.keyserver.data.KeyServerDataType.{
+  Key,
+  KeyGenId,
+  KeyGenRequest,
+  KeyGenRequestStatus
+}
 import com.advancedtelematic.tuf.keyserver.db.KeyGenRequestSupport
 import com.advancedtelematic.tuf.util._
 import eu.timepit.refined.refineV
 import io.circe.Json
-import io.circe.syntax._
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.time.{Millis, Seconds, Span}
 
@@ -21,29 +35,31 @@ import java.time.Instant
 import scala.async.Async.{async, await}
 import scala.concurrent.{ExecutionContext, Future}
 
-class KeyserverHttpClientSpec extends TufKeyserverSpec
-  with ResourceSpec
-  with KeyGenRequestSupport
-  with RootGenerationSpecSupport
-  with PatienceConfiguration
-  with KeyTypeSpecSupport
-  with HttpClientSpecSupport {
+class KeyserverHttpClientSpec
+    extends TufKeyserverSpec
+    with ResourceSpec
+    with KeyGenRequestSupport
+    with RootGenerationSpecSupport
+    with PatienceConfiguration
+    with KeyTypeSpecSupport
+    with HttpClientSpecSupport {
 
-  implicit val ec = ExecutionContext.global
+  override val ec: scala.concurrent.ExecutionContextExecutor = this.executor
 
-  override implicit def patienceConfig = PatienceConfig(timeout = Span(20, Seconds), interval = Span(500, Millis))
+  override implicit def patienceConfig: PatienceConfig =
+    PatienceConfig(timeout = Span(20, Seconds), interval = Span(500, Millis))
 
   implicit lazy val requestTracing: ServerRequestTracing = new NullServerRequestTracing
 
   val client = new KeyserverHttpClient("http://test-keyserver", testHttpClient)
 
-  def createAndProcessRoot(repoId: RepoId, keyType: KeyType): Future[(Seq[Key], SignedPayload[RootRole])] = {
+  def createAndProcessRoot(repoId: RepoId,
+                           keyType: KeyType): Future[(Seq[Key], SignedPayload[RootRole])] =
     for {
       _ <- client.createRoot(repoId, keyType, forceSync = false)
       keys <- processKeyGenerationRequest(repoId)
-      rootRole ← client.fetchRootRole(repoId)
+      rootRole <- client.fetchRootRole(repoId)
     } yield (keys, rootRole)
-  }
 
   // only makes sense for RSA
   test("minimum RSA key size when creating a repo") {
@@ -66,7 +82,7 @@ class KeyserverHttpClientSpec extends TufKeyserverSpec
   }
 
   def manipulateSignedRsaKey(payload: SignedPayload[RootRole]): SignedPayload[RootRole] = {
-    val kid: KeyId = refineV[ValidKeyId]("0" * 64).right.get
+    val kid: KeyId = refineV[ValidKeyId]("0" * 64).toOption.get
     // change type of one of the RSA keys to Ed25519:
     val key = EcPrime256TufKey(payload.signed.keys.values.head.keyval)
     val signedCopy = payload.signed.copy(keys = payload.signed.keys.updated(kid, key))
@@ -121,12 +137,12 @@ class KeyserverHttpClientSpec extends TufKeyserverSpec
 
     val f = for {
       _ <- createAndProcessRoot(repoId, keyType)
-      root ← client.fetchRootRole(repoId)
+      root <- client.fetchRootRole(repoId)
       keyId = root.signed.roles(RoleType.TARGETS).keyids.head
       keyPair <- client.fetchKeyPair(repoId, keyId)
     } yield (keyId, keyPair)
 
-    whenReady(f) { case (keyId, keyPair) ⇒
+    whenReady(f) { case (keyId, keyPair) =>
       keyPair.pubkey.keytype shouldBe keyType
       keyPair.privkey.keytype shouldBe keyType
       keyPair.pubkey.id shouldBe keyId
@@ -173,8 +189,14 @@ class KeyserverHttpClientSpec extends TufKeyserverSpec
 
   keyTypeTest("returns KeysNotReady when keys are not yet ready") { keyType =>
     val repoId = RepoId.generate()
-    val keyGenRequest = KeyGenRequest(KeyGenId.generate(),
-      repoId, KeyGenRequestStatus.REQUESTED, RoleType.TARGETS, keyType.crypto.defaultKeySize, keyType)
+    val keyGenRequest = KeyGenRequest(
+      KeyGenId.generate(),
+      repoId,
+      KeyGenRequestStatus.REQUESTED,
+      RoleType.TARGETS,
+      keyType.crypto.defaultKeySize,
+      keyType
+    )
     val f = for {
       _ <- keyGenRepo.persist(keyGenRequest)
       root <- client.fetchRootRole(repoId)
@@ -216,4 +238,5 @@ class KeyserverHttpClientSpec extends TufKeyserverSpec
 
     rootF.futureValue.roles(RoleType.OFFLINE_UPDATES).keyids shouldNot be(empty)
   }
+
 }

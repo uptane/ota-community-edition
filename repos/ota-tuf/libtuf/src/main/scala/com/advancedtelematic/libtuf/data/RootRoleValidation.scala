@@ -1,87 +1,77 @@
 package com.advancedtelematic.libtuf.data
 
+import cats.data.*
 import cats.data.Validated.Invalid
-import cats.data.{ValidatedNel, _}
+import cats.implicits.*
+import com.advancedtelematic.libtuf.crypt.CanonicalJson.*
 import com.advancedtelematic.libtuf.crypt.TufCrypto
-import com.advancedtelematic.libtuf.data.ClientCodecs._
-import com.advancedtelematic.libtuf.data.ClientDataType.RootRole
-import com.advancedtelematic.libtuf.data.TufDataType.{KeyId, RoleType, JsonSignedPayload, SignedPayload, TufKey}
-import cats.implicits._
-import io.circe.syntax._
-import com.advancedtelematic.libtuf.crypt.CanonicalJson._
-import cats.implicits._
+import com.advancedtelematic.libtuf.data.ClientDataType.{RootRole, TufRole, TufRoleOps}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  JsonSignedPayload,
+  KeyId,
+  SignedPayload,
+  TufKey
+}
+import io.circe.Codec
+import io.circe.syntax.*
 
+object RoleValidation {
+  private sealed trait RoleValidatedSig
+  private case class ValidSignature(keyId: KeyId) extends RoleValidatedSig
+  private case class InvalidSignature(msg: String) extends RoleValidatedSig
 
-object RootRoleValidation {
-  private sealed trait RootRoleValidatedSig
-  private case class ValidSignature(keyId: KeyId) extends RootRoleValidatedSig
-  private case class InvalidSignature(msg: String) extends RootRoleValidatedSig
+  def rawJsonIsValid[T: Codec](signedPayloadJson: JsonSignedPayload)(
+    implicit tufRole: TufRole[T]): ValidatedNel[String, SignedPayload[T]] = {
+    val parsedE = signedPayloadJson.signed.as[T].leftMap(_.message).toValidatedNel
 
-  def rootRawJsonIsValid(signedPayloadJson: JsonSignedPayload): ValidatedNel[String, SignedPayload[RootRole]] = {
-    val parsedE = signedPayloadJson.signed.as[RootRole].leftMap(_.message)
-
-    Validated.fromEither(parsedE).toValidatedNel.andThen { parsed: RootRole =>
-      Validated.condNel(signedPayloadJson.signed.canonical == parsed.asJson.canonical, parsed, "an incompatible encoder was used to encode root.json")
-    }.map { parsed =>
-      SignedPayload(signedPayloadJson.signatures, parsed, signedPayloadJson.signed)
-    }
+    parsedE
+      .andThen { (parsed: T) =>
+        Validated.condNel(
+          signedPayloadJson.signed.canonical == parsed.asJson.canonical,
+          parsed,
+          s"an incompatible encoder was used to encode ${tufRole.metaPath.value}"
+        )
+      }
+      .map { parsed =>
+        SignedPayload(signedPayloadJson.signatures, parsed, signedPayloadJson.signed)
+      }
   }
 
-  def newRootIsValid(newSignedRoot: SignedPayload[RootRole], oldRoot: SignedPayload[RootRole]): ValidatedNel[String, SignedPayload[RootRole]] = {
-    val validationWithOldRoot = validateThresholdWithRole(newSignedRoot, oldRoot.signed)
-    val validationWithNewRoot = validateThresholdWithRole(newSignedRoot, newSignedRoot.signed)
-
-    val newRoleValidation =
-      (validateVersionBump(oldRoot.signed, newSignedRoot.signed), validationWithOldRoot, validationWithNewRoot)
-        .mapN { (_, _, _) => newSignedRoot }
-
-    newRoleValidation
-  }
-
-  def rootIsValid(signedRoot: SignedPayload[RootRole]): ValidatedNel[String, SignedPayload[RootRole]] =
-    validateThresholdWithRole(signedRoot, signedRoot.signed).map(_ => signedRoot)
-
-
-
-  private def validateThresholdWithRole(newSignedRoot: SignedPayload[RootRole], roleForValidation: RootRole): ValidatedNel[String, Int] = {
-
-    val roleRootKeys = roleForValidation.roles.get(RoleType.ROOT)
-      .toValidNel(s"root.json version ${roleForValidation.version} does not contain keys for ROOT")
+  def roleIsValid[T: TufRole](newSignedRole: SignedPayload[T],
+                              rootRole: RootRole): ValidatedNel[String, SignedPayload[T]] = {
+    val roleRootKeys = rootRole.roles
+      .get(newSignedRole.signed.roleType)
+      .toValidNel(
+        s"root.json version ${rootRole.version} does not contain keys for ${newSignedRole.signed.roleType}"
+      )
 
     roleRootKeys.andThen { roleKeys =>
-      val publicKeys = roleForValidation.keys.filterKeys(roleKeys.keyids.contains)
-      val sigs = validateSignatures(newSignedRoot, publicKeys)
-      thresholdIsSatisfied(newSignedRoot.signed.version, roleForValidation.version, roleKeys.threshold, sigs)
+      val publicKeys = rootRole.keys.view.filterKeys(roleKeys.keyids.contains).toMap
+      val sigs = validateSignatures(newSignedRole, publicKeys)
+
+      val validCount = sigs.count {
+        case ValidSignature(_) => true
+        case _                 => false
+      }
+
+      val errors = sigs.collect { case InvalidSignature(msg) => msg }
+
+      if (roleKeys.threshold <= 0)
+        s"invalid threshold for root role version ${rootRole.version}".invalidNel
+      else if (validCount < roleKeys.threshold) {
+        val base = NonEmptyList.of(
+          s"root.json version ${rootRole.version} requires ${roleKeys.threshold} valid signatures for ${newSignedRole.signed.metaPath} version ${newSignedRole.signed.version}, $validCount supplied"
+        )
+        Invalid(base ++ errors)
+      } else
+        newSignedRole.validNel
     }
   }
 
-  private def validateVersionBump(oldRoot: RootRole, newRoot: RootRole): ValidatedNel[String, RootRole] =
-    Validated.cond(newRoot.version == oldRoot.version + 1, newRoot, s"Invalid version bump from ${oldRoot.version} to ${newRoot.version}").toValidatedNel
-
-  private def thresholdIsSatisfied(underValidationVersion: Int, keysFromVersion: Int,
-                                   threshold: Int, signatures: List[RootRoleValidatedSig]): ValidatedNel[String, Int] = {
-    import cats.syntax.validated._
-
-    val validCount = signatures.count {
-      case ValidSignature(_) => true
-      case _ => false
-    }
-
-    val errors = signatures.collect { case InvalidSignature(msg) => msg }
-
-    if(threshold <= 0)
-      s"invalid threshold for root role version $keysFromVersion".invalidNel
-    else if (validCount < threshold) {
-      val base = NonEmptyList.of(s"Root role version $keysFromVersion requires $threshold valid signatures in version $underValidationVersion, $validCount supplied")
-      Invalid(base ++ errors)
-    } else if(validCount >= threshold)
-      threshold.validNel
-    else
-      Invalid(NonEmptyList.fromListUnsafe(errors))
-  }
-
-  private def validateSignatures(signedPayload: SignedPayload[RootRole], publicKeys: Map[KeyId, TufKey]): List[RootRoleValidatedSig] = {
-    val roleSignatures = signedPayload.signatures.map { sig => sig.keyid -> sig }.toMap
+  private def validateSignatures[T: TufRole](
+    signedPayload: SignedPayload[T],
+    publicKeys: Map[KeyId, TufKey]): List[RoleValidatedSig] = {
+    val roleSignatures = signedPayload.signatures.map(sig => sig.keyid -> sig).toMap
 
     publicKeys.toList.map { case (keyId, tufKey) =>
       roleSignatures.get(keyId) match {
@@ -89,10 +79,49 @@ object RootRoleValidation {
           if (TufCrypto.isValid(sig, tufKey, signedPayload.json))
             ValidSignature(keyId)
           else
-            InvalidSignature(s"Invalid signature for key $keyId in root.json version ${signedPayload.signed.version}")
+            InvalidSignature(
+              s"Invalid signature for key $keyId in ${signedPayload.signed.metaPath} version ${signedPayload.signed.version}"
+            )
         case None =>
-          InvalidSignature(s"No signature found for key $keyId in root.json version ${signedPayload.signed.version}")
+          InvalidSignature(
+            s"No signature found for key $keyId in ${signedPayload.signed.metaPath} version ${signedPayload.signed.version}"
+          )
       }
     }
   }
+
+}
+
+object RootRoleValidation {
+
+  def newRootIsValid(
+    newSignedRoot: SignedPayload[RootRole],
+    oldRoot: SignedPayload[RootRole]): ValidatedNel[String, SignedPayload[RootRole]] = {
+    val validationWithOldRoot = RoleValidation.roleIsValid(newSignedRoot, oldRoot.signed)
+    val validationWithNewRoot = RoleValidation.roleIsValid(newSignedRoot, newSignedRoot.signed)
+
+    val newRoleValidation =
+      (
+        validateVersionBump(oldRoot.signed, newSignedRoot.signed),
+        validationWithOldRoot,
+        validationWithNewRoot
+      )
+        .mapN((_, _, _) => newSignedRoot)
+
+    newRoleValidation
+  }
+
+  def rootIsValid(
+    signedRoot: SignedPayload[RootRole]): ValidatedNel[String, SignedPayload[RootRole]] =
+    RoleValidation.roleIsValid(signedRoot, signedRoot.signed)
+
+  private def validateVersionBump[T: TufRole](oldRole: T, newRole: T): ValidatedNel[String, T] =
+    Validated
+      .cond(
+        newRole.version == oldRole.version + 1,
+        newRole,
+        s"Invalid version bump from ${oldRole.version} to ${newRole.version}"
+      )
+      .toValidatedNel
+
 }

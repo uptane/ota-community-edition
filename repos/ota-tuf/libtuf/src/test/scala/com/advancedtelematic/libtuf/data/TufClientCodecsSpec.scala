@@ -6,14 +6,13 @@ import com.advancedtelematic.libtuf.data.ClientCodecs._
 import com.advancedtelematic.libtuf.data.ClientDataType.{Delegation, TargetCustom, TargetsRole}
 import com.advancedtelematic.libtuf.data.TufDataType.TargetName
 import io.circe.syntax._
-import io.circe.{DecodingFailure, Json, ParsingFailure, parser => circeParser}
+import io.circe.{parser => circeParser, DecodingFailure, Json, ParsingFailure}
 import org.scalatest.concurrent.ScalaFutures
 
-class TufClientCodecsSpec extends LibtufSpec with ScalaFutures  {
+class TufClientCodecsSpec extends LibtufSpec with ScalaFutures {
 
   test("can decode targets.json without delegations") {
-    val result = circeParser.parse(
-      """
+    val result = circeParser.parse("""
         | {
         |  "_type": "Targets",
         |  "expires": "2018-12-13T15:37:21Z",
@@ -36,10 +35,8 @@ class TufClientCodecsSpec extends LibtufSpec with ScalaFutures  {
     targets.delegations shouldBe empty
   }
 
-
   test("can decode targets.json") {
-    val result = circeParser.parse(
-      """
+    val result = circeParser.parse("""
         | {
         |  "_type": "Targets",
         |  "expires": "2018-12-13T15:37:21Z",
@@ -106,7 +103,6 @@ class TufClientCodecsSpec extends LibtufSpec with ScalaFutures  {
     result.failed.get.getMessage should include("be empty or bigger than 254 chars or contain `..`")
   }
 
-
   test("delegation role name codec fails when delegation name is invalid") {
     val str =
       """{
@@ -123,12 +119,13 @@ class TufClientCodecsSpec extends LibtufSpec with ScalaFutures  {
 
     result.failed.get shouldBe a[DecodingFailure]
 
-    result.failed.get.getMessage should include("name cannot be empty or bigger than 50 characters")
+    result.failed.get.getMessage should include(
+      "name cannot be empty, bigger than 50 characters, or contain any special characters other than `_, -, .`"
+    )
   }
 
   test("encodes a decoded targets.json to the same canonical json") {
-    val result = circeParser.parse(
-      """
+    val result = circeParser.parse("""
         | {
         |  "_type": "Targets",
         |  "expires": "2018-12-13T15:37:21Z",
@@ -167,8 +164,8 @@ class TufClientCodecsSpec extends LibtufSpec with ScalaFutures  {
                   "additionalField": true
                  }"""
 
-    val json = circeParser.parse(str).right.get
-    val targetCustom = json.as[TargetCustom].right.get
+    val json = circeParser.parse(str).toOption.get
+    val targetCustom = json.as[TargetCustom].toOption.get
 
     targetCustom.name shouldBe TargetName("bananas")
     targetCustom.uri shouldBe None
@@ -176,4 +173,5 @@ class TufClientCodecsSpec extends LibtufSpec with ScalaFutures  {
 
     targetCustom.asJson.dropNullValues shouldBe json
   }
+
 }

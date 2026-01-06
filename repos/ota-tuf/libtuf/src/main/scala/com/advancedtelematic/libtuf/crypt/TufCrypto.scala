@@ -1,4 +1,3 @@
-
 package com.advancedtelematic.libtuf.crypt
 
 import java.io.{StringReader, StringWriter}
@@ -14,7 +13,31 @@ import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
 import com.advancedtelematic.libtuf.crypt.CanonicalJson._
 import com.advancedtelematic.libtuf.data.ClientDataType.{RootRole, TufRole}
 import com.advancedtelematic.libtuf.data.TufDataType.SignatureMethod.SignatureMethod
-import com.advancedtelematic.libtuf.data.TufDataType.{ClientSignature, EcPrime256KeyType, EcPrime256TufKey, EcPrime256TufKeyPair, EcPrime256TufPrivateKey, Ed25519KeyType, Ed25519TufKey, Ed25519TufKeyPair, Ed25519TufPrivateKey, KeyId, KeyType, RSATufKey, RSATufKeyPair, RSATufPrivateKey, RsaKeyType, Signature, SignatureMethod, SignedPayload, TufKey, TufKeyPair, TufPrivateKey, ValidKeyId, ValidSignature}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  ClientSignature,
+  EcPrime256KeyType,
+  EcPrime256TufKey,
+  EcPrime256TufKeyPair,
+  EcPrime256TufPrivateKey,
+  Ed25519KeyType,
+  Ed25519TufKey,
+  Ed25519TufKeyPair,
+  Ed25519TufPrivateKey,
+  KeyId,
+  KeyType,
+  RSATufKey,
+  RSATufKeyPair,
+  RSATufPrivateKey,
+  RsaKeyType,
+  Signature,
+  SignatureMethod,
+  SignedPayload,
+  TufKey,
+  TufKeyPair,
+  TufPrivateKey,
+  ValidKeyId,
+  ValidSignature
+}
 import io.circe.{Encoder, Json}
 import net.i2p.crypto.eddsa.spec.{EdDSANamedCurveTable, EdDSAPrivateKeySpec, EdDSAPublicKeySpec}
 import net.i2p.crypto.eddsa.{EdDSAEngine, EdDSAPrivateKey, EdDSAPublicKey, Utils}
@@ -50,8 +73,8 @@ trait TufCrypto[T <: KeyType] {
 
   def parseKeyPair(publicKey: String, privateKey: String): Try[TufKeyPair] =
     for {
-      priv ← parsePrivate(privateKey)
-      pub ← parsePublic(publicKey)
+      priv <- parsePrivate(privateKey)
+      pub <- parsePublic(publicKey)
     } yield toKeyPair(pub, priv)
 
   def signer: security.Signature
@@ -70,6 +93,7 @@ trait TufCrypto[T <: KeyType] {
     digest.doFinal(buf, 0)
     Hex.toHexString(buf).refineTry[ValidKeyId].get
   }
+
 }
 
 object TufCrypto {
@@ -79,7 +103,9 @@ object TufCrypto {
 
   // TODO: Never used
   case class SignatureMethodMismatch(fromKey: SignatureMethod, fromSig: SignatureMethod)
-      extends Exception(s"SignatureMethod mismatch, The key is for $fromKey but the signature is for $fromSig")
+      extends Exception(
+        s"SignatureMethod mismatch, The key is for $fromKey but the signature is for $fromSig"
+      )
       with NoStackTrace
 
   val rsaCrypto = new RsaCrypto
@@ -93,7 +119,9 @@ object TufCrypto {
     sign(key.keytype, key.keyval, bytes)
   }
 
-  private def sign[T <: KeyType](keyType: T, privateKey: PrivateKey, data: Array[Byte]): Signature = {
+  private def sign[T <: KeyType](keyType: T,
+                                 privateKey: PrivateKey,
+                                 data: Array[Byte]): Signature = {
     val signer = keyType.crypto.signer
 
     signer.initSign(privateKey)
@@ -108,9 +136,9 @@ object TufCrypto {
   // Director is catching this exception, make this safe for director instead
   def isValid(signature: Signature, publicKey: TufKey, data: Array[Byte]): Boolean = {
     val signer = signature.method match {
-      case SignatureMethod.RSASSA_PSS_SHA256 ⇒ rsaCrypto.signer
-      case SignatureMethod.ED25519 ⇒ ed25519Crypto.signer
-      case other ⇒ throw new IllegalArgumentException(s"Unsupported signature method: $other")
+      case SignatureMethod.RSASSA_PSS_SHA256 => rsaCrypto.signer
+      case SignatureMethod.ED25519           => ed25519Crypto.signer
+      case other => throw new IllegalArgumentException(s"Unsupported signature method: $other")
     }
     try {
       val decodedSig = Base64.decode(signature.sig.value)
@@ -152,32 +180,38 @@ object TufCrypto {
   def generateKeyPair[T <: KeyType](keyType: T, keySize: Int): TufKeyPair =
     keyType.crypto.generateKeyPair(keySize)
 
-  def payloadSignatureIsValid[T : Encoder](rootRole: RootRole, signedPayload: SignedPayload[T])
-                                          (implicit tufRole: TufRole[T]): ValidatedNel[String, SignedPayload[T]] = {
-    val publicKeys = rootRole.keys.filterKeys(keyId => rootRole.roles(tufRole.roleType).keyids.contains(keyId))
+  def payloadSignatureIsValid[T: Encoder](rootRole: RootRole, signedPayload: SignedPayload[T])(
+    implicit tufRole: TufRole[T]): ValidatedNel[String, SignedPayload[T]] = {
+    val publicKeys = rootRole.keys.view.filterKeys(keyId =>
+      rootRole.roles(tufRole.roleType).keyids.contains(keyId)
+    )
     val threshold = rootRole.roles(tufRole.roleType).threshold
-    payloadSignatureIsValid(publicKeys, threshold, signedPayload)
+    payloadSignatureIsValid(publicKeys.toMap, threshold, signedPayload)
   }
 
-  def payloadSignatureIsValid[T : Encoder](pubKeys: Map[KeyId, TufKey],
-                                           threshold: Int,
-                                           signedPayload: SignedPayload[T]): ValidatedNel[String, SignedPayload[T]] = {
+  def payloadSignatureIsValid[T: Encoder](
+    pubKeys: Map[KeyId, TufKey],
+    threshold: Int,
+    signedPayload: SignedPayload[T]): ValidatedNel[String, SignedPayload[T]] = {
     val sigsByKeyId = signedPayload.signatures.map(s => s.keyid -> s).toMap
 
     import cats.syntax.either._
 
     val validSignatures: List[ValidatedNel[String, KeyId]] =
-      sigsByKeyId.par.map { case (keyId, sig) =>
-        pubKeys.get(keyId)
+      sigsByKeyId.map { case (keyId, sig) =>
+        pubKeys
+          .get(keyId)
           .toRight(s"key ${sig.keyid} required for role validation not found in authoritative role")
-          .ensure(s"Invalid signature for key ${sig.keyid}") { key => signedPayload.isValidFor(key) }
+          .ensure(s"Invalid signature for key ${sig.keyid}") { key =>
+            signedPayload.isValidFor(key)
+          }
           .map(_.id)
           .toValidatedNel
       }.toList
 
     val validSignatureCount = validSignatures.count(_.isValid)
 
-    if(validSignatureCount >= threshold && threshold > 0) {
+    if (validSignatureCount >= threshold && threshold > 0) {
       Valid(signedPayload)
     } else {
       validSignatures.sequence_ match {
@@ -188,9 +222,10 @@ object TufCrypto {
       }
     }
   }
+
 }
 
-protected [crypt] class ECPrime256Crypto extends TufCrypto[EcPrime256KeyType.type] {
+protected[crypt] class ECPrime256Crypto extends TufCrypto[EcPrime256KeyType.type] {
   private lazy val fac = KeyFactory.getInstance("ECDSA", "BC")
 
   private lazy val generator = {
@@ -214,9 +249,11 @@ protected [crypt] class ECPrime256Crypto extends TufCrypto[EcPrime256KeyType.typ
 
   override def encode(keyVal: EcPrime256TufKey): String = Hex.toHexString(keyVal.keyval.getEncoded)
 
-  override def encode(keyVal: EcPrime256TufPrivateKey): String = Hex.toHexString(keyVal.keyval.getEncoded)
+  override def encode(keyVal: EcPrime256TufPrivateKey): String =
+    Hex.toHexString(keyVal.keyval.getEncoded)
 
-  override def signer: security.Signature = java.security.Signature.getInstance("SHA512withECDSA", "BC")
+  override def signer: security.Signature =
+    java.security.Signature.getInstance("SHA512withECDSA", "BC")
 
   override val signatureMethod: SignatureMethod = SignatureMethod.ECPrime256V1
 
@@ -224,17 +261,22 @@ protected [crypt] class ECPrime256Crypto extends TufCrypto[EcPrime256KeyType.typ
 
   override def defaultKeySize: Int = 256
 
-  override def toKeyPair(publicKey: EcPrime256TufKey, privateKey: EcPrime256TufPrivateKey): TufKeyPair =
+  override def toKeyPair(publicKey: EcPrime256TufKey,
+                         privateKey: EcPrime256TufPrivateKey): TufKeyPair =
     EcPrime256TufKeyPair(publicKey, privateKey)
 
   override def generateKeyPair(keySize: Int): TufKeyPair = {
     require(validKeySize(keySize), "Key size too small")
     val keyPair = keyPairGenerator(keySize).generateKeyPair()
-    EcPrime256TufKeyPair(EcPrime256TufKey(keyPair.getPublic), EcPrime256TufPrivateKey(keyPair.getPrivate))
+    EcPrime256TufKeyPair(
+      EcPrime256TufKey(keyPair.getPublic),
+      EcPrime256TufPrivateKey(keyPair.getPrivate)
+    )
   }
+
 }
 
-protected [crypt] class ED25519Crypto extends TufCrypto[Ed25519KeyType.type] {
+protected[crypt] class ED25519Crypto extends TufCrypto[Ed25519KeyType.type] {
   private lazy val edDSAKeyPairGenerator = new net.i2p.crypto.eddsa.KeyPairGenerator()
 
   override def toKeyPair(publicKey: Ed25519TufKey, privateKey: Ed25519TufPrivateKey): TufKeyPair =
@@ -254,9 +296,8 @@ protected [crypt] class ED25519Crypto extends TufCrypto[Ed25519KeyType.type] {
     Ed25519TufPrivateKey(new EdDSAPrivateKey(privateKeySpec))
   }
 
-  override def encode(keyVal: Ed25519TufKey): String = {
+  override def encode(keyVal: Ed25519TufKey): String =
     Utils.bytesToHex(keyVal.keyval.getAbyte)
-  }
 
   override def encode(keyVal: Ed25519TufPrivateKey): String = {
     val seed = Utils.bytesToHex(keyVal.keyval.getSeed)
@@ -283,10 +324,10 @@ protected [crypt] class ED25519Crypto extends TufCrypto[Ed25519KeyType.type] {
     val priv = keyPair.getPrivate.asInstanceOf[EdDSAPrivateKey]
     Ed25519TufKeyPair(Ed25519TufKey(pub), Ed25519TufPrivateKey(priv))
   }
+
 }
 
-
-protected [crypt] class RsaCrypto extends TufCrypto[RsaKeyType.type] {
+protected[crypt] class RsaCrypto extends TufCrypto[RsaKeyType.type] {
 
   override def parsePublic(publicKey: String): Try[RSATufKey] = {
     val parser = new PEMParser(new StringReader(publicKey))
@@ -296,8 +337,10 @@ protected [crypt] class RsaCrypto extends TufCrypto[RsaKeyType.type] {
       val pemKeyPair = parser.readObject().asInstanceOf[SubjectPublicKeyInfo]
       val pubKey = converter.getPublicKey(pemKeyPair)
       pubKey match {
-        case rsaPubKey: RSAPublicKey if rsaPubKey.getModulus.bitLength() >= 2048 => RSATufKey(pubKey)
-        case _: RSAPublicKey => throw new IllegalArgumentException("Key size too small, must be >= 2048")
+        case rsaPubKey: RSAPublicKey if rsaPubKey.getModulus.bitLength() >= 2048 =>
+          RSATufKey(pubKey)
+        case _: RSAPublicKey =>
+          throw new IllegalArgumentException("Key size too small, must be >= 2048")
         case _ => throw new IllegalArgumentException("Key is not an RSAPublicKey")
       }
     }
@@ -325,11 +368,13 @@ protected [crypt] class RsaCrypto extends TufCrypto[RsaKeyType.type] {
 
   override def encode(keyVal: RSATufPrivateKey): String = toPem(keyVal.keyval)
 
-  override def signer: security.Signature = java.security.Signature.getInstance("SHA256withRSAandMGF1", "BC") // RSASSA-PSS
+  override def signer: security.Signature =
+    java.security.Signature.getInstance("SHA256withRSAandMGF1", "BC") // RSASSA-PSS
 
   override val signatureMethod: SignatureMethod = SignatureMethod.RSASSA_PSS_SHA256
 
-  override def toKeyPair(publicKey: RSATufKey, privateKey: RSATufPrivateKey): TufKeyPair = RSATufKeyPair(publicKey, privateKey)
+  override def toKeyPair(publicKey: RSATufKey, privateKey: RSATufPrivateKey): TufKeyPair =
+    RSATufKeyPair(publicKey, privateKey)
 
   override def validKeySize(size: Int): Boolean = size >= 2048
 
@@ -346,4 +391,5 @@ protected [crypt] class RsaCrypto extends TufCrypto[RsaKeyType.type] {
     val keyPair = keyPairGenerator(keySize).generateKeyPair()
     RSATufKeyPair(RSATufKey(keyPair.getPublic), RSATufPrivateKey(keyPair.getPrivate))
   }
+
 }
