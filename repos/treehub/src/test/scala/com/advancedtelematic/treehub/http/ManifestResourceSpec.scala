@@ -73,7 +73,7 @@ class ManifestResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRe
       status shouldBe StatusCodes.OK
     }
 
-    val msg = messageBus.findReceived { msg: CommitManifestUpdated =>
+    val msg = messageBus.findReceived { (msg: CommitManifestUpdated) =>
       msg.commit == obj.commit
     }
 

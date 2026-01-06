@@ -19,7 +19,7 @@ trait ManifestRepositorySupport {
 
 
 protected class ManifestRepository()(implicit db: Database, ec: ExecutionContext) {
-  private implicit val showId = Show.fromToString[(Namespace, ObjectId)]
+  private implicit val showId: Show[(Namespace, ObjectId)] = Show.fromToString[(Namespace, ObjectId)]
 
   def find(ns: Namespace, objectId: ObjectId): Future[CommitManifest] = db.run {
     Schema.manifests

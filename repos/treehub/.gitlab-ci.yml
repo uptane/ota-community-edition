@@ -1,142 +1,65 @@
 stages:
   - test
   - build image
-  - static scans
-  - trigger deploy
-  - publish pages
+  - deploy
 
 variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
   MYSQL_ROOT_PASSWORD: "root"
   MYSQL_DATABASE: "ota_treehub"
   MYSQL_USER: "treehub"
   MYSQL_PASSWORD: "treehub"
-  # VAULT_ADDR: defined in GitLab variables
-  # The same image have to be used by test and code coverage jobs:
-  TEST_IMAGE: advancedtelematic/gitlab-jobs:0.2.5
+  SBT_OPTS: "-sbt-launch-dir .sbt/launchers -sbt-dir .sbt -ivy .ivy2 -Dsbt.color=true -Dscala.color=true"
+  SERVICE: treehub
+
+image: registry.gitlab.com/torizon-platform/ci-container-build:scala-jvm17-0.0.5
+
+include:
+  - project: torizon-platform/ci-container-build
+    file: gitlab-ci-templates/gitlab-sbt-docker-publish.yaml
+    ref: master
+  - project: 'torizon-platform/deploy-env'
+    ref: master
+    file: '/gitlab/deploy-core-service.yml'
+
+services:
+  - name: docker:dind
+  - name: mariadb:10.4
+    alias: db
+    command:
+      - --character-set-server=utf8
+      - --collation-server=utf8_unicode_ci
+      - --max_connections=1000
 
 default:
-  services:
-    - name: mariadb:10.2
-      alias: db
-      command:
-        - --character-set-server=utf8
-        - --collation-server=utf8_unicode_ci
-        - --max_connections=1000
+  cache:
+    key: treehub
+    when: always
+    paths:
+      - .ivy2/
+      - .sbt/
 
 test:
   stage: test
-  image: $TEST_IMAGE
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   variables:
     DB_URL: "jdbc:mariadb://db:3306/ota_treehub"
   before_script:
     - echo "GRANT ALL PRIVILEGES ON \`ota\_treehub%\`.* TO 'treehub'@'%'; FLUSH PRIVILEGES;" > db_user.sql
-    - mysqladmin ping --protocol=TCP -h db -P 3306 -u root -proot
+    - until mysqladmin ping --protocol=TCP -h db -P 3306 -u root -proot; do echo waiting for mysql; sleep 1; done
     - mysql -v -h db -u root -proot < db_user.sql
   script:
-    - sbt -sbt-dir ./.sbt -ivy ./.ivy2 -J-Xmx1G -J-XX:MaxPermSize=256m -J-XX:ReservedCodeCacheSize=128m clean coverage ut:test
-  artifacts:
-    paths:
-      - "target/scala-*/scoverage-data"
-      - "target/scala-*/src_managed"
-  cache:
-    paths:
-      - .ivy2/
-      - .sbt/
-
-code coverage:
-  extends: .report_scala_coverage
-  allow_failure: true
-  image: $TEST_IMAGE
-
-export docker credentials:
-  extends: .export_docker_credentials
-  stage: test
-  rules:
-    - if: '$CI_COMMIT_BRANCH != "master"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-    - when: on_success
+    - sbt ut:test
 
 build docker image:
   stage: build image
   rules:
-    - if: '$CI_COMMIT_BRANCH != "master"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-    - when: on_success
-  tags:
-    - docker-sock
-  image: advancedtelematic/gitlab-jobs:0.2.5
-  script:
-    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-    - sbt -x -sbt-dir ./.sbt -ivy ./.ivy2 -batch docker:publish -J-Xmx1G -J-XX:ReservedCodeCacheSize=128m -Dsbt.log.noformat=true
-  dependencies:
-    - export docker credentials
-  artifacts:
-    paths:
-      - "target/docker/stage/Dockerfile"
-  cache:
-    paths:
-      - .ivy2/
-      - .sbt/
-
-container_scanning:
-  stage: static scans
-  rules:
-    - if: '$CI_COMMIT_BRANCH != "master"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-    - when: on_success
+    - if: $CI_COMMIT_REF_NAME == "master"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  extends: .sbt-docker-publish
   variables:
-    CI_APPLICATION_REPOSITORY: registry.hub.docker.com/advancedtelematic/treehub
-    DOCKERFILE_PATH: target/docker/stage/Dockerfile
-  dependencies:
-    - export docker credentials
-    - build docker image
-
-trigger dev deploy:
-  stage: trigger deploy
-  rules:
-    - if: '$CI_COMMIT_BRANCH != "master"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-    - when: on_success
-  variables:
-    ENV: "dev"
-    NEW_TAG: $CI_COMMIT_SHA
-    SERVICE: $CI_PROJECT_NAME
-    CREATE_COMMIT: "true"
-    UPSTREAM_COMMIT_MESSAGE: $CI_COMMIT_MESSAGE
-  trigger:
-    project: OLP/EDGE/OTA/infra/deployment-descriptors
-    branch: master
-
-trigger sit deploy:
-  stage: trigger deploy
-  except:
-    - schedules
-  only:
-    - deploy/sit
-  variables:
-    ENV: "sit"
-    NEW_TAG: $CI_COMMIT_SHA
-    SERVICE: $CI_PROJECT_NAME
-    CREATE_COMMIT: "true"
-    UPSTREAM_COMMIT_MESSAGE: $CI_COMMIT_MESSAGE
-  trigger:
-    project: OLP/EDGE/OTA/infra/deployment-descriptors
-    branch: master
-
-
-include:
-  - template: SAST.gitlab-ci.yml
-  - template: Container-Scanning.gitlab-ci.yml
-  - template: Secret-Detection.gitlab-ci.yml
-  - template: License-Scanning.gitlab-ci.yml
-  - project: olp/edge/ota/infra/security
-    ref: v0.0.9
-    file: /shared.yaml
+    SERVICE_NAME: treehub

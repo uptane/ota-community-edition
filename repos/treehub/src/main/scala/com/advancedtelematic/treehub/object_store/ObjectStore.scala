@@ -12,17 +12,17 @@ import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.treehub.http.Errors
 import com.advancedtelematic.treehub.object_store.BlobStore.OutOfBandStoreResult
-import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class ObjectStore(blobStore: BlobStore)(implicit ec: ExecutionContext, db: Database) extends ObjectRepositorySupport {
   def deleteObject(ns: Namespace, objectId: ObjectId): Future[Done] = for {
     deleted <- objectRepository.delete(ns, objectId)
-    _ <- if(deleted > 0) blobStore.deleteObject(ns, objectId) else FastFuture.failed(Errors.ObjectNotFound)
+    _ <- if(deleted > 0) blobStore.deleteObject(ns, objectId.asPrefixedPath) else FastFuture.failed(Errors.ObjectNotFound(objectId))
   } yield Done
 
-  import scala.async.Async._
+  import scala.async.Async.*
 
   def completeClientUpload(namespace: Namespace, id: ObjectId): Future[Unit] =
     objectRepository.setCompleted(namespace, id).map(_ => ())
@@ -35,7 +35,7 @@ class ObjectStore(blobStore: BlobStore)(implicit ec: ExecutionContext, db: Datab
 
     lazy val uploadF =
       blobStore
-        .storeOutOfBand(namespace, id)
+        .storeOutOfBand(namespace, id.asPrefixedPath)
         .recoverWith {
           case e =>
             objectRepository.delete(namespace, id)
@@ -46,12 +46,12 @@ class ObjectStore(blobStore: BlobStore)(implicit ec: ExecutionContext, db: Datab
     createF.flatMap(_ => uploadF)
   }
 
-  def storeStream(namespace: Namespace, id: ObjectId, size: Long, blob: Source[ByteString, _]): Future[TObject] = {
+  def storeStream(namespace: Namespace, id: ObjectId, size: Long, blob: Source[ByteString, ?]): Future[TObject] = {
     val obj = TObject(namespace, id, size, ObjectStatus.SERVER_UPLOADING)
     lazy val createF = objectRepository.create(obj)
 
     lazy val uploadF = async {
-      val _size = await(blobStore.storeStream(namespace, id, size, blob))
+      val _size = await(blobStore.storeStream(namespace, id.asPrefixedPath, size, blob))
       val newObj = obj.copy(byteSize = _size, status = ObjectStatus.UPLOADED)
       await(objectRepository.update(namespace, id, _size, ObjectStatus.UPLOADED))
       newObj
@@ -74,25 +74,25 @@ class ObjectStore(blobStore: BlobStore)(implicit ec: ExecutionContext, db: Datab
   def exists(namespace: Namespace, id: ObjectId): Future[Boolean] =
     for {
       dbExists <- objectRepository.exists(namespace, id)
-      fsExists <- blobStore.exists(namespace, id)
+      fsExists <- blobStore.exists(namespace, id.asPrefixedPath)
     } yield fsExists && dbExists
 
   def isUploaded(namespace: Namespace, id: ObjectId): Future[Boolean] =
     for {
       dbUploaded <- objectRepository.isUploaded(namespace, id)
-      fsExists <- blobStore.exists(namespace, id)
+      fsExists <- blobStore.exists(namespace, id.asPrefixedPath)
     } yield fsExists && dbUploaded
 
   def findBlob(namespace: Namespace, id: ObjectId): Future[(Long, HttpResponse)] = {
     for {
       _ <- ensureUploaded(namespace, id)
       tobj <- objectRepository.find(namespace, id)
-      response <- blobStore.buildResponse(namespace, id)
+      response <- blobStore.buildResponse(namespace, id.asPrefixedPath)
     } yield (tobj.byteSize, response)
   }
 
   def readFull(namespace: Namespace, id: ObjectId): Future[ByteString] = {
-    blobStore.readFull(namespace, id)
+    blobStore.readFull(namespace, id.asPrefixedPath)
   }
 
   def usage(namespace: Namespace): Future[Long] = {
@@ -102,7 +102,7 @@ class ObjectStore(blobStore: BlobStore)(implicit ec: ExecutionContext, db: Datab
   private def ensureUploaded(namespace: Namespace, id: ObjectId): Future[ObjectId] = {
     isUploaded(namespace, id).flatMap {
       case true => Future.successful(id)
-      case false => Future.failed(Errors.ObjectNotFound)
+      case false => Future.failed(Errors.ObjectNotFound(id))
     }
   }
 }

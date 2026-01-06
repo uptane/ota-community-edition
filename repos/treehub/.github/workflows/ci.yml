@@ -21,6 +21,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: coursier/setup-action@v1
+        with:
+          jvm: 'temurin:1.17.0.3'
       - name: Coursier cache
         uses: coursier/cache-action@v6
       - run: ./deploy/ci-db-setup.sh db

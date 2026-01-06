@@ -19,7 +19,7 @@ class RefResourceIntegrationSpec extends TreeHubSpec with ResourceSpec with Obje
 
   val log = LoggerFactory.getLogger(this.getClass)
 
-  implicit val patience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
+  implicit val patience: PatienceConfig = PatienceConfig(timeout = Span(5, Seconds), interval = Span(500, Millis))
 
   def createCommitObject(fileName: String): Future[(Commit, TObject)] = {
     val file = new File(this.getClass.getResource(s"/blobs/$fileName").getFile)
@@ -27,7 +27,7 @@ class RefResourceIntegrationSpec extends TreeHubSpec with ResourceSpec with Obje
     val blobBytes = blob.runReduce(_ ++ _).map(_.toArray)
 
     for {
-      commit <- blobBytes.map(Commit.from).map(_.toOption.get)
+      commit <- blobBytes.map(Commit.fromObjectContent).map(_.toOption.get)
       id = ObjectId.from(commit)
       tobj <- objectStore.storeFile(defaultNs, id, file)
         .recover {

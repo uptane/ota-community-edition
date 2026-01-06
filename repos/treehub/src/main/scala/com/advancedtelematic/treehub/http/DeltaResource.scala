@@ -1,69 +1,96 @@
 package com.advancedtelematic.treehub.http
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.headers.Location
-import akka.http.scaladsl.server.Directive1
-import com.advancedtelematic.data.DataType.{DeltaId, ValidDeltaId}
+import akka.http.scaladsl.server.*
+import com.advancedtelematic.data.ClientDataType.CommitInfoRequest
+import com.advancedtelematic.data.DataType.{CommitTupleOps, DeltaId, SuperBlockHash}
+import com.advancedtelematic.data.GVariantEncoder.*
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter
-import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
+import com.advancedtelematic.libats.http.RefinedMarshallingSupport.*
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
-import com.advancedtelematic.treehub.delta_store.StaticDeltaStorage
+import com.advancedtelematic.treehub.delta_store.StaticDeltas
+import com.advancedtelematic.treehub.http.PathMatchers.*
+import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter.UpdateBandwidth
+import eu.timepit.refined.api.RefType
+import io.circe.KeyEncoder
+import io.circe.syntax.EncoderOps
 import org.slf4j.LoggerFactory
-import com.advancedtelematic.data.DataType.CommitTupleOps
+
 import scala.util.Success
-import scala.collection.Searching.Found
 
-class DeltaResource(namespace: Directive1[Namespace], deltaStorage: StaticDeltaStorage, usageHandler: UsageMetricsRouter.HandlerRef) {
+class DeltaResource(namespace: Directive1[Namespace],
+                    staticDeltas: StaticDeltas,
+                    usageHandler: UsageMetricsRouter.HandlerRef) {
 
-  import akka.http.scaladsl.server.Directives._
-  import StaticDeltaStorage._
-
-  val DeltaIdPath = Segments(2).flatMap { parts =>
-    parts.mkString("/").refineTry[ValidDeltaId].toOption
-  }
+  import akka.http.scaladsl.server.Directives.*
 
   val _log = LoggerFactory.getLogger(this.getClass)
 
   private def publishBandwidthUsage(namespace: Namespace, usageBytes: Long, deltaId: DeltaId): Unit = {
-    deltaId.asObjectId match {
-      case Left(err) =>
-        _log.warn(s"Could not publish bandwith usage for $namespace: $err")
-      case Right(objectId) =>
-        usageHandler ! UpdateBandwidth(namespace, usageBytes, objectId)
-    }
+    usageHandler ! UpdateBandwidth(namespace, usageBytes, deltaId.toCommitObjectId)
   }
 
-  import com.advancedtelematic.libats.http.RefinedMarshallingSupport._
+  val superblockHashHeader: Directive1[SuperBlockHash] = optionalHeaderValueByName("x-trx-superblock-hash").flatMap {
+    case Some(hashStr) => {
+      RefType.applyRef[SuperBlockHash](hashStr).map(provide).getOrElse(failWith(Errors.MissingSuperblockHash))
+    }
+    case None => failWith(Errors.MissingSuperblockHash)
+  }
 
   val route =
     extractExecutionContext { implicit ec =>
       namespace { ns =>
-        path("summary") {
-          _log.info(s"Getting summary for $ns")
-          val f = deltaStorage.summary(ns).map { bytes =>
-            HttpResponse(entity = HttpEntity(MediaTypes.`application/octet-stream`, bytes))
-          }
+        (get & path("delta-indexes" / PrefixedIndexId)) { id =>
+          val f = staticDeltas.index(ns, id).map(_.encodeGVariant)
           complete(f)
         } ~
-        path("deltas" / DeltaIdPath / Segment) { (deltaId, path) =>
-          val f = deltaStorage.retrieve(ns, deltaId, path)
-            .andThen {
-              case Success(result: StaticDeltaResponse) =>
-                publishBandwidthUsage(ns, result.length, deltaId)
-            }.map {
-            case StaticDeltaRedirectResponse(uri, _) =>
-              HttpResponse(StatusCodes.Found, headers = List(Location(uri)))
-            case StaticDeltaContent(bytes, _) =>
-              HttpResponse(entity = HttpEntity(MediaTypes.`application/octet-stream`, bytes))
-          }
+        pathPrefix("deltas") {
+          path(PrefixedDeltaIdPath / Segment) { (deltaId, path) =>
+            (post & superblockHashHeader) { superblockHash =>
+              (extractRequestEntity) { entity =>
+                entity.contentLengthOption match {
+                  case Some(size) if size > 0 =>
+                    val f = staticDeltas.store(ns, deltaId, path, entity.dataBytes, size, superblockHash)
+                    complete(f.map(_ => StatusCodes.OK))
+                  case _ => reject(MissingHeaderRejection("Content-Length"))
+                }
+              }
+            } ~
+            get {
+              val f = staticDeltas.retrieve(ns, deltaId, path)
+                .andThen {
+                  case Success((size, result)) =>
+                    // TODO: On redirects, returns entire size of delta
+                    publishBandwidthUsage(ns, result.entity.contentLengthOption.getOrElse(size), deltaId)
+                }.map(_._2)
 
-          complete(f)
-        } ~
-        (path("deltas") & parameters('from.as[Commit], 'to.as[Commit])) { (from, to) =>
-          val deltaId = (from, to).toDeltaId
-          val uri = Uri(s"/deltas/${deltaId.value}")
-          complete(HttpResponse(StatusCodes.Found, headers = List(Location(uri))))
+              complete(f)
+            }
+          } ~
+            post {
+              import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+              implicit val commitKeyEncoder: KeyEncoder[Commit] = KeyEncoder.encodeKeyString.contramap(_.value)
+
+              entity(as[CommitInfoRequest]) { request =>
+                val f = staticDeltas.getCommitInfos(ns, request.commits)
+                complete(f)
+              }
+            } ~
+            (delete & path(PrefixedDeltaIdPath)) { id =>
+              val f = staticDeltas.markDeleted(ns, id)
+              complete(f.map(_ => StatusCodes.Accepted))
+            }
+            ~
+            (pathEnd & parameters(Symbol("from").as[Commit], Symbol("to").as[Commit])) { (from, to) =>
+              val deltaId = (from, to).toDeltaId
+              val uri = Uri(s"/deltas/${deltaId.asPrefixedPath}")
+              complete(HttpResponse(StatusCodes.Found, headers = List(Location(uri))))
+            } ~
+            (pathEnd & parameters(Symbol("offset").as(nonNegativeLong).?, Symbol("limit").as(nonNegativeLong).?)) { (offset, limit) =>
+              val f = staticDeltas.getAll(ns, offset, limit).map(_.asJson.toString())
+              complete(f)
+            }
         }
       }
     }

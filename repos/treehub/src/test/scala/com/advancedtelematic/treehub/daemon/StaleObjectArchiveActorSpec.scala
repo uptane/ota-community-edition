@@ -1,6 +1,6 @@
 package com.advancedtelematic.treehub.daemon
 
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -17,7 +17,7 @@ import com.advancedtelematic.util.{DatabaseSpec, TreeHubSpec}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.Eventually
 import org.scalatest.time.{Seconds, Span}
-import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.MySQLProfile.api.*
 
 protected abstract class StaleObjectArchiveActorSpecUtil extends TreeHubSpec with TestKitBase with ImplicitSender with DatabaseSpec
   with ArchivedObjectRepositorySupport
@@ -58,7 +58,7 @@ class StaleObjectArchiveActorSpec extends StaleObjectArchiveActorSpecUtil {
 
     done.count shouldBe 1
     archivedObjectRepository.find(defaultNs, obj.objectId).futureValue.map(_._2) should contain(obj.objectId)
-    objectRepository.find(defaultNs, obj.objectId).failed.futureValue shouldBe Errors.ObjectNotFound
+    objectRepository.find(defaultNs, obj.objectId).failed.futureValue.getMessage shouldBe Errors.ObjectNotFound(obj.objectId).getMessage
   }
 
   test("does nothing to non stale objects that were not uploaded yet") {
@@ -93,7 +93,7 @@ class StaleObjectArchiveActorSpec extends StaleObjectArchiveActorSpecUtil {
     val tobj = TObject(defaultNs, obj.objectId, obj.blob.size, ObjectStatus.CLIENT_UPLOADING)
 
     objectRepository.create(tobj).futureValue
-    storage.store(defaultNs, obj.objectId, obj.byteSource).futureValue
+    storage.store(defaultNs, obj.objectId.asPrefixedPath, obj.byteSource).futureValue
 
     subject ! Tick
     val done = expectMsgType[Done]
@@ -110,7 +110,7 @@ class StaleObjectArchiveActorSpec extends StaleObjectArchiveActorSpecUtil {
     subject ! Done(0)
 
     objectRepository.create(tobj).futureValue
-    storage.store(defaultNs, obj.objectId, obj.byteSource).futureValue
+    storage.store(defaultNs, obj.objectId.asPrefixedPath, obj.byteSource).futureValue
 
     eventually({
       objectRepository.find(defaultNs, obj.objectId).futureValue.status shouldBe ObjectStatus.UPLOADED
@@ -122,7 +122,7 @@ class StaleObjectArchiveActorSpec extends StaleObjectArchiveActorSpecUtil {
 class StaleObjectArchiveActorIntegrationSpec extends StaleObjectArchiveActorSpecUtil {
   import system.dispatcher
 
-  val storage = S3BlobStore(s3Credentials, allowRedirects = false)
+  val storage = S3BlobStore(s3Credentials, allowRedirects = false, root = Some(Paths.get("test-objects")))
   lazy val subject = system.actorOf(StaleObjectArchiveActor.withBackOff(storage))
 
   test("marks uploaded objects as UPLOADED") {
@@ -130,7 +130,7 @@ class StaleObjectArchiveActorIntegrationSpec extends StaleObjectArchiveActorSpec
     val tobj = TObject(defaultNs, obj.objectId, obj.blob.size, ObjectStatus.CLIENT_UPLOADING)
 
     objectRepository.create(tobj).futureValue
-    storage.storeStream(defaultNs, obj.objectId, obj.blob.length, obj.byteSource).futureValue
+    storage.storeStream(defaultNs, obj.objectId.asPrefixedPath, obj.blob.length, obj.byteSource).futureValue
 
     subject ! Tick
 

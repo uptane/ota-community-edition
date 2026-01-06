@@ -8,7 +8,6 @@ import org.scalatest.{FunSuite, Matchers}
 
 abstract class TreeHubSpec extends FunSuite with Matchers with ScalaFutures with Settings {
   val defaultNs = Namespace("default")
-
   val testDbConfig: Config = ConfigFactory.load().getConfig("ats.treehub.database")
 }
 

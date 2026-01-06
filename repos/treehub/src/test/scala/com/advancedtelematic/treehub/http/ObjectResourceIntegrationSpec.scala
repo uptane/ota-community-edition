@@ -1,11 +1,10 @@
 package com.advancedtelematic.treehub.http
 
 import akka.actor.Props
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.libats.http.{DefaultRejectionHandler, ErrorHandler}
@@ -14,11 +13,13 @@ import com.advancedtelematic.treehub.object_store.{ObjectStore, S3BlobStore}
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
 import com.advancedtelematic.util.{DatabaseSpec, FakeUsageUpdate, TreeHubSpec}
 
+import java.nio.file.Paths
+
 class ObjectResourceIntegrationSpec extends TreeHubSpec with ScalatestRouteTest with DatabaseSpec with LongTest {
 
   val ns = DataType.Namespace("ObjectResourceIntegrationSpec")
 
-  val s3BlobStore = S3BlobStore(s3Credentials, allowRedirects = false)
+  val s3BlobStore = S3BlobStore(s3Credentials, allowRedirects = false, root = Some(Paths.get("test-objects")))
 
   val fakeUsageUpdate = system.actorOf(Props(new FakeUsageUpdate), "fake-usage-update")
 
