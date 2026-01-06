@@ -1,9 +1,21 @@
-.idea/
+# sbt specific
+.cache
+.history
+.lib/
+dist/*
 target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
 project/target
-project/.bloop
-/.bsp/
-ota-ce/generated/
-ota-ce-gen
-project/project
+README.html
 
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+.idea/
+
+aws.env
+.bloop/
+.bsp/

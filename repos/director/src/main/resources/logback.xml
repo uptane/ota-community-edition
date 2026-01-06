@@ -1,8 +1,0 @@
-<configuration>
-    <logger name="com.advancedtelematic.director.manifest" level="${MANIFEST_COMPILER_LOG_LEVEL:-info}" />
-    <logger name="com.advancedtelematic.director.http.DeviceAssignments" level="${DEVICE_ASSIGNMENTS_LOG_LEVEL:-info}" />
-
-    <include resource="logback-libats.xml"/>
-
-<!--    <logger name="slick.basic.BasicBackend.action" level="debug" />-->
-</configuration>

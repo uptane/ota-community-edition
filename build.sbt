@@ -1,75 +1,146 @@
-name := "ota-lith"
-organization := "com.advancedtelematic"
-scalaVersion := "2.12.12"
+def itFilter(name: String): Boolean = name.endsWith("IntegrationSpec")
 
-resolvers += "ATS Releases" at "https://nexus.ota.here.com/content/repositories/releases"
+def unitFilter(name: String): Boolean = !itFilter(name)
 
-resolvers += "ATS Snapshots" at "https://nexus.ota.here.com/content/repositories/snapshots"
+lazy val ItTest = config("it").extend(Test)
 
-updateOptions := updateOptions.value.withLatestSnapshots(false)
+lazy val UnitTest = config("ut").extend(Test)
 
-libraryDependencies ++= {
-  val bouncyCastleV = "1.59"
-  val akkaV = "2.6.5"
-  val akkaHttpV = "10.1.12"
+lazy val commonConfigs = Seq(ItTest, UnitTest)
+
+val libatsVersion = "5.0.0"
+
+lazy val commonDeps = libraryDependencies ++= {
+  val scalaTestV = "3.2.19"
+  lazy val catsV = "2.13.0"
+  lazy val pekkoHttpV = "1.2.0"
+  lazy val enumeratumV = "1.9.2"
 
   Seq(
-    "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
-    "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV,
-
-    "com.typesafe.akka" %% "akka-actor" % akkaV,
-    "com.typesafe.akka" %% "akka-stream" % akkaV,
-    "com.typesafe.akka" %% "akka-http" % akkaHttpV,
+    "org.scala-lang.modules" %% "scala-async" % "1.0.1",
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
+    "io.github.uptane" %% "libats" % libatsVersion,
+    "org.scalatest" %% "scalatest" % scalaTestV % "test",
+    "org.typelevel" %% "cats-core" % catsV,
+    "org.apache.pekko" %% "pekko-http" % pekkoHttpV,
+    "com.beachape" %% "enumeratum" % enumeratumV,
+    "com.beachape" %% "enumeratum-circe" % enumeratumV,
+    "io.github.uptane" %% "libats-http" % libatsVersion
   )
 }
 
-// TODO: Add to libraryDependencies when done
-lazy val treehub = (ProjectRef(file("./repos/treehub"), "root"))
-lazy val device_registry = (ProjectRef(file("./repos/device-registry"), "ota-device-registry"))
-lazy val campaigner = (ProjectRef(file("./repos/campaigner"), "campaigner"))
-lazy val director = (ProjectRef(file("./repos/director"), "director"))
-lazy val keyserver = (ProjectRef(file("./repos/tuf"), "keyserver"))
-lazy val reposerver = (ProjectRef(file("./repos/tuf"), "reposerver"))
-// lazy val libats_slick = (ProjectRef(file("/home/simao/ats/libats"), "libats_slick"))
+lazy val serverDependencies = libraryDependencies ++= {
+  lazy val pekkoV = "1.1.5"
+  lazy val pekkoHttpV = "1.2.0"
+  lazy val enumeratumV = "1.9.2"
 
-dependsOn(treehub, device_registry, campaigner, director, keyserver, reposerver)
+  Seq(
+    "org.apache.pekko" %% "pekko-actor" % pekkoV,
+    "org.apache.pekko" %% "pekko-stream" % pekkoV,
+    "org.apache.pekko" %% "pekko-stream-testkit" % pekkoV % "test",
+    "org.apache.pekko" %% "pekko-http" % pekkoHttpV,
+    "org.apache.pekko" %% "pekko-slf4j" % pekkoV,
+    "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpV % "test",
+    "com.softwaremill.sttp.client4" %% "pekko-http-backend" % "4.0.13" % "test",
+    "org.apache.pekko" %% "pekko-stream" % "1.1.4" % "test",
+    "io.github.uptane" %% "libats-http" % libatsVersion,
+    "io.github.uptane" %% "libats-http-tracing" % libatsVersion,
+    "io.github.uptane" %% "libats-messaging" % libatsVersion,
+    "io.github.uptane" %% "libats-metrics-pekko" % libatsVersion,
+    "io.github.uptane" %% "libats-metrics-prometheus" % libatsVersion,
+    "io.github.uptane" %% "libats-slick" % libatsVersion,
+    "io.github.uptane" %% "libats-logging" % libatsVersion,
+    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.7",
+    "com.beachape" %% "enumeratum" % enumeratumV,
+    "com.beachape" %% "enumeratum-circe" % enumeratumV,
+    "io.scalaland" %% "chimney" % "1.8.2"
+  )
+}
 
-enablePlugins(BuildInfoPlugin, GitVersioning, JavaAppPackaging)
+lazy val commonSettings = Seq(
+  organization := "io.github.uptane",
+  scalaVersion := "2.13.18",
+  organizationName := "uptane",
+  organizationHomepage := Some(url("https://uptane.github.io/")),
+  scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-Xasync", "-Xsource:3"),
+  Compile / console / scalacOptions ~= (_.filterNot(_ == "-Ywarn-unused-import")),
+  resolvers += "maven-snapshots".at("https://central.sonatype.com/repository/maven-snapshots"),
+  resolvers += Resolver.mavenCentral,
+  licenses += ("MPL-2.0", url("http://mozilla.org/MPL/2.0/")),
+  description := "scala tuf implementation support",
+  buildInfoOptions += BuildInfoOption.ToMap,
+  buildInfoOptions += BuildInfoOption.BuildTime
+) ++
+  Seq(inConfig(ItTest)(Defaults.testTasks): _*) ++
+  Seq(inConfig(UnitTest)(Defaults.testTasks): _*) ++
+  (UnitTest / testOptions := Seq(Tests.Filter(unitFilter))) ++
+  (IntegrationTest / testOptions := Seq(Tests.Filter(itFilter))) ++
+  Versioning.settings ++
+  commonDeps
 
-buildInfoOptions += BuildInfoOption.ToMap
-buildInfoOptions += BuildInfoOption.BuildTime
+lazy val libtuf = (project in file("libtuf"))
+  .enablePlugins(Versioning.Plugin, BuildInfoPlugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(Publish.settings)
 
-mainClass in Compile := Some("com.advancedtelematic.ota_lith.OtaLithBoot")
+lazy val libtuf_server = (project in file("libtuf-server"))
+  .enablePlugins(Versioning.Plugin, BuildInfoPlugin)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(serverDependencies)
+  .settings(Publish.settings)
+  .dependsOn(libtuf)
 
-import com.typesafe.sbt.packager.docker._
-import sbt.Keys._
-import com.typesafe.sbt.SbtNativePackager.Docker
-import DockerPlugin.autoImport._
-import com.typesafe.sbt.SbtGit.git
-import com.typesafe.sbt.SbtNativePackager.autoImport._
-import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
+lazy val keyserver = (project in file("keyserver"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin, JavaAppPackaging)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(Packaging.docker("tuf-keyserver"))
+  .settings(Publish.disable)
+  .settings(serverDependencies)
+  .settings(BuildInfoSettings("com.advancedtelematic.tuf.keyserver"))
+  .dependsOn(libtuf)
+  .dependsOn(libtuf_server)
 
-dockerRepository in Docker := Some("advancedtelematic")
+lazy val reposerver = (project in file("reposerver"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin, JavaAppPackaging)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(serverDependencies)
+  .settings(Packaging.docker("tuf-reposerver"))
+  .settings(Publish.disable)
+  .settings(BuildInfoSettings("com.advancedtelematic.tuf.reposerver"))
+  .dependsOn(libtuf)
+  .dependsOn(libtuf_server)
 
-packageName in Docker := packageName.value
+lazy val tuf_server = (project in file("tuf-server"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin, JavaAppPackaging)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(serverDependencies)
+  .settings(Packaging.docker("tuf-server"))
+  .settings(BuildInfoSettings("io.github.uptane.tuf.tuf_server"))
+  .dependsOn(libtuf)
+  .dependsOn(libtuf_server)
+  .dependsOn(keyserver)
+  .dependsOn(reposerver)
 
-dockerUpdateLatest := true
+lazy val cli = (project in file("cli"))
+  .enablePlugins(BuildInfoPlugin, Versioning.Plugin, JavaAppPackaging)
+  .configs(commonConfigs: _*)
+  .settings(commonSettings)
+  .settings(Publish.disable)
+  .settings(BuildInfoSettings("com.advancedtelematic.tuf.cli"))
+  .settings(
+    topLevelDirectory := Some("uptane-sign"),
+    executableScriptName := "uptane-sign",
+    Universal / mappings += (file("cli/LICENSE") -> "docs/LICENSE"),
+    libraryDependencies += "com.typesafe" % "config" % "1.4.5" % Test
+  )
+  .dependsOn(libtuf)
 
-dockerAliases ++= Seq(dockerAlias.value.withTag(git.gitHeadCommit.value))
-
-defaultLinuxInstallLocation in Docker := s"/opt/${moduleName.value}"
-
-dockerCommands := Seq(
-  Cmd("FROM", "advancedtelematic/alpine-jre:adoptopenjdk-jre8u262-b10"),
-  ExecCmd("RUN", "mkdir", "-p", s"/var/log/${moduleName.value}"),
-  Cmd("ADD", "opt /opt"),
-  Cmd("WORKDIR", s"/opt/${moduleName.value}"),
-  ExecCmd("ENTRYPOINT", s"/opt/${moduleName.value}/bin/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /opt/${moduleName.value}"),
-  Cmd("RUN", s"mkdir /var/lib/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /var/lib/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /var/log/${moduleName.value}"),
-  Cmd("USER", "daemon")
-)
-
-// fork := true // TODO: Not compatible with .properties ?
+lazy val ota_tuf = (project in file("."))
+  .settings(Publish.disable)
+  .settings(Release.settings(libtuf, libtuf_server, keyserver, reposerver))
+  .aggregate(libtuf_server, libtuf, keyserver, reposerver, cli)

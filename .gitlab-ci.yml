@@ -1,0 +1,73 @@
+stages:
+  - test
+  - build image
+  - deploy
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+  MYSQL_ROOT_PASSWORD: "root"
+  MYSQL_DATABASE: "ota_tuf"
+  MYSQL_USER: "ota_tuf"
+  MYSQL_PASSWORD: "ota_tuf"
+  SBT_OPTS: "-sbt-launch-dir .sbt/launchers -sbt-dir .sbt -ivy .ivy2 -Dsbt.color=true -Dscala.color=true"
+  SERVICE: tuf-server
+
+image: registry.gitlab.com/toradex/torizon-cloud/ci-container-build/scala:4acf34bc
+
+include:
+  - project: toradex/torizon-cloud/ci-container-build
+    file: gitlab-ci-templates/gitlab-sbt-docker-publish.yaml
+    ref: master
+  - project: 'toradex/torizon-cloud/deploy-env'
+    ref: master
+    file: '/gitlab/deploy-core-service.yml'
+
+services:
+  - name: docker:dind
+
+default:
+  cache:
+    key: tuf
+    paths:
+      - .ivy2/
+      - .sbt/
+
+test:
+  stage: test
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  services:
+    - name: uptane/tuf-nginx:latest
+      alias: tuf-nginx
+    - name: mariadb:10.11
+      alias: db
+      command:
+        - --character-set-server=utf8
+        - --collation-server=utf8_unicode_ci
+        - --max_connections=1000
+  variables:
+    DB_URL: "jdbc:mariadb://db:3306/ota_tuf"
+    MTLS_REPOSERVER_URI: "https://tuf-nginx:8181/"
+  before_script:
+    - ./deploy/gitlab-db-setup.sh mysql db
+  script:
+    - sbt ut:test
+  tags:
+    - torizon-cloud-team
+
+
+build docker image tuf-server:
+  stage: build image
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  extends:
+    - .sbt-docker-publish
+  variables:
+    SERVICE_NAME: tuf-server
+    SBT_NAME: tuf_server/
+  tags:
+    - torizon-cloud-team

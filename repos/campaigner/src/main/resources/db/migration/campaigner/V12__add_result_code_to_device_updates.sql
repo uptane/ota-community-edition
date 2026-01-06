@@ -1,1 +1,0 @@
-ALTER TABLE device_updates ADD COLUMN result_code VARCHAR(255) NULL;

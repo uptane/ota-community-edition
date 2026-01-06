@@ -1,2 +1,0 @@
-ALTER TABLE `ref`
-ADD COLUMN version Integer NOT NULL DEFAULT 0;

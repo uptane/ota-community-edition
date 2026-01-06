@@ -1,101 +1,52 @@
-# OTA Community Edition (mono)-lith
+# Ota-tuf
 
-Easy to run, secure, open source [tuf](https://theupdateframework.io/)/[uptane](https://uptane.github.io/) over the air (OTA) updates.
+[tuf][1] implementation for over the air updates. This project is part of [ota-community-edition][2].
 
-You may not want or need to run [ota-community-edition](https://github.com/advancedtelematic/ota-community-edition) using a microservice architecure. A monolith might fit your use case better if you just want to try `ota-community-edition` or if your organization doesn't need to serve millions of devices. A monolith architecture is easier to deploy and manage, and uses less resources.
+This project is split into multiple modules:
 
-This project bundles all the scala apps included in [ota-community-edition](https://github.com/advancedtelematic/ota-community-edition) into a application that can be executed in a single container. The app can be easily configured using a single configuration file and avoids the usage of environment variables to simplifly configuration. Additionally, a `docker-compose` file is provided to run the application. This means you no longer need a kubernetes cluster if you just want to try or test `ota-community-edition`.
-
-For small deployments, you don't need kubernetes. This solution can fit your organization better. With this app you could run ota in a single machine/vm + mariadb and kafka.
-
-## Active branches
-
-Currently there are three active branches in this repository:
-
-- `master`. `ota-community-edition` running without webapp and with kafka, using a single scala app.
-
-- `webapp`. The webapp is broken in `ota-community-edition` and therefore is not included in `ota-lith/master`. The `webapp` branch includes patched version of `webapp` that does not rely on user profile and is therefore working with both `ota-community-edition` and `ota-lith`.
-
-## Pending changes and dependencies
-  
-This project depends on changes to other `ota-community-edition` repositories. The changes were incorporated into this repository using `git subtree`, and they will need to be updated using the same method once those changes are merged upstream. 
-
-The following forks/branches are included using git subtree:
-
-- campaigner https://github.com/simao/campaigner/tree/ota-lith
-- device-registry https://github.com/simao/ota-device-registry/tree/ota-lith
-- director https://github.com/simao/director/tree/ota-lith
-- libats https://github.com/simao/libats/tree/ota-lith
-- treehub https://github.com/simao/treehub/tree/ota-lith
-- treehub https://github.com/simao/treehub/tree/ota-lith
-- tuf https://github.com/simao/ota-tuf/tree/ota-lith
-
-## Building
-
-To build a container running the services, run `sbt docker:publishLocal`
-
-## Configuration
-
-Configuration is done through a single config file, rather than using enviroment variables. This is meant to simplify the deployment scripts and just pass a `configFile=file.conf` argument to the container, or when needed, using system properties (`-Dkey=value`). An example config file is provied in `ota-lith-ce.conf`.
+*  reposerver - Manages tuf metadata for tuf repositories
+*  keyserver - Manages key generation and online role signing for tuf roles
+*  cli - Command line tools to manage a remote tuf repository. See [cli/README](cli/README.adoc)
+*  libtuf/libtuf-server - Dependencies for the other modules
 
 ## Running
 
-If you already have kafka and mariadb instances you can just run the ota-lith binary using sbt or docker.
+`reposerver` and `keyserver` should run as part of
+[ota-community-edition][2]. See [cli/README](cli/README.adoc) for
+information on how to run the CLI tools.
 
-### Using sbt
+You can then use `sbt keyserver/run` and `sbt reposerver/run`.
 
-You'll need a valid ota-lith.conf, then run:
+## Running tests
 
-    sbt -Dconfig.file=$(pwd)/ota-lith.conf run
+You'll need a mariadb instance running with the users configured in
+`application.conf`. If you want it quick you can use
+`deploy/ci_setup.sh`. This will create a new docker container running
+a database with the proper permissions.
 
-### Using docker
+To run tests simply run `sbt test`.
 
-The scala apps run in a single container, but you'll need kafka and mariadb. Write a valid ota-lith.conf.
+To run integration tests:
 
-    sbt docker:publishLocal
-    docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf advancedtelematic/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
+    sbt it:test
 
-## Running With Docker Compose
+The `cli` module includes a test that requires an nginx to run with the proper TLS certificates, which match the certificates inside a zip file used for the test.
 
-If you don't have kafka or mariadb running and just want to try ota-ce, run using docker-compose:
+The nginx certificates can be renewed and copied to the correct places with the following command:
 
-1. Generate the required certificates using `scripts/gen-server-certs.sh` 
-
-2. Update /etc/hosts
-
-3. build docker image
-
-`sbt docker:publishLocal`
-
-4. Run docker-compose 
- 
-`docker-compose -f ota-ce.yaml up`
-
-5. Test
-
-For example `curl director.ota.ce/health/version`
-
-6. You can now create device credentials and provision devices
-
-Run `scripts/gen-device.sh`. This will create a new dir in `ota-ce-gen/devices/:uuid` where `uuid` is the id of the new device. You can run `aktualizr` in that directory using:
-
-    aktualizr --run-mode=once --config=config.toml
+    cd cli/src/test/resources/mtls-openssl && make clean all
     
-7. You can now deploy updates to the devices
+This will require the certificates in the test zip file to be updated, which can be done with:
 
-## Deploy updates
+    cd cli/src/test/resources/mtls-openssl && make update-credentials.zip
 
-You can either use the API directly or use [ota-cli](https://github.com/simao/ota-cli/) to deploy updates. After provisioning devices (see above).
+## Continuous Integration
 
-Before using the api or `ota-cli` you will need to generate a valid `credentials.zip`. Run `scripts/get-credentials.zip`.
+The `deploy` directory includes scripts required for CI jobs.
 
-To deploy an update using the API and a custom campaign, see [api-updates.md](docs/api-updates.md).
+## License
 
-To deploy an update using [ota-cli](https://github.com/simao/ota-cli/) with or without a custom campaign see [updates-ota-cli.md](docs/updates-ota-cli.md).
+This code is licensed under the [Mozilla Public License 2.0](LICENSE), a copy of which can be found in this repository. All code is copyright [ATS Advanced Telematic Systems GmbH](https://www.advancedtelematic.com), 2016-2018.
 
-## Related
-
-- https://github.com/simao/ota-cli
-- https://github.com/advancedtelematic/ota-community-edition
-- https://docs.ota.here.com/getstarted/dev/index.html
-- https://docs.ota.here.com/ota-client/latest/aktualizr-config-options.html
+[1]: https://theupdateframework.github.io/
+[2]: https://github.com/advancedtelematic/ota-community-edition

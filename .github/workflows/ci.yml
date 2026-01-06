@@ -1,0 +1,37 @@
+name: Test & Build
+on: [push, pull_request]
+env:
+  JVM_OPTS: "-XX:+UnlockExperimentalVMOptions" # Needed to override default `JVM_OPTS`, because of error "JVMCI compiler: No JVMCI compiler found"
+jobs:
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    container: uptane/ci:latest
+    services:
+      tuf-nginx:
+        image: uptane/tuf-nginx:latest
+
+      db:
+        image: mariadb:10.11
+        env:
+          MYSQL_ROOT_PASSWORD: "root"
+          MYSQL_DATABASE: "ota_tuf"
+          MYSQL_USER: "ota_tuf"
+          MYSQL_PASSWORD: "ota_tuf"
+        # command:
+        #     - --character-set-server=utf8
+        #     - --collation-server=utf8_unicode_ci
+        #     - --max_connections=1000
+
+    env:
+      DB_URL: "jdbc:mariadb://db:3306/ota_tuf"
+      MTLS_REPOSERVER_URI: "https://tuf-nginx:8181/"
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: coursier/setup-action@v1
+        with:
+          jvm: 'temurin:1.17.0.3'
+      - uses: coursier/cache-action@v6
+      - run: ./deploy/gitlab-db-setup.sh mysql db
+      - run: sbtn 'clean; Ut / test'
