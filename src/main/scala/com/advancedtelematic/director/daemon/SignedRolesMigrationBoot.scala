@@ -9,16 +9,16 @@ import com.advancedtelematic.libats.slick.db.DatabaseSupport
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-object SignedRolesMigrationBoot extends BootApp
-  with BootAppDefaultConfig
-  with BootAppDatabaseConfig
-  with Directives
-  with Settings
-  with VersionInfo
-  with DatabaseSupport {
+object SignedRolesMigrationBoot
+    extends BootApp
+    with BootAppDefaultConfig
+    with BootAppDatabaseConfig
+    with Directives
+    with Settings
+    with VersionInfo
+    with DatabaseSupport {
 
-  implicit val _db = db
-
+  implicit val _db: slick.jdbc.MySQLProfile.backend.Database = db
 
   val migrationF = new SignedRoleMigration().run.map { res =>
     log.info(s"Migration finished $res")

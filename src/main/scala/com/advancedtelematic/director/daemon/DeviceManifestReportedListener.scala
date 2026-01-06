@@ -7,8 +7,11 @@ import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DeviceManifestReportedListener()(implicit val db: Database, val ec: ExecutionContext) extends MsgOperation[DeviceManifestReported] with DeviceManifestRepositorySupport {
-  override def apply(msg: DeviceManifestReported): Future[Unit] = {
+class DeviceManifestReportedListener()(implicit val db: Database, val ec: ExecutionContext)
+    extends MsgOperation[DeviceManifestReported]
+    with DeviceManifestRepositorySupport {
+
+  override def apply(msg: DeviceManifestReported): Future[Unit] =
     deviceManifestRepository.createOrUpdate(msg.deviceId, msg.manifest.signed, msg.receivedAt)
-  }
+
 }

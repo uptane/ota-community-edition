@@ -3,9 +3,6 @@ on:
   push:
     branches: [master]
     tags: ["*"]
-env:
-  SBT_OPTS: "-Dsbt.color=true -Dscala.color=true"
-
 jobs:
   build-images:
     name: Build and Push Images
@@ -17,9 +14,9 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - uses: olafurpg/setup-scala@v11
+      - uses: coursier/setup-action@v1
         with:
-          java-version: adopt@1.8
+          jvm: 'temurin:1.17.0.3'
       - uses: coursier/cache-action@v6
       - run: sbt docker:publishLocal
       - run: docker tag advancedtelematic/director-v2:$GITHUB_SHA uptane/director-v2:$GITHUB_SHA

@@ -1,23 +1,32 @@
 name := "director-v2"
 organization := "io.github.uptane"
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.16"
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-Ypartial-unification")
+scalacOptions := Seq(
+  "-unchecked",
+  "-deprecation",
+  "-encoding",
+  "utf8",
+  "-feature",
+  "-Xlog-reflective-calls",
+  "-Xasync",
+  "-Xsource:3",
+  "-Ywarn-unused",
+  "-Wconf:cat=other-match-analysis:error"
+)
 
-resolvers += "Artifactory Realm" at "https://artifactory-horw.int.toradex.com/artifactory/ota-sbt-dev-horw"
-
-resolvers += "sonatype-snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
-resolvers += "sonatype-releases" at "https://s01.oss.sonatype.org/content/repositories/releases"
+resolvers += "sonatype-snapshots".at("https://s01.oss.sonatype.org/content/repositories/snapshots")
+resolvers += "sonatype-releases".at("https://s01.oss.sonatype.org/content/repositories/releases")
 
 Global / bloopAggregateSourceDependencies := true
 
 libraryDependencies ++= {
-  val akkaV = "2.6.17"
-  val akkaHttpV = "10.2.7"
-  val scalaTestV = "3.2.10"
-  val bouncyCastleV = "1.69"
-  val tufV = "0.8.1-26-gbdfd97a-SNAPSHOT"
-  val libatsV = "2.0.3"
+  val akkaV = "2.8.5"
+  val akkaHttpV = "10.5.2"
+  val tufV = "3.2.11"
+  val scalaTestV = "3.2.19"
+  val bouncyCastleV = "1.83"
+  val libatsV = "2.6.6"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -26,9 +35,8 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaV,
     "com.typesafe.akka" %% "akka-slf4j" % akkaV,
-    "org.scalatest"     %% "scalatest" % scalaTestV % Test,
-    "org.scalacheck" %% "scalacheck" % "1.15.4" % Test,
-
+    "org.scalatest" %% "scalatest" % scalaTestV % Test,
+    "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
     "io.github.uptane" %% "libats" % libatsV,
     "io.github.uptane" %% "libats-messaging" % libatsV,
     "io.github.uptane" %% "libats-messaging-datatype" % libatsV,
@@ -39,23 +47,24 @@ libraryDependencies ++= {
     "io.github.uptane" %% "libats-logging" % libatsV,
     "io.github.uptane" %% "libtuf" % tufV,
     "io.github.uptane" %% "libtuf-server" % tufV,
+    "org.bouncycastle" % "bcprov-jdk18on" % bouncyCastleV,
+    "org.bouncycastle" % "bcpkix-jdk18on" % bouncyCastleV,
+    "org.scala-lang.modules" %% "scala-async" % "1.0.1",
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
+    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.7",
+    "com.beachape" %% "enumeratum" % "1.9.0",
+    "com.beachape" %% "enumeratum-circe" % "1.9.0",
 
-    "org.bouncycastle" % "bcprov-jdk15on" % bouncyCastleV,
-    "org.bouncycastle" % "bcpkix-jdk15on" % bouncyCastleV,
-
-    "org.scala-lang.modules" %% "scala-async" % "0.10.0",
-
-    "org.mariadb.jdbc" % "mariadb-java-client" % "2.7.4"
+    // Device registry specific dependencies
+    "com.lightbend.akka" %% "akka-stream-alpakka-csv" % "2.0.0",
+    "io.circe" %% "circe-testing" % "0.14.15",
+    "tech.sparse" %% "toml-scala" % "0.2.2",
+    "org.tpolecat" %% "atto-core" % "0.9.5",
+    "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test
   )
 }
 
-Compile / scalacOptions ++= Seq(
-  "-deprecation",
-    "-feature",
-  "-Xlog-reflective-calls",
-  "-Yno-adapted-args",
-  "-Ypartial-unification"
-)
+javacOptions ++= Seq("-source", "21", "-target", "21")
 
 Test / testOptions ++= Seq(
   Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
@@ -73,14 +82,6 @@ enablePlugins(BuildInfoPlugin, GitVersioning, JavaAppPackaging)
 
 Compile / mainClass := Some("com.advancedtelematic.director.Boot")
 
-import com.typesafe.sbt.packager.docker._
-import sbt.Keys._
-import com.typesafe.sbt.SbtNativePackager.Docker
-import DockerPlugin.autoImport._
-import com.typesafe.sbt.SbtGit.git
-import com.typesafe.sbt.SbtNativePackager.autoImport._
-import com.typesafe.sbt.packager.linux.LinuxPlugin.autoImport._
-
 dockerRepository := Some("advancedtelematic")
 
 Docker / packageName := packageName.value
@@ -91,15 +92,8 @@ dockerAliases ++= Seq(dockerAlias.value.withTag(git.gitHeadCommit.value))
 
 Docker / defaultLinuxInstallLocation := s"/opt/${moduleName.value}"
 
-dockerCommands := Seq(
-  Cmd("FROM", "advancedtelematic/alpine-jre:adoptopenjdk-jre8u262-b10"),
-  ExecCmd("RUN", "mkdir", "-p", s"/var/log/${moduleName.value}"),
-  Cmd("ADD", "opt /opt"),
-  Cmd("WORKDIR", s"/opt/${moduleName.value}"),
-  ExecCmd("ENTRYPOINT", s"/opt/${moduleName.value}/bin/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /opt/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /var/log/${moduleName.value}"),
-  Cmd("USER", "daemon")
-)
+dockerBaseImage := "eclipse-temurin:21.0.1_12-jre-jammy"
+
+Docker / daemonUser := "daemon"
 
 fork := true

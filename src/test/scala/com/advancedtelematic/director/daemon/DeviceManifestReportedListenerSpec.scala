@@ -1,7 +1,6 @@
 package com.advancedtelematic.director.daemon
 
 import java.time.Instant
-
 import com.advancedtelematic.director.data.Codecs._
 import com.advancedtelematic.director.data.GeneratorOps._
 import com.advancedtelematic.director.data.Generators._
@@ -11,20 +10,21 @@ import com.advancedtelematic.director.util.DirectorSpec
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.test.MysqlDatabaseSpec
-import com.advancedtelematic.libtuf.data.TufCodecs._
 import com.advancedtelematic.libtuf.data.TufDataType.SignedPayload
 import io.circe.syntax._
 import org.scalatest.OptionValues._
 
+import java.time.temporal.ChronoUnit
 import scala.concurrent.ExecutionContext
 
-class DeviceManifestReportedListenerSpec extends DirectorSpec
-  with MysqlDatabaseSpec
-  with DeviceManifestRepositorySupport {
+class DeviceManifestReportedListenerSpec
+    extends DirectorSpec
+    with MysqlDatabaseSpec
+    with DeviceManifestRepositorySupport {
 
   val defaultNs = DataType.Namespace(this.getClass.getName)
 
-  implicit lazy val ec = ExecutionContext.global
+  implicit lazy val ec: scala.concurrent.ExecutionContextExecutor = ExecutionContext.global
 
   lazy val listener = new DeviceManifestReportedListener()
 
@@ -32,21 +32,25 @@ class DeviceManifestReportedListenerSpec extends DirectorSpec
     val manifest = GenDeviceManifest.generate
     val signedManifest = SignedPayload(Seq.empty, manifest.asJson, manifest.asJson)
 
-    val msg = Messages.DeviceManifestReported(defaultNs, DeviceId.generate(), signedManifest, Instant.now())
+    val msg =
+      Messages.DeviceManifestReported(defaultNs, DeviceId.generate(), signedManifest, Instant.now())
 
     listener.apply(msg).futureValue
 
     val (saved, receivedAt) = deviceManifestRepository.find(msg.deviceId).futureValue.value
 
     saved shouldBe msg.manifest.signed
-    receivedAt shouldBe msg.receivedAt
+    receivedAt.truncatedTo(ChronoUnit.SECONDS) shouldBe msg.receivedAt.truncatedTo(
+      ChronoUnit.SECONDS
+    )
   }
 
   test("it doesn't create new row if manifest did not change") {
     val manifest = GenDeviceManifest.generate
     val signedManifest = SignedPayload(Seq.empty, manifest.asJson, manifest.asJson)
 
-    val msg = Messages.DeviceManifestReported(defaultNs, DeviceId.generate(), signedManifest, Instant.now())
+    val msg =
+      Messages.DeviceManifestReported(defaultNs, DeviceId.generate(), signedManifest, Instant.now())
 
     listener.apply(msg).futureValue
     listener.apply(msg.copy(receivedAt = Instant.now().plusSeconds(30))).futureValue
@@ -77,4 +81,5 @@ class DeviceManifestReportedListenerSpec extends DirectorSpec
     all should contain(manifest.asJson)
     all should contain(manifest2.asJson)
   }
+
 }

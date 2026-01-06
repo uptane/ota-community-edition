@@ -1,45 +1,66 @@
 package com.advancedtelematic.director.http
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server._
-import cats.syntax.option._
+import akka.http.scaladsl.server.*
+import akka.http.scaladsl.server.Directives.*
+import cats.syntax.option.*
+import com.advancedtelematic.director.daemon.UpdateScheduler
 import com.advancedtelematic.director.data.AdminDataType.{FindImageCount, RegisterDevice}
-import com.advancedtelematic.director.data.ClientDataType.DevicePaginationOps
-import com.advancedtelematic.director.data.Codecs._
-import com.advancedtelematic.director.db.{AutoUpdateDefinitionRepositorySupport, DeviceRegistration, DeviceRepository, DeviceRepositorySupport, EcuRepositorySupport, RepoNamespaceRepositorySupport}
-import com.advancedtelematic.libats.codecs.CirceCodecs._
+import com.advancedtelematic.director.data.ClientDataType.*
+import com.advancedtelematic.director.data.Codecs.*
+import com.advancedtelematic.director.data.DataType.AdminRoleName.AdminRoleNamePathMatcher
+import com.advancedtelematic.director.data.DataType.ScheduledUpdateId
+import com.advancedtelematic.director.db.*
+import com.advancedtelematic.director.http.PaginationParametersDirectives.*
+import com.advancedtelematic.director.repo.{DeviceRoleGeneration, OfflineUpdates, RemoteSessions}
+import com.advancedtelematic.libats.codecs.CirceCodecs.*
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.http.RefinedMarshallingSupport._
-import com.advancedtelematic.libats.http.UUIDKeyAkka._
+import com.advancedtelematic.libats.data.{EcuIdentifier, PaginationResult}
+import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
+import com.advancedtelematic.libats.http.RefinedMarshallingSupport.*
+import com.advancedtelematic.libats.http.UUIDKeyAkka.*
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import com.advancedtelematic.libtuf.data.ClientCodecs._
-import com.advancedtelematic.libtuf.data.TufCodecs._
-import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, SignedPayload, TargetFilename, TargetName, ValidKeyId, ValidTargetFilename}
+import com.advancedtelematic.libtuf.data.ClientCodecs.*
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  ClientTargetItem,
+  RemoteSessionsPayload,
+  RootRole
+}
+import com.advancedtelematic.libtuf.data.TufCodecs.*
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  HardwareIdentifier,
+  JsonSignedPayload,
+  SignedPayload,
+  TargetFilename,
+  TargetName,
+  ValidKeyId
+}
+import com.advancedtelematic.libtuf_server.data.Marshalling.jsonSignedPayloadMarshaller
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import slick.jdbc.MySQLProfile.api._
-import PaginationParametersDirectives._
-import com.advancedtelematic.director.data.DataType.AdminRoleName.AdminRoleNamePathMatcher
-import com.advancedtelematic.director.repo.{DeviceRoleGeneration, OfflineUpdates}
-import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, RootRole}
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import slick.jdbc.MySQLProfile.api.*
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
-import com.advancedtelematic.director.data.ClientDataType._
 
-case class OfflineUpdateRequest(values: Map[TargetFilename, ClientTargetItem])
+case class OfflineUpdateRequest(values: Map[TargetFilename, ClientTargetItem],
+                                expiresAt: Option[Instant])
 
-class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient: KeyserverClient)
-                   (implicit val db: Database, val ec: ExecutionContext, messageBusPublisher: MessageBusPublisher)
-  extends NamespaceRepoId
+case class RemoteSessionRequest(remoteSessions: RemoteSessionsPayload, previousVersion: Int)
+
+class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient: KeyserverClient)(
+  implicit val db: Database,
+  msgBus: MessageBusPublisher,
+  val ec: ExecutionContext)
+    extends NamespaceRepoId
     with RepoNamespaceRepositorySupport
+    with AdminRolesRepositorySupport
     with RootFetching
     with EcuRepositorySupport
-    with DeviceRepositorySupport
-    with AutoUpdateDefinitionRepositorySupport {
+    with ProvisionedDeviceRepositorySupport
+    with AutoUpdateDefinitionRepositorySupport
+    with ScheduledUpdatesRepositorySupport {
 
   private val EcuIdPath = Segment.flatMap(EcuIdentifier.from(_).toOption)
   private val KeyIdPath = Segment.flatMap(_.refineTry[ValidKeyId].toOption)
@@ -49,16 +70,33 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
   val repositoryCreation = new RepositoryCreation(keyserverClient)
   val deviceRoleGeneration = new DeviceRoleGeneration(keyserverClient)
   val offlineUpdates = new OfflineUpdates(keyserverClient)
+  val remoteSessions = new RemoteSessions(keyserverClient)
+  val updateScheduler = new UpdateScheduler()
 
-  private def findDevicesCurrentTarget(ns: Namespace, devices: Seq[DeviceId]): Future[DevicesCurrentTarget] = {
-    val defaultResult = devices.map { deviceId => deviceId -> List.empty[EcuTarget] }.toMap
-
-    ecuRepository.currentTargets(ns, devices.toSet).map { existing =>
-      val result = existing.foldLeft(defaultResult) { case (acc, (deviceId, ecuId, target)) =>
-        acc + (deviceId -> (target.toClient(ecuId) +: acc(deviceId)))
+  private def findDevicesCurrentTarget(ns: Namespace,
+                                       devices: Seq[DeviceId]): Future[DevicesCurrentTarget] = {
+    val values =
+      for {
+        d <- ecuRepository.deviceEcuInstallInfo(ns, devices.toSet)
+      } yield d
+        .map { case (deviceId, ecu, isPrimary, installedTarget) =>
+          installedTarget match {
+            case Some(t) =>
+              deviceId -> Seq[EcuTarget](
+                EcuTarget(ecu.ecuSerial, t.checksum, t.filename, ecu.hardwareId, isPrimary)
+              )
+            case None => deviceId -> Seq.empty[EcuTarget]
+          }
+        }
+        .groupMap(_._1)(_._2)
+        .map { case (deviceId, ecuTargets) => deviceId -> ecuTargets.flatten }
+    values.map { v =>
+      DevicesCurrentTarget {
+        // Only necessary if lengths differ. This can happen when db has no activeEcus for a specified deviceId
+        if (v.size != devices.length) {
+          devices.map(d => d -> v.getOrElse(d, Seq.empty[EcuTarget])).toMap
+        } else v
       }
-
-      DevicesCurrentTarget(result)
     }
   }
 
@@ -68,95 +106,137 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
         val f = repositoryCreation.create(ns).map(_ => StatusCodes.Created)
         complete(f)
       } ~
-      (pathPrefix("root") & pathEnd & entity(as[SignedPayload[RootRole]]) & UserRepoId(ns)) { (signedPayload, repoId) =>
-        complete {
-          keyserverClient.updateRoot(repoId, signedPayload)
-        }
-      } ~
-      get {
-        path("root.json") {
-          complete(fetchRoot(ns, version = None))
+        (pathPrefix("root") & pathEnd & entity(as[SignedPayload[RootRole]]) & UserRepoId(ns)) {
+          (signedPayload, repoId) =>
+            complete {
+              keyserverClient.updateRoot(repoId, signedPayload)
+            }
         } ~
-        path(IntNumber ~ ".root.json") { version ⇒
-          complete(fetchRoot(ns, version.some))
-        }
-      } ~
-      path("private_keys" / KeyIdPath) { keyId =>
-        UserRepoId(ns) { repoId =>
-          delete {
-            complete {
-              keyserverClient.deletePrivateKey(repoId, keyId)
-            }
+        get {
+          path("root.json") {
+            complete(fetchRoot(ns, version = None))
           } ~
-          get {
-            complete {
-              keyserverClient.fetchKeyPair(repoId, keyId)
+            path(IntNumber ~ ".root.json") { version =>
+              complete(fetchRoot(ns, version.some))
             }
+        } ~
+        path("private_keys" / KeyIdPath) { keyId =>
+          UserRepoId(ns) { repoId =>
+            delete {
+              complete {
+                keyserverClient.deletePrivateKey(repoId, keyId)
+              }
+            } ~
+              get {
+                complete {
+                  keyserverClient.fetchKeyPair(repoId, keyId)
+                }
+              }
+          }
+        } ~
+        (path("offline-updates" / AdminRoleNamePathMatcher) & UserRepoId(ns)) {
+          (offlineTargetName, repoId) =>
+            (post & entity(as[OfflineUpdateRequest])) { req =>
+              val f = offlineUpdates.set(repoId, offlineTargetName, req.values, req.expiresAt)
+              complete(f.map(_.content))
+            } ~
+              delete {
+                val f = offlineUpdates.delete(repoId, offlineTargetName)
+                complete(f)
+              }
+        } ~
+        (path("offline-updates" / AdminRoleNamePathMatcher ~ ".json") & UserRepoId(ns)) {
+          (offlineTargetName, repoId) =>
+            get {
+              val f = offlineUpdates.findLatestUpdates(repoId, offlineTargetName)
+              complete(f)
+            }
+        } ~
+        (path(
+          "offline-updates" / IntNumber ~ "." ~ AdminRoleNamePathMatcher ~ ".json"
+        ) & UserRepoId(ns)) { (version, offlineTargetName, repoId) =>
+          get {
+            val f = offlineUpdates.findUpdates(repoId, offlineTargetName, version)
+            complete(f)
+          }
+        } ~
+        (path("offline-snapshot.json") & UserRepoId(ns)) { repoId =>
+          get {
+            val f = offlineUpdates.findLatestSnapshot(repoId)
+            complete(f)
+          }
+        } ~
+        (path(IntNumber ~ ".offline-snapshot.json") & UserRepoId(ns)) { (version, repoId) =>
+          get {
+            val f = offlineUpdates.findSnapshot(repoId, version)
+            complete(f)
           }
         }
-      } ~
-      (path("offline-updates" / AdminRoleNamePathMatcher) & UserRepoId(ns)){ (offlineTargetName, repoId) =>
-        (post & entity(as[OfflineUpdateRequest])) { req =>
-          val f = offlineUpdates.set(repoId, offlineTargetName, req.values)
-          complete(f.map(_ => StatusCodes.OK))
-        }
-      } ~
-      (path("offline-updates" / AdminRoleNamePathMatcher ~ ".json") & UserRepoId(ns)) { (offlineTargetName, repoId) =>
-        get {
-          val f = offlineUpdates.findLatestUpdates(repoId, offlineTargetName)
-          complete(f)
-        }
-      } ~
-      (path("offline-updates" / IntNumber ~ "." ~ AdminRoleNamePathMatcher ~ ".json") & UserRepoId(ns)) { (version, offlineTargetName, repoId) =>
-        get {
-          val f = offlineUpdates.findUpdates(repoId, offlineTargetName, version)
-          complete(f)
-        }
-      } ~
-      (path("offline-snapshot.json") & UserRepoId(ns)) { repoId =>
-        get {
-          val f = offlineUpdates.findLatestSnapshot(repoId)
-          complete(f)
-        }
-      } ~
-      (path(IntNumber ~ ".offline-snapshot.json") & UserRepoId(ns)) { (version, repoId) =>
-        get {
-          val f = offlineUpdates.findSnapshot(repoId, version)
-          complete(f)
-        }
-      }
     }
 
   def devicePath(ns: Namespace): Route =
     pathPrefix(DeviceId.Path) { device =>
-      pathPrefix("ecus") {
-        pathPrefix(EcuIdPath) { ecuId =>
-          pathPrefix("auto_update") {
-            (pathEnd & get) {
-              complete(autoUpdateDefinitionRepository.findOnDevice(ns, device, ecuId).map(_.map(_.targetName)))
-            } ~
-              path(TargetNamePath) { targetName =>
-                put {
-                  complete(autoUpdateDefinitionRepository.persist(ns, device, ecuId, targetName).map(_ => StatusCodes.NoContent))
-                } ~
-                delete {
-                  complete(autoUpdateDefinitionRepository.remove(ns, device, ecuId, targetName).map(_ => StatusCodes.NoContent))
-                }
-              }
+      pathPrefix("scheduled-updates") {
+        pathEnd {
+          (post & entity(as[CreateScheduledUpdateRequest])) { req =>
+            val f = updateScheduler
+              .create(ns, req.device, req.updateId, req.scheduledAt)
+              .map(id => StatusCodes.Created -> id)
+            complete(f)
           } ~
-            (path("public_key") & get) {
-              val key = ecuRepository.findBySerial(ns, device, ecuId).map(_.publicKey)
-              complete(key)
+            get {
+              val f = scheduledUpdatesRepository.findFor(ns, device)
+              complete(f)
             }
+        } ~
+          path(ScheduledUpdateId.Path) { scheduledId =>
+            delete {
+              val f = updateScheduler.cancel(ns, scheduledId)
+              complete(f)
+            }
+          }
+
+      } ~
+        pathPrefix("ecus") {
+          pathPrefix(EcuIdPath) { ecuId =>
+            pathPrefix("auto_update") {
+              (pathEnd & get) {
+                complete(
+                  autoUpdateDefinitionRepository
+                    .findOnDevice(ns, device, ecuId)
+                    .map(_.map(_.targetName))
+                )
+              } ~
+                path(TargetNamePath) { targetName =>
+                  put {
+                    complete(
+                      autoUpdateDefinitionRepository
+                        .persist(ns, device, ecuId, targetName)
+                        .map(_ => StatusCodes.NoContent)
+                    )
+                  } ~
+                    delete {
+                      complete(
+                        autoUpdateDefinitionRepository
+                          .remove(ns, device, ecuId, targetName)
+                          .map(_ => StatusCodes.NoContent)
+                      )
+                    }
+                }
+            } ~
+              (path("public_key") & get) {
+                val key = ecuRepository.findBySerial(ns, device, ecuId).map(_.publicKey)
+                complete(key)
+              }
+          }
+        } ~
+        get {
+          val f = deviceRegistration.findDeviceEcuInfo(ns, device)
+          complete(f)
+        } ~
+        (path("targets.json") & put) {
+          complete(deviceRoleGeneration.forceTargetsRefresh(device).map(_ => StatusCodes.Accepted))
         }
-      } ~
-      get {
-        val f = deviceRegistration.findDeviceEcuInfo(ns, device)
-        complete(f)
-      } ~
-      (path("targets.json") & put) {
-        complete(deviceRoleGeneration.forceTargetsRefresh(device).map(_ => StatusCodes.Accepted))
-      }
     }
 
   val route: Route = extractNamespace { ns =>
@@ -171,6 +251,23 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
             }
           }
         },
+        (path("remote-sessions") & UserRepoId(ns)) { repoId =>
+          (post & entity(as[RemoteSessionRequest])) { req =>
+            val f = remoteSessions.set(repoId, req.remoteSessions, req.previousVersion)
+            complete(f.map(_.content))
+          }
+        },
+        (path("remote-sessions.json") & UserRepoId(ns)) { repoId =>
+          get {
+            val f = remoteSessions.find(repoId)
+            complete(f)
+          } ~
+            post {
+              entity(as[JsonSignedPayload]) { req =>
+                complete(remoteSessions.updateFullRole(repoId, req).map(_ => StatusCodes.OK))
+              }
+            }
+        },
         pathPrefix("devices") {
           UserRepoId(ns) { repoId =>
             concat(
@@ -180,10 +277,17 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
                     reject(ValidationRejection("deviceId is required to register a device"))
                   else {
                     complete {
-                      deviceRegistration.registerAndPublish(ns, repoId, regDev.deviceId.get, regDev.primary_ecu_serial, regDev.ecus)
+                      deviceRegistration
+                        .register(
+                          ns,
+                          repoId,
+                          regDev.deviceId.get,
+                          regDev.primary_ecu_serial,
+                          regDev.ecus
+                        )
                         .map {
-                          case DeviceRepository.Created => StatusCodes.Created
-                          case _: DeviceRepository.Updated => StatusCodes.OK
+                          case ProvisionedDeviceRepository.Created    => StatusCodes.Created
+                          case _: ProvisionedDeviceRepository.Updated => StatusCodes.OK
                         }
                     }
                   }
@@ -197,10 +301,15 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
               get {
                 concat(
                   pathEnd {
-                    /** if you leave this parameter (or misspell it) out you'll land in [[LegacyRoutes.route]] */
-                    parameter('primaryHardwareId.as[HardwareIdentifier]) { hardwareId =>
+
+                    /** if you leave this parameter (or misspell it) out you'll land in
+                      * [[LegacyRoutes.route]]
+                      */
+                    parameter(Symbol("primaryHardwareId").as[HardwareIdentifier]) { hardwareId =>
                       PaginationParameters { (limit, offset) =>
-                        val f = deviceRepository.findDevices(ns, hardwareId, offset, limit).map(_.toClient)
+                        val f = provisionedDeviceRepository
+                          .findDevices(ns, hardwareId, offset, limit)
+                          .map(_.toClient)
                         complete(f)
                       }
                     }
@@ -210,13 +319,37 @@ class AdminResource(extractNamespace: Directive1[Namespace], val keyserverClient
                       val f = ecuRepository.findAllHardwareIdentifiers(ns, offset, limit)
                       complete(f)
                     }
+                  },
+                  path("ecus") {
+                    PaginationParameters { (limit, offset) =>
+                      val pagedEcus = ecuRepository.findAll(ns).map { ecuTuples =>
+                        val uniqueDeviceIds = ecuTuples.map(_._1.deviceId).toSet
+                        val s = uniqueDeviceIds.map { deviceId =>
+                          // group ecus which belong to the same device
+                          val deviceEcus = ecuTuples
+                            .filter(_._1.deviceId == deviceId)
+                            .map { case (ecu, primary) => ecu.toClient(primary) }
+                          Map(deviceId -> deviceEcus)
+                        }
+                        val pageLimit = if (s.size < (offset * limit + limit).toInt) {
+                          s.size
+                        } else {
+                          (offset * limit + limit).toInt
+                        }
+                        val page = s.slice((offset * limit).toInt, (offset * limit + limit).toInt)
+                        PaginationResult(page.toSeq, pageLimit, offset, limit)
+                      }
+                      complete(pagedEcus)
+                    }
                   }
                 )
               },
               devicePath(ns)
             )
           }
-        })
+        }
+      )
     }
   }
+
 }

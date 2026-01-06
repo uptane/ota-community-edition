@@ -1,0 +1,96 @@
+<html>
+<head>
+    <title>Debug</title>
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
+
+    <script type="module" src="/debug/debug.js"></script>
+
+    <style>
+        .debug-content .columns {
+          padding-top: 1em;
+        }
+        a:visited {
+          color: #4b48d6;
+        }
+    </style>
+</head>
+
+<div class="container debug-content">
+    <div class="columns">
+        <div class="column col-12">
+            <h1 id="title"></h1>
+        </div>
+    </div>
+
+    <div id="nav-inputs">
+    </div>
+
+    <div class="columns">
+        <div class="column col-12 btn-group btn-group-block">
+            <div class="navbar">
+                <div id="navbar-section" class="navbar-section">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tables-container">
+    </div>
+</div>
+
+
+
+<script id="nav-input-tmpl" type="text/x-handlebars">
+  <form>
+  <div class="columns">
+    <div class="input-group column col-5">
+      <span class="input-group-addon addon">{{href}}</span>
+      <input id="nav-input-{{name}}" type="text" class="form-input input" placeholder="{{paramName}}" required>
+      <button class="btn btn-primary input-group-btn"
+        onclick="location.href='{{href}}' + document.getElementById('nav-input-{{name}}').value; return false;">OK</button>
+    </div>
+  </div>
+</form>
+</script>
+
+<script id="menu-item-tmpl" type="text/x-handlebars">
+    <a href="#sec-{{id}}" class="btn btn-lg">{{name}}</a>
+</script>
+
+<script id="table-tmpl" type="text/x-handlebars">
+  <div class="columns">
+  <div class="column col-12">
+
+  <h3 id="sec-{{id}}">{{name}}</h3>
+
+  <table id="{{id}}" class="table table-striped">
+
+  <thead>
+  <tr>
+  {{#each columns}}
+  <th>{{this}}</th>
+  {{/each}}
+  </tr>
+  </thead>
+
+  <tbody>
+
+  {{#each rows}}
+  <tr>
+    {{#each this}}
+      <td>{{#rendertd}}{{this}}{{/rendertd}}</td>
+    {{/each}}
+  </tr>
+  {{/each}}
+
+  </tbody>
+
+  </table>
+
+  </div>
+  </div>
+</script>
+
+</html>

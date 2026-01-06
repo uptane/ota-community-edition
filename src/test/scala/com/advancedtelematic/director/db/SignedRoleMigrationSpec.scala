@@ -9,13 +9,12 @@ import com.advancedtelematic.libtuf.data.ClientDataType.SnapshotRole
 
 import scala.async.Async.{async, await}
 import scala.concurrent.ExecutionContext
-import org.scalatest.funsuite.AsyncFunSuite
 
 class SignedRoleMigrationSpec extends DirectorSpec with MysqlDatabaseSpec {
 
   implicit val system: ActorSystem = ActorSystem(this.getClass.getSimpleName)
 
-  implicit val ec = ExecutionContext.Implicits.global
+  implicit val ec: scala.concurrent.ExecutionContext = ExecutionContext.Implicits.global
 
   val subject = new SignedRoleMigration("director1_test")
 
@@ -30,4 +29,5 @@ class SignedRoleMigrationSpec extends DirectorSpec with MysqlDatabaseSpec {
       assert(signedRole.device == deviceId)
     }
   }
+
 }

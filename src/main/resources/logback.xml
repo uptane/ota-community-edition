@@ -4,5 +4,9 @@
 
     <include resource="logback-libats.xml"/>
 
+<!--    <logger name="org.flywaydb" level="debug" />-->
+
+    <!-- <logger name="com.advancedtelematic.director" level="debug" /> -->
+
 <!--    <logger name="slick.basic.BasicBackend.action" level="debug" />-->
 </configuration>
