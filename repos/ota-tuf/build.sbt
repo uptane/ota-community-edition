@@ -14,7 +14,7 @@ lazy val commonDeps = libraryDependencies ++= {
   val scalaTestV = "3.2.19"
   lazy val catsV = "2.13.0"
   lazy val pekkoHttpV = "1.2.0"
-  lazy val enumeratumV = "1.9.2"
+  lazy val enumeratumV = "1.9.0"
 
   Seq(
     "org.scala-lang.modules" %% "scala-async" % "1.0.1",
@@ -32,7 +32,7 @@ lazy val commonDeps = libraryDependencies ++= {
 lazy val serverDependencies = libraryDependencies ++= {
   lazy val pekkoV = "1.1.5"
   lazy val pekkoHttpV = "1.2.0"
-  lazy val enumeratumV = "1.9.2"
+  lazy val enumeratumV = "1.9.0"
 
   Seq(
     "org.apache.pekko" %% "pekko-actor" % pekkoV,
@@ -41,7 +41,7 @@ lazy val serverDependencies = libraryDependencies ++= {
     "org.apache.pekko" %% "pekko-http" % pekkoHttpV,
     "org.apache.pekko" %% "pekko-slf4j" % pekkoV,
     "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpV % "test",
-    "com.softwaremill.sttp.client4" %% "pekko-http-backend" % "4.0.13" % "test",
+    "com.softwaremill.sttp.client4" %% "pekko-http-backend" % "4.0.9" % "test",
     "org.apache.pekko" %% "pekko-stream" % "1.1.4" % "test",
     "io.github.uptane" %% "libats-http" % libatsVersion,
     "io.github.uptane" %% "libats-http-tracing" % libatsVersion,
@@ -50,21 +50,21 @@ lazy val serverDependencies = libraryDependencies ++= {
     "io.github.uptane" %% "libats-metrics-prometheus" % libatsVersion,
     "io.github.uptane" %% "libats-slick" % libatsVersion,
     "io.github.uptane" %% "libats-logging" % libatsVersion,
-    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.7",
+    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.4",
     "com.beachape" %% "enumeratum" % enumeratumV,
     "com.beachape" %% "enumeratum-circe" % enumeratumV,
-    "io.scalaland" %% "chimney" % "1.8.2"
+    "io.scalaland" %% "chimney" % "1.8.1"
   )
 }
 
 lazy val commonSettings = Seq(
   organization := "io.github.uptane",
-  scalaVersion := "2.13.18",
+  scalaVersion := "2.13.16",
   organizationName := "uptane",
   organizationHomepage := Some(url("https://uptane.github.io/")),
   scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-Xasync", "-Xsource:3"),
   Compile / console / scalacOptions ~= (_.filterNot(_ == "-Ywarn-unused-import")),
-  resolvers += "maven-snapshots".at("https://central.sonatype.com/repository/maven-snapshots"),
+  resolvers += "maven-snapshots"at "https://central.sonatype.com/repository/maven-snapshots",
   resolvers += Resolver.mavenCentral,
   licenses += ("MPL-2.0", url("http://mozilla.org/MPL/2.0/")),
   description := "scala tuf implementation support",
@@ -136,7 +136,7 @@ lazy val cli = (project in file("cli"))
     topLevelDirectory := Some("uptane-sign"),
     executableScriptName := "uptane-sign",
     Universal / mappings += (file("cli/LICENSE") -> "docs/LICENSE"),
-    libraryDependencies += "com.typesafe" % "config" % "1.4.5" % Test
+    libraryDependencies += "com.typesafe" % "config" % "1.4.3" % Test
   )
   .dependsOn(libtuf)
 

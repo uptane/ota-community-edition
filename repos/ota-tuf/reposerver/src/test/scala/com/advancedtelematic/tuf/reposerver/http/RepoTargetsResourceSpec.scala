@@ -9,23 +9,14 @@ import org.scalatest.OptionValues.*
 import org.apache.pekko.http.scaladsl.model.{HttpEntity, StatusCodes}
 import org.apache.pekko.util.ByteString
 import com.advancedtelematic.libats.data.PaginationResult
-import com.advancedtelematic.tuf.reposerver.util.{
-  RepoResourceDelegationsSpecUtil,
-  ResourceSpec,
-  TufReposerverSpec
-}
+import com.advancedtelematic.tuf.reposerver.util.{RepoResourceDelegationsSpecUtil, ResourceSpec, TufReposerverSpec}
 import com.advancedtelematic.tuf.reposerver.util.NamespaceSpecOps.*
 import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import com.advancedtelematic.tuf.reposerver.data.RepoDataType.*
 import com.advancedtelematic.tuf.reposerver.data.RepoDataType.Package.*
 import com.advancedtelematic.libats.data.DataType.HashMethod
 import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, TargetsRole}
-import com.advancedtelematic.libtuf.data.TufDataType.{
-  HardwareIdentifier,
-  SignedPayload,
-  TargetFilename,
-  ValidTargetFilename
-}
+import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, SignedPayload, TargetFilename, ValidTargetFilename}
 import com.advancedtelematic.libtuf_server.crypto.Sha256Digest
 import eu.timepit.refined.api.Refined
 import io.circe.Json
@@ -425,13 +416,13 @@ class RepoTargetsResourceSpec
       Post(apiUriV2(s"user_repo/search?sortBy=createdAt")).namespaced ~> routes ~> check {
         status shouldBe StatusCodes.OK
 
-        val result = responseAs[PaginationResult[Package]]
+      val result = responseAs[PaginationResult[Package]]
 
-        result.total shouldBe 2
-        result.values.length shouldBe 2
+      result.total shouldBe 2
+      result.values.length shouldBe 2
 
-        result.values.map(_.filename.value) shouldBe Seq("mypath/mytargetName", "zotherpackage")
-      }
+      result.values.map(_.filename.value) shouldBe Seq("mypath/mytargetName", "zotherpackage")
+    }
   }
 
   testWithRepo("sorts by created_at DESC") { implicit ns => implicit repoId =>
@@ -571,7 +562,9 @@ class RepoTargetsResourceSpec
     }
 
     val params1 =
-      PackageSearchParameters.empty.copy(hardwareIds = Seq(refineMV("delegated-hardware-id-001")))
+      PackageSearchParameters.empty.copy(hardwareIds =
+        Seq(refineMV("delegated-hardware-id-001"))
+      )
 
     Post(apiUriV2(s"user_repo/search"), params1).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.OK
@@ -619,14 +612,19 @@ class RepoTargetsResourceSpec
     val params =
       PackageSearchParameters.empty.copy(filenames = Seq(refineMV("library-0.0.1")))
 
-    Post(apiUriV2(s"user_repo/search"), params).namespaced ~> routes ~> check {
+    Post(
+      apiUriV2(s"user_repo/search"),
+      params
+    ).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.OK
       val values = responseAs[PaginationResult[Package]].values
       values should have size 1
     }
 
     val params1 =
-      PackageSearchParameters.empty.copy(filenames = Seq(refineMV("mypath/mytargetName")))
+      PackageSearchParameters.empty.copy(filenames =
+        Seq(refineMV("mypath/mytargetName"))
+      )
 
     Post(apiUriV2(s"user_repo/search"), params1).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.OK

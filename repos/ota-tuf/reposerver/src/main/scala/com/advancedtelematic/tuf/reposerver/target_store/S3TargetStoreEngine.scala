@@ -90,7 +90,6 @@ class S3TargetStoreEngine(credentials: S3Credentials)(implicit val system: Actor
       val meta = new ObjectMetadata()
       meta.setContentLength(size)
       val request = new PutObjectRequest(bucketId, storagePath.toString, is, meta)
-        .withCannedAcl(CannedAccessControlList.AuthenticatedRead)
 
       log.info(s"Uploading $filename to amazon s3 using streaming upload")
 
@@ -111,7 +110,6 @@ class S3TargetStoreEngine(credentials: S3Credentials)(implicit val system: Actor
                        filename: TargetFilename): Future[(Uri, Long)] = {
     val storagePath = storageFilename(repoId, filename)
     val request = new PutObjectRequest(credentials.bucketId, storagePath.toString, file)
-      .withCannedAcl(CannedAccessControlList.AuthenticatedRead)
 
     log.info(s"Uploading ${filename.value} to amazon s3")
 
