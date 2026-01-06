@@ -12,9 +12,14 @@ trait Settings {
 
   val tufUri = Uri(_config.getString("http.client.keyserver.uri"))
 
-  val requestLogLevel = Logging.levelFor(_config.getString("requestLogLevel")).getOrElse(Logging.DebugLevel)
+  val requestLogLevel =
+    Logging.levelFor(_config.getString("requestLogLevel")).getOrElse(Logging.DebugLevel)
 
   val allowEcuReplacement = _config.getBoolean("allowEcuReplacement")
 
-  val daemonPort = if(_config.hasPath("http.server.daemon-port")) _config.getInt("http.server.daemon-port") else port
+  val daemonPort =
+    if (_config.hasPath("http.server.daemon-port")) _config.getInt("http.server.daemon-port")
+    else port
+
+  val maxOfflineTargets = _config.getInt("max-offline-targets")
 }

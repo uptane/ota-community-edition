@@ -1,6 +1,10 @@
 package com.advancedtelematic.director.data
 
-import com.advancedtelematic.director.manifest.DeviceManifestProcess.{fromJson, latestVersion, manifestVersion}
+import com.advancedtelematic.director.manifest.DeviceManifestProcess.{
+  fromJson,
+  latestVersion,
+  manifestVersion
+}
 import com.advancedtelematic.libtuf.crypt.SignedPayloadSignatureOps._
 import com.advancedtelematic.libtuf.crypt.TufCrypto
 import com.advancedtelematic.libtuf.data.TufCodecs._
@@ -12,23 +16,25 @@ import scala.io.Source
 import org.scalatest.funsuite.AnyFunSuite
 
 class DeviceManifestProcessSpec extends AnyFunSuite {
+
   import java.security.Security
 
   import org.bouncycastle.jce.provider.BouncyCastleProvider
 
   Security.addProvider(new BouncyCastleProvider)
 
-  def forAllVersions(f: (Int, SignedPayload[Json]) => Unit): Unit = {
+  def forAllVersions(f: (Int, SignedPayload[Json]) => Unit): Unit =
     for (v <- 1 to latestVersion) {
-      val manifest = Source.fromResource(s"device_manifests/v$v/manifest.json").getLines.mkString("\n")
-      val signedPayload = parse(manifest).right.get.as[SignedPayload[Json]].right.get
+      val manifest =
+        Source.fromResource(s"device_manifests/v$v/manifest.json").getLines().mkString("\n")
+      val signedPayload = parse(manifest).toOption.get.as[SignedPayload[Json]].toOption.get
       f(v, signedPayload)
     }
-  }
 
   test("signatures") {
     forAllVersions { (version, signedPayload) =>
-      val pem = Source.fromResource(s"device_manifests/v$version/rsa-key.pem").getLines.mkString("\n")
+      val pem =
+        Source.fromResource(s"device_manifests/v$version/rsa-key.pem").getLines().mkString("\n")
       val pub = TufCrypto.parsePublic(RsaKeyType, pem).get
       signedPayload.isValidFor(pub)
     }
@@ -45,4 +51,5 @@ class DeviceManifestProcessSpec extends AnyFunSuite {
       assert(fromJson(signedPayload.json).isValid)
     }
   }
+
 }
