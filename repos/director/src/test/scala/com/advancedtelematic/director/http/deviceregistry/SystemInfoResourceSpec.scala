@@ -35,13 +35,10 @@ import toml.Value.{Str, Tbl}
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*
 import com.advancedtelematic.director.deviceregistry.data.SimpleJsonGenerator.*
 
-class SystemInfoResourceSpec
-    extends DirectorSpec
-    with ResourcePropSpec
-    with RegistryDeviceRequests {
+class SystemInfoResourceSpec extends DirectorSpec with ResourcePropSpec with RegistryDeviceRequests {
 
-  import akka.http.scaladsl.model.StatusCodes.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import org.apache.pekko.http.scaladsl.model.StatusCodes.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   test("GET /system_info request fails on non-existent device") {
     forAll { (uuid: DeviceId, json: Json) =>
@@ -127,7 +124,7 @@ class SystemInfoResourceSpec
         )
         val sysInfo = sysInfoJson.as[DeviceId => NetworkInfo] match {
           case Right(ninfo) => ninfo
-          case Left(e)      =>
+          case Left(e) =>
             throw new IllegalArgumentException(
               "Failed to parse json string. Error: " + e.toString()
             )
@@ -421,7 +418,7 @@ class SystemInfoResourceSpec
   }
 
   test("system config can be uploaded") {
-    import akka.http.scaladsl.unmarshalling.Unmarshaller.*
+    import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller.*
 
     val deviceUuid = createDeviceOk(genDeviceT.generate.copy(deviceId = DeviceOemId("abcd-1234")))
     val config = """
@@ -448,7 +445,7 @@ class SystemInfoResourceSpec
   }
 
   test("system config without 'secondary_preinstall_wait_sec' can be uploaded") {
-    import akka.http.scaladsl.unmarshalling.Unmarshaller.*
+    import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller.*
 
     val deviceUuid =
       createDeviceOk(genDeviceT.generate.copy(deviceId = DeviceOemId("abcd-1234-legacy")))
@@ -475,7 +472,7 @@ class SystemInfoResourceSpec
   }
 
   test("system config TOML parsing error handling") {
-    import akka.http.scaladsl.unmarshalling.Unmarshaller.*
+    import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller.*
 
     val deviceUuid =
       createDeviceOk(genDeviceT.generate.copy(deviceId = DeviceOemId("abcd-1234-error")))

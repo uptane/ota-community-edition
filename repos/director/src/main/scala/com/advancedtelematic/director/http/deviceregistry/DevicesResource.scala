@@ -8,34 +8,25 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.*
-import akka.http.scaladsl.model.headers.*
-import akka.http.scaladsl.server.*
-import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
-import akka.http.scaladsl.unmarshalling.{FromStringUnmarshaller, Unmarshaller}
-import akka.stream.Materializer
-import akka.stream.alpakka.csv.scaladsl.{CsvParsing, CsvToMap}
-import akka.stream.scaladsl.{Sink, Source}
-import akka.util.ByteString
+import com.advancedtelematic.libats.codecs.CirceRefined.*
+import org.apache.pekko.http.scaladsl.model.*
+import org.apache.pekko.http.scaladsl.model.headers.*
+import org.apache.pekko.http.scaladsl.server.*
+import org.apache.pekko.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
+import org.apache.pekko.http.scaladsl.unmarshalling.{FromStringUnmarshaller, Unmarshaller}
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.connectors.csv.scaladsl.{CsvParsing, CsvToMap}
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.util.ByteString
 import cats.syntax.either.*
 import cats.syntax.show.*
+import com.advancedtelematic.director.data.ClientDataType.TagSearchParam
 import com.advancedtelematic.director.db.deviceregistry.*
-import com.advancedtelematic.director.db.deviceregistry.DbOps.PaginationResultOps
+import com.advancedtelematic.director.db.deviceregistry.DbOps.*
 import com.advancedtelematic.director.deviceregistry.data.*
 import com.advancedtelematic.director.deviceregistry.data.Codecs.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.InstallationStatsLevel.InstallationStatsLevel
-import com.advancedtelematic.director.deviceregistry.data.DataType.{
-  DeviceCountParams,
-  DeviceT,
-  DevicesQuery,
-  InstallationStatsLevel,
-  RenameTagId,
-  SearchParams,
-  SetDevice,
-  UpdateDevice,
-  UpdateHibernationStatusRequest,
-  UpdateTagValue
-}
+import com.advancedtelematic.director.deviceregistry.data.DataType.{DeviceCountParams, DeviceT, DevicesQuery, InstallationStatsLevel, RenameTagId, SearchParams, SetDevice, UpdateDevice, UpdateHibernationStatusRequest, UpdateTagValue}
 import com.advancedtelematic.director.deviceregistry.data.Device.{ActiveDeviceCount, DeviceOemId}
 import com.advancedtelematic.director.deviceregistry.data.DeviceSortBy.DeviceSortBy
 import com.advancedtelematic.director.deviceregistry.data.DeviceStatus.DeviceStatus
@@ -49,31 +40,30 @@ import com.advancedtelematic.director.http.deviceregistry.Errors.{Codes, Missing
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace, ResultCode}
 import com.advancedtelematic.libats.http.Errors.JsonError
 import com.advancedtelematic.libats.http.RefinedMarshallingSupport.*
-import com.advancedtelematic.libats.http.UUIDKeyAkka.*
+import com.advancedtelematic.libats.http.UUIDKeyPekko.*
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId.*
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Event, EventType}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier, Event, EventType}
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs.*
-import com.advancedtelematic.libats.messaging_datatype.Messages.{
-  DeleteDeviceRequest,
-  DeviceEventMessage
-}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{DeleteDeviceRequest, DeviceEventMessage}
 import com.advancedtelematic.libats.slick.db.SlickExtensions.*
 import com.advancedtelematic.libtuf.data.TufDataType.HardwareIdentifier
 import io.circe.Json
 import io.circe.syntax.EncoderOps
 import slick.jdbc.MySQLProfile.api.*
-import Unmarshallers.nonNegativeLong
 import com.advancedtelematic.director.db.DeleteDeviceDBIO
+import com.advancedtelematic.director.http.PaginationParametersDirectives
+import com.advancedtelematic.director.http.PaginationParametersDirectives.PaginationParameters
 
 import java.time.{Instant, OffsetDateTime}
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Failure
+import com.advancedtelematic.libats.data.PaginationResult.*
 
 object DevicesResource {
-  import akka.http.scaladsl.server.PathMatchers.Segment
+  import org.apache.pekko.http.scaladsl.server.PathMatchers.Segment
 
   type EventPayload = (DeviceId, Instant) => Event
 
@@ -84,8 +74,9 @@ object DevicesResource {
         deviceTime <- c.get[Instant]("deviceTime")(io.circe.Decoder.decodeInstant)
         eventType <- c.get[EventType]("eventType")
         payload <- c.get[Json]("event")
+        ecu <- c.get[Option[EcuIdentifier]]("ecu")
       } yield (deviceUuid: DeviceId, receivedAt: Instant) =>
-        Event(deviceUuid, id, eventType, deviceTime, receivedAt, payload)
+        Event(deviceUuid, id, eventType, deviceTime, receivedAt, ecu, payload)
     }
 
   implicit val groupIdUnmarshaller: Unmarshaller[String, GroupId] = GroupId.unmarshaller
@@ -103,7 +94,7 @@ object DevicesResource {
       _.toLowerCase match {
         case "device" => InstallationStatsLevel.Device
         case "ecu"    => InstallationStatsLevel.Ecu
-        case s        =>
+        case s =>
           throw new IllegalArgumentException(
             s"Invalid value for installation stats level parameter: $s."
           )
@@ -154,7 +145,7 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
   import Directives.*
   import StatusCodes.*
   import com.advancedtelematic.libats.http.AnyvalMarshallingSupport.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   val extractPackageId: Directive1[PackageId] =
     pathPrefix(Segment / Segment).as(PackageId.apply)
@@ -174,7 +165,7 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
     complete(db.run(SearchDBIO.countByStatus(ns, params)))
 
   def searchDevice(ns: Namespace): Route =
-    parameters(
+    (parameters(
       Symbol("deviceId").as[DeviceOemId].?,
       Symbol("grouped").as[Boolean].?,
       Symbol("groupType").as[GroupType].?,
@@ -190,11 +181,10 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
       Symbol("createdAtStart").as[Instant].?,
       Symbol("createdAtEnd").as[Instant].?,
       Symbol("hardwareIds").as(CsvSeq[HardwareIdentifier]).?,
+      Symbol("tags").as(CsvSeq[TagSearchParam]).?,
       Symbol("sortBy").as[DeviceSortBy].?,
       Symbol("sortDirection").as[SortDirection].?,
-      Symbol("offset").as(nonNegativeLong).?,
-      Symbol("limit").as(nonNegativeLong).?
-    ).as(
+    ) & PaginationParameters).as(
       (oemId,
        grouped,
        groupType,
@@ -210,6 +200,7 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
        createdAtStart,
        createdAtEnd,
        hardwareId: Option[Seq[HardwareIdentifier]],
+       tags: Option[Seq[TagSearchParam]],
        sortBy,
        sortDirection,
        offset,
@@ -230,10 +221,11 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
           createdAtStart,
           createdAtEnd,
           hardwareId.getOrElse(Seq.empty),
+          tags.map(_.toSet).getOrElse(Set.empty),
           sortBy,
           sortDirection,
           offset,
-          limit
+          limit,
         )
     ) { params =>
       complete(for {
@@ -300,28 +292,15 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
     for {
       foundOemDevices <- db.run(DeviceRepository.findByOemIds(ns, oemDevices))
       foundUuidDevices <- db.run(DeviceRepository.findByDeviceUuids(ns, uuidDevices))
-    } yield {
-      val foundDevices = (foundOemDevices ++ foundUuidDevices).toSet.toList
-      val missingOemDevices =
-        oemDevices.filterNot(expected => foundOemDevices.map(_.deviceId).contains(expected))
-      val missingUuidDevices =
-        uuidDevices.filterNot(expected => foundUuidDevices.map(_.uuid).contains(expected))
-      if (missingOemDevices.nonEmpty || missingUuidDevices.nonEmpty) {
-        val msg = Map(
-          "missingOemIds" -> missingOemDevices.map(_.underlying).mkString(","),
-          "missingDeviceUuids" -> missingUuidDevices.map(_.uuid).mkString(",")
-        )
-        throw JsonError(Codes.MissingDevice, StatusCodes.NotFound, msg.asJson, "Devices not found")
-      }
-      foundDevices.map(DeviceDB.toDevice(_))
-    }
+      foundDevices = (foundOemDevices ++ foundUuidDevices).toSet.toList
+    } yield foundDevices.map(DeviceDB.toDevice(_))
   }
 
   def countDynamicGroupCandidates(ns: Namespace, expression: GroupExpression): Route =
     complete(db.run(SearchDBIO.countDevicesForExpression(ns, expression)))
 
   def getGroupsForDevice(uuid: DeviceId): Route =
-    parameters(Symbol("offset").as(nonNegativeLong).?, Symbol("limit").as(nonNegativeLong).?) {
+    PaginationParameters {
       (offset, limit) =>
         complete(db.run(GroupMemberRepository.listGroupsForDevice(uuid, offset, limit)))
     }
@@ -336,11 +315,9 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
     complete(db.run(InstalledPackages.getDevicesCount(pkg, ns)))
 
   def listPackagesOnDevice(device: DeviceId): Route =
-    parameters(
-      Symbol("nameContains").as[String].?,
-      Symbol("offset").as(nonNegativeLong).?,
-      Symbol("limit").as(nonNegativeLong).?
-    ) { (nameContains, offset, limit) =>
+    (parameters(
+      Symbol("nameContains").as[String].?
+    ) & PaginationParameters) { (nameContains, offset, limit) =>
       complete(db.run(InstalledPackages.installedOn(device, nameContains, offset, limit)))
     }
 
@@ -360,7 +337,7 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
     }
 
   def getDistinctPackages(ns: Namespace): Route =
-    parameters(Symbol("offset").as(nonNegativeLong).?, Symbol("limit").as(nonNegativeLong).?) {
+    PaginationParameters {
       (offset, limit) =>
         complete(db.run(InstalledPackages.getInstalledForAllDevices(ns, offset, limit)))
     }
@@ -374,27 +351,27 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
     }
 
   def getPackageStats(ns: Namespace, name: PackageId.Name): Route =
-    parameters(Symbol("offset").as(nonNegativeLong).?, Symbol("limit").as(nonNegativeLong).?) {
+    PaginationParameters {
       (offset, limit) =>
         val f = db.run(InstalledPackages.listAllWithPackageByName(ns, name, offset, limit))
         complete(f)
     }
 
   def fetchInstallationHistory(deviceId: DeviceId,
-                               offset: Option[Long],
-                               limit: Option[Long]): Route =
+                               offset: Offset,
+                               limit: Limit): Route =
     complete(
       db.run(
         EcuReplacementRepository
-          .deviceHistory(deviceId, offset.orDefaultOffset, limit.orDefaultLimit)
+          .deviceHistory(deviceId, offset, limit)
       )
     )
 
-  def installationReports(deviceId: DeviceId, offset: Option[Long], limit: Option[Long]): Route =
+  def installationReports(deviceId: DeviceId, offset: Offset, limit: Limit): Route =
     complete(
       db.run(
         InstallationReportRepository
-          .installationReports(deviceId, offset.orDefaultOffset, limit.orDefaultLimit)
+          .installationReports(deviceId, offset, limit)
       )
     )
 
@@ -514,16 +491,10 @@ class DevicesResource(namespaceExtractor: Directive1[Namespace],
               path("active_device_count") {
                 getActiveDeviceCount(ns)
               } ~
-              (path("installation_reports") & parameters(
-                Symbol("offset").as(nonNegativeLong).?,
-                Symbol("limit").as(nonNegativeLong).?
-              )) { (offset, limit) =>
+              (path("installation_reports") & PaginationParameters) { (offset, limit) =>
                 installationReports(uuid, offset, limit)
               } ~
-              (path("installation_history") & parameters(
-                Symbol("offset").as(nonNegativeLong).?,
-                Symbol("limit").as(nonNegativeLong).?
-              )) { (offset, limit) =>
+              (path("installation_history") & PaginationParameters) { (offset, limit) =>
                 fetchInstallationHistory(uuid, offset, limit)
               } ~
               (pathPrefix("device_count") & extractPackageId) { pkg =>

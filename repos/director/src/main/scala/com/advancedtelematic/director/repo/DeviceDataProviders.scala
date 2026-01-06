@@ -1,7 +1,7 @@
 package com.advancedtelematic.director.repo
 
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.util.FastFuture
+import org.apache.pekko.http.scaladsl.model.Uri
+import org.apache.pekko.http.scaladsl.util.FastFuture
 import cats.implicits._
 import com.advancedtelematic.director.data.Codecs._
 import com.advancedtelematic.director.data.DataType.{
@@ -17,8 +17,7 @@ import com.advancedtelematic.director.db.{
   EcuTargetsRepositorySupport
 }
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
+import com.advancedtelematic.libats.messaging_datatype.DataType.*
 import com.advancedtelematic.libtuf.data.ClientDataType.{
   ClientHashes,
   ClientTargetItem,

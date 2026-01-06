@@ -3,33 +3,27 @@ package com.advancedtelematic.director.http
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.genDeviceT
 import com.advancedtelematic.director.http.deviceregistry.RegistryDeviceRequests
 import org.scalatest.LoneElement.*
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import cats.syntax.option.*
 import cats.syntax.show.*
-import com.advancedtelematic.director.daemon.UpdateScheduler
 import com.advancedtelematic.director.data.AdminDataType.*
 import com.advancedtelematic.director.data.Codecs.*
-import com.advancedtelematic.director.data.DataType.TargetItemCustom
+import com.advancedtelematic.director.data.DataType.{TargetItemCustom, TargetSpecId}
 import com.advancedtelematic.director.data.GeneratorOps.*
 import com.advancedtelematic.director.data.Generators.*
-import com.advancedtelematic.director.db.{
-  DbDeviceRoleRepositorySupport,
-  RepoNamespaceRepositorySupport
-}
-import com.advancedtelematic.director.deviceregistry.daemon.DeviceUpdateStatus
-import com.advancedtelematic.director.deviceregistry.data.DeviceStatus
+import com.advancedtelematic.director.db.{DbDeviceRoleRepositorySupport, RepoNamespaceRepositorySupport, UpdatesDBIO}
 import com.advancedtelematic.director.http.DeviceAssignments.AssignmentCreateResult
 import com.advancedtelematic.director.util.*
-import com.advancedtelematic.libats.data.DataType.{CorrelationId, MultiTargetUpdateId, Namespace}
+import com.advancedtelematic.libats.data.DataType.{CorrelationId, MultiTargetUpdateCorrelationId, Namespace}
 import com.advancedtelematic.libats.data.ErrorRepresentation
 import com.advancedtelematic.libats.messaging.test.MockMessageBus
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
-import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateEvent, *}
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
+import com.advancedtelematic.libats.messaging_datatype.Messages.*
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
 import com.advancedtelematic.libtuf.data.ClientDataType.TargetsRole
 import com.advancedtelematic.libtuf.data.TufCodecs.*
 import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, SignedPayload}
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import org.scalactic.source.Position
 import org.scalatest.Inspectors
 import org.scalatest.OptionValues.*
@@ -55,14 +49,14 @@ trait AssignmentResources {
     val correlationId = correlationIdO.getOrElse(GenCorrelationId.generate)
 
     val targetUpdate = targetUpdateO.getOrElse(GenTargetUpdateRequest.generate)
-    val mtu = MultiTargetUpdate(Map(hwId -> targetUpdate))
+    val mtu = TargetUpdateSpec(Map(hwId -> targetUpdate))
 
-    val mtuId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
+    val targetSpecId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.Created
-      responseAs[UpdateId]
+      responseAs[TargetSpecId]
     }
 
-    val assignment = AssignUpdateRequest(correlationId, deviceIds, mtuId)
+    val assignment = AssignUpdateRequest(correlationId, deviceIds, targetSpecId)
 
     Post(apiUri("assignments"), assignment).namespaced ~> routes ~> check(checkV)
 
@@ -131,11 +125,12 @@ class AssignmentsResourceSpec
     with ProvisionedDevicesRequests
     with DeviceManifestSpec
     with RegistryDeviceRequests
+    with UpdatesResources
     with Inspectors {
 
   override implicit val msgPub: MockMessageBus = new MockMessageBus()
 
-  val updateScheduler = new UpdateScheduler()
+  val updatesDBIO = new UpdatesDBIO()
 
   testWithRepo("Can create an assignment for existing devices") { implicit ns =>
     val regDev = registerAdminDeviceOk()
@@ -155,6 +150,7 @@ class AssignmentsResourceSpec
     }
   }
 
+  // TODO: Should be moved to AdminResourceSpec
   testWithRepo(
     "returns PrimaryIsNotListedForDevice when ecus to register do not include primary ecu"
   ) { implicit ns =>
@@ -175,16 +171,16 @@ class AssignmentsResourceSpec
     val regDev1 = registerAdminDeviceOk()
 
     val targetUpdate = GenTargetUpdateRequest.generate
-    val mtu = MultiTargetUpdate(Map(regDev0.primary.hardwareId -> targetUpdate))
+    val mtu = TargetUpdateSpec(Map(regDev0.primary.hardwareId -> targetUpdate))
 
-    val mtuId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
+    val targetSpecId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.Created
-      responseAs[UpdateId]
+      responseAs[TargetSpecId]
     }
 
     Get(
       apiUri(
-        s"assignments/devices?mtuId=${mtuId.show}&ids=${regDev0.deviceId.show},${regDev1.deviceId.show}"
+        s"assignments/devices?targetSpecId=${targetSpecId.show}&ids=${regDev0.deviceId.show},${regDev1.deviceId.show}"
       )
     ).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.OK
@@ -198,17 +194,17 @@ class AssignmentsResourceSpec
     val regDev1 = registerAdminDeviceOk()
 
     val targetUpdate = GenTargetUpdateRequest.generate
-    val mtu = MultiTargetUpdate(Map(regDev0.primary.hardwareId -> targetUpdate))
+    val mtu = TargetUpdateSpec(Map(regDev0.primary.hardwareId -> targetUpdate))
 
-    val mtuId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
+    val targetSpecId = Post(apiUri("multi_target_updates"), mtu).namespaced ~> routes ~> check {
       status shouldBe StatusCodes.Created
-      responseAs[UpdateId]
+      responseAs[TargetSpecId]
     }
 
     val assignment = AssignUpdateRequest(
-      MultiTargetUpdateId(mtuId.uuid),
+      MultiTargetUpdateCorrelationId(targetSpecId.uuid),
       Seq(regDev0.deviceId, regDev1.deviceId),
-      mtuId,
+      targetSpecId,
       dryRun = Some(true)
     )
 
@@ -303,12 +299,8 @@ class AssignmentsResourceSpec
     val deviceT = genDeviceT.generate.copy(uuid = Some(regDev0.deviceId))
     createDeviceInNamespaceOk(deviceT, ns)
 
-    val mtu = MultiTargetUpdate(Map(regDev0.primary.hardwareId -> GenTargetUpdateRequest.generate))
-    val scheduledUpdate = createMtu(mtu) ~> check {
-      response.status shouldBe StatusCodes.Created
-      responseAs[UpdateId]
-    }
-    updateScheduler.create(ns, regDev0.deviceId, scheduledUpdate, Instant.now).futureValue
+    val mtu = TargetUpdateSpec(Map(regDev0.primary.hardwareId -> GenTargetUpdateRequest.generate))
+    updatesDBIO.createFor(ns, regDev0.deviceId, mtu, Instant.now.some).futureValue
 
     val existingUpdate = GenTargetUpdate.generate
     putManifestOk(
@@ -331,7 +323,7 @@ class AssignmentsResourceSpec
       val (deviceId, errors) = response.notAffected.loneElement
       val (_, error) = errors.loneElement
       deviceId shouldBe regDev0.deviceId
-      error.code shouldBe ErrorCodes.DeviceHasScheduledUpdate
+      error.code shouldBe ErrorCodes.DeviceHasActiveUpdate
     }
 
     val queue0 = getDeviceAssignmentOk(regDev0.deviceId)
@@ -586,25 +578,55 @@ class AssignmentsResourceSpec
       }
   }
 
-  testWithRepo("publishes DeviceUpdateStatus when creating scheduled update") { implicit ns =>
+
+  testWithRepo("PATCH assignments cannot cancel an assignment that belongs to an update") { implicit ns =>
     val regDev = registerAdminDeviceOk()
-    val deviceT = genDeviceT.generate.copy(uuid = Some(regDev.deviceId))
-    createDeviceInNamespaceOk(deviceT, ns)
+    val hardwareId = regDev.primary.hardwareId
+    val targetUpdate = GenTargetUpdateRequest.generate
+    val createRequest = CreateUpdateRequest(
+      targets = Map(hardwareId -> targetUpdate),
+      devices = Seq(regDev.deviceId)
+    )
 
-    val mtu = MultiTargetUpdate(Map(regDev.primary.hardwareId -> GenTargetUpdateRequest.generate))
-    val scheduledUpdate = createMtu(mtu) ~> check {
-      response.status shouldBe StatusCodes.Created
-      responseAs[UpdateId]
+    createManyUpdates(createRequest) {
+      status shouldBe StatusCodes.OK
+      val result = responseAs[CreateUpdateResult]
+      result.affected should contain(regDev.deviceId)
     }
 
-    updateScheduler.create(ns, regDev.deviceId, scheduledUpdate, Instant.now).futureValue
+    val queue = getDeviceAssignmentOk(regDev.deviceId)
+    queue shouldNot be(empty)
 
-    val msg = msgPub.findReceived[DeviceUpdateStatus] { (msg: DeviceUpdateStatus) =>
-      msg.device == regDev.deviceId &&
-      msg.status == DeviceStatus.UpdateScheduled
+    Patch(apiUri(s"assignments"), Seq(regDev.deviceId)).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.Conflict
+      val error = responseAs[ErrorRepresentation]
+      error.code shouldBe ErrorCodes.AssignmentBelongsToUpdate
+    }
+  }
+
+  testWithRepo("PATCH on assignments/device-id cannot cancel an assignment that belongs to an update") { implicit ns =>
+    val regDev = registerAdminDeviceOk()
+    val hardwareId = regDev.primary.hardwareId
+    val targetUpdate = GenTargetUpdateRequest.generate
+    val createRequest = CreateUpdateRequest(
+      targets = Map(hardwareId -> targetUpdate),
+      devices = Seq(regDev.deviceId)
+    )
+
+    createManyUpdates(createRequest) {
+      status shouldBe StatusCodes.OK
+      val result = responseAs[CreateUpdateResult]
+      result.affected should contain(regDev.deviceId)
     }
 
-    msg shouldBe defined
+    val queue = getDeviceAssignmentOk(regDev.deviceId)
+    queue shouldNot be(empty)
+
+    Patch(apiUri(s"assignments/${regDev.deviceId.show}")).namespaced ~> routes ~> check {
+      status shouldBe StatusCodes.Conflict
+      val error = responseAs[ErrorRepresentation]
+      error.code shouldBe ErrorCodes.AssignmentBelongsToUpdate
+    }
   }
 
 }

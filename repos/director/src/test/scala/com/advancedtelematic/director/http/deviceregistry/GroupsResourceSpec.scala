@@ -8,27 +8,20 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.StatusCodes.*
-import akka.http.scaladsl.model.Uri.Query
+import com.advancedtelematic.libats.data.PaginationResult.*
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.model.Uri.Query
 import cats.implicits.toShow
 import com.advancedtelematic.director.deviceregistry.GroupMembership
 import com.advancedtelematic.director.deviceregistry.data.Codecs.*
-import com.advancedtelematic.director.deviceregistry.data.DataType.{
-  DeviceT,
-  UpdateHibernationStatusRequest
-}
+import com.advancedtelematic.director.deviceregistry.data.DataType.{DeviceT, UpdateHibernationStatusRequest}
 import com.advancedtelematic.director.http.deviceregistry.DeviceGroupStats
 import com.advancedtelematic.director.deviceregistry.data.Device.DeviceOemId
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.GroupGenerators.*
-import com.advancedtelematic.director.deviceregistry.data.{
-  Group,
-  GroupExpression,
-  GroupName,
-  GroupSortBy
-}
+import com.advancedtelematic.director.deviceregistry.data.{Group, GroupExpression, GroupName, GroupSortBy}
 import com.advancedtelematic.director.http.deviceregistry.Errors.Codes.MalformedInput
 import com.advancedtelematic.director.util.{DirectorSpec, ResourceSpec}
 import com.advancedtelematic.libats.data.{ErrorCodes, ErrorRepresentation, PaginationResult}
@@ -52,7 +45,7 @@ class GroupsResourceSpec
     with ResourceSpec
     with RegistryDeviceRequests
     with GroupRequests {
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   private val limit = 30
 
@@ -363,7 +356,7 @@ class GroupsResourceSpec
       status shouldEqual Created
       val groupId = responseAs[GroupId]
       val uuidsInGroup = new GroupMembership()
-        .listDevices(groupId, Some(0L), Some(deviceTs.size.toLong))
+        .listDevices(groupId, 0L.toOffset, deviceTs.size.toLimit)
         .futureValue
         .values
       uuidsInGroup should contain allElementsOf uuidsCreated
@@ -381,7 +374,7 @@ class GroupsResourceSpec
       status shouldEqual Created
       val groupId = responseAs[GroupId]
       val uuidsInGroup = new GroupMembership()
-        .listDevices(groupId, Some(0L), Some(deviceTs.size.toLong))
+        .listDevices(groupId, 0L.toOffset, deviceTs.size.toLimit)
         .futureValue
         .values
       uuidsInGroup should contain allElementsOf uuidsCreated
@@ -396,7 +389,7 @@ class GroupsResourceSpec
       status shouldEqual Created
       val groupId = responseAs[GroupId]
       val uuidsInGroup = new GroupMembership()
-        .listDevices(groupId, Some(0L), Some(deviceTs.size.toLong))
+        .listDevices(groupId, 0L.toOffset, deviceTs.size.toLimit)
         .futureValue
         .values
       uuidsInGroup shouldBe empty
@@ -547,35 +540,32 @@ class GroupsResourceSpec
       addDeviceToGroupOk(groupId, id)
 
       db.run(DeviceRepository.setDeviceStatus(id, DeviceStatus.Error)).futureValue
-      db.run(DeviceRepository.updateLastSeen(id, Instant.now().minus(5, ChronoUnit.MINUTES)))
-        .futureValue
+      db.run(DeviceRepository.updateLastSeen(id, Instant.now().minus(5, ChronoUnit.MINUTES))).futureValue
     }
 
     upToDateDevices.foreach { device =>
       val id = createDeviceOk(device)
       addDeviceToGroupOk(groupId, id)
       db.run(DeviceRepository.setDeviceStatus(id, DeviceStatus.UpToDate)).futureValue
-      db.run(DeviceRepository.updateLastSeen(id, Instant.now().minus(5, ChronoUnit.HOURS)))
-        .futureValue
+      db.run(DeviceRepository.updateLastSeen(id, Instant.now().minus(5, ChronoUnit.HOURS))).futureValue
     }
 
     updatePendingDevices.foreach { device =>
       val id = createDeviceOk(device)
       addDeviceToGroupOk(groupId, id)
       db.run(DeviceRepository.setDeviceStatus(id, DeviceStatus.UpdatePending)).futureValue
-      db.run(DeviceRepository.updateLastSeen(id, Instant.now().minus(20, ChronoUnit.DAYS)))
-        .futureValue
+      db.run(DeviceRepository.updateLastSeen(id, Instant.now().minus(20, ChronoUnit.DAYS))).futureValue
     }
 
     getDeviceStats(groupId) ~> routes ~> check {
       status shouldBe OK
       val stats = responseAs[DeviceGroupStats]
-
+      
       stats.status(DeviceStatus.NotSeen) shouldBe 2
       stats.status(DeviceStatus.Error) shouldBe 3
       stats.status(DeviceStatus.UpToDate) shouldBe 1
       stats.status(DeviceStatus.UpdatePending) shouldBe 4
-
+      
       stats.status.values.sum shouldBe (notSeenDevices.size + errorDevices.size +
         upToDateDevices.size + updatePendingDevices.size)
 
@@ -585,7 +575,7 @@ class GroupsResourceSpec
       stats.lastSeen.`1week` shouldBe 4
       stats.lastSeen.`1month` shouldBe 8
       stats.lastSeen.`1year` shouldBe 8
-    }
+     }
   }
 
   test("getting device stats for non-existent group returns not found") {

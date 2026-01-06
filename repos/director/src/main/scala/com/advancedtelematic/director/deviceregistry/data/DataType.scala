@@ -2,9 +2,9 @@ package com.advancedtelematic.director.deviceregistry.data
 
 import java.time.Instant
 import cats.Show
+import com.advancedtelematic.director.data.ClientDataType.TagSearchParam
 import com.advancedtelematic.libats.data.DataType.{CorrelationId, Namespace, ResultCode}
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Event}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier, Event}
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceMetricsObservation
 import com.advancedtelematic.director.deviceregistry.data.CredentialsType.CredentialsType
 import com.advancedtelematic.director.deviceregistry.data.DataType.IndexedEventType.IndexedEventType
@@ -14,6 +14,7 @@ import com.advancedtelematic.director.deviceregistry.data.DeviceStatus.DeviceSta
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.GroupType.GroupType
 import com.advancedtelematic.director.deviceregistry.data.SortDirection.SortDirection
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import com.advancedtelematic.libtuf.data.TufDataType.HardwareIdentifier
 import enumeratum.EnumEntry
 import enumeratum.EnumEntry.Camelcase
@@ -78,17 +79,24 @@ object DataType {
                                             deviceId: DeviceId,
                                             success: Boolean,
                                             receivedAt: Instant,
-                                            installationReport: Json)
+                                            installationReport: Json) {
+
+    // TODO: parse this when writing to db (migrate old rows)
+    def description: Option[String] =
+      installationReport.hcursor.downField("result").downField("description").as[String].toOption
+
+  }
 
   final case class EcuInstallationResult(correlationId: CorrelationId,
                                          resultCode: ResultCode,
                                          deviceId: DeviceId,
                                          ecuId: EcuIdentifier,
-                                         success: Boolean)
+                                         success: Boolean,
+                                         description: Option[String])
 
   object SearchParams {
 
-    def all(limit: Option[Long], offset: Option[Long]) = SearchParams(
+    def all(limit: Limit, offset: Offset) = SearchParams(
       None,
       None,
       None,
@@ -104,6 +112,7 @@ object DataType {
       None,
       None,
       List.empty,
+      Set.empty,
       Some(DeviceSortBy.CreatedAt),
       Some(SortDirection.Asc),
       offset,
@@ -123,7 +132,7 @@ object DataType {
                                       updateScheduled: Long)
 
   final case class SearchParams(oemId: Option[DeviceOemId],
-                                grouped: Option[HibernationStatus],
+                                grouped: Option[Boolean],
                                 groupType: Option[GroupType],
                                 groupId: Option[GroupId],
                                 nameContains: Option[String],
@@ -137,10 +146,59 @@ object DataType {
                                 createdAtStart: Option[Instant],
                                 createdAtEnd: Option[Instant],
                                 hardwareId: Seq[HardwareIdentifier],
+                                deviceTags:  Set[TagSearchParam],
                                 sortBy: Option[DeviceSortBy],
                                 sortDirection: Option[SortDirection],
-                                offset: Option[Long],
-                                limit: Option[Long]) {
+                                offset: Offset,
+                                limit: Limit) {
+
+    if(deviceTags.nonEmpty) {
+      require(
+        oemId.isEmpty,
+        "Invalid parameters: oemId must be empty when searching by deviceTags"
+      )
+
+      require(
+        nameContains.isEmpty,
+        "Invalid parameters: nameContains must be empty when searching by deviceTags"
+      )
+
+      require(
+        grouped.isEmpty,
+        "Invalid parameters: grouped must be empty when searching by deviceTags"
+      )
+
+      require(
+        groupType.isEmpty,
+        "Invalid parameters: groupType must be empty when searching by deviceTags"
+      )
+
+      require(
+        hardwareId.isEmpty,
+        "Invalid parameters: hardwareId must be empty when searching by deviceTags"
+      )
+
+      require(
+        activatedAfter.isEmpty,
+        "Invalid parameters: activatedAfter must be empty when searching by deviceTags"
+      )
+
+      require(
+        activatedBefore.isEmpty,
+        "Invalid parameters: activatedBefore must be empty when searching by deviceTags"
+      )
+
+      require(
+        lastSeenStart.isEmpty,
+        "Invalid parameters: lastSeenStart must be empty when searching by deviceTags"
+      )
+
+      require(
+        lastSeenEnd.isEmpty,
+        "Invalid parameters: lastSeenEnd must be empty when searching by deviceTags"
+      )
+
+    }
 
     if (oemId.isDefined) {
       require(

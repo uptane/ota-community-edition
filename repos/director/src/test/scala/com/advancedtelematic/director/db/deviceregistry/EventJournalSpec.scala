@@ -11,11 +11,11 @@ package com.advancedtelematic.director.db.deviceregistry
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import cats.syntax.option.*
 import com.advancedtelematic.libats.codecs.CirceCodecs.*
-import com.advancedtelematic.libats.data.DataType.{CampaignId, CorrelationId, MultiTargetUpdateId}
-import com.advancedtelematic.libats.messaging_datatype.DataType.{Event, EventType}
+import com.advancedtelematic.libats.data.DataType.{CorrelationId, MultiTargetUpdateCorrelationId, TargetSpecCorrelationId}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{Event, EventType, ValidEcuIdentifier}
 import com.advancedtelematic.libats.messaging_datatype.MessageCodecs.*
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceEventMessage
 import EventJournalSpec.EventPayload
@@ -30,9 +30,10 @@ import io.circe.{Decoder, Json}
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.time.SpanSugar.*
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import org.scalatest.time.{Millis, Seconds, Span}
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*
+import eu.timepit.refined.refineMV
 
 object EventJournalSpec {
 
@@ -82,7 +83,7 @@ class EventJournalSpec
     } yield EventType(id, ver)
 
   val genCorrelationId: Gen[CorrelationId] =
-    Gen.uuid.flatMap(uuid => Gen.oneOf(CampaignId(uuid), MultiTargetUpdateId(uuid)))
+    Gen.uuid.flatMap(uuid => Gen.oneOf(TargetSpecCorrelationId(uuid), MultiTargetUpdateCorrelationId(uuid)))
 
   implicit val EventGen: org.scalacheck.Gen[EventJournalSpec.EventPayload] = for {
     id <- Gen.uuid
@@ -116,7 +117,7 @@ class EventJournalSpec
 
       events
         .map(ep =>
-          Event(deviceUuid, ep.id.toString, ep.eventType, ep.deviceTime, Instant.now, ep.event)
+          Event(deviceUuid, ep.id.toString, ep.eventType, ep.deviceTime, Instant.now, refineMV[ValidEcuIdentifier]("ecuId").some, ep.event)
         )
         .map(DeviceEventMessage(defaultNs, _))
         .map(listener.apply)
@@ -140,7 +141,7 @@ class EventJournalSpec
 
     List(event0, event1)
       .map(ep =>
-        Event(deviceUuid, ep.id.toString, ep.eventType, ep.deviceTime, Instant.now, ep.event)
+        Event(deviceUuid, ep.id.toString, ep.eventType, ep.deviceTime, Instant.now, refineMV[ValidEcuIdentifier]("ecuId").some, ep.event)
       )
       .map(DeviceEventMessage(defaultNs, _))
       .map(listener.apply)
@@ -164,13 +165,13 @@ class EventJournalSpec
 
     List(event0, event1)
       .map(ep =>
-        Event(deviceUuid, ep.id.toString, ep.eventType, ep.deviceTime, Instant.now, ep.event)
+        Event(deviceUuid, ep.id.toString, ep.eventType, ep.deviceTime, Instant.now, refineMV[ValidEcuIdentifier]("ecuId").some, ep.event)
       )
       .map(DeviceEventMessage(defaultNs, _))
       .map(listener.apply)
 
     eventually(timeout(3.seconds), interval(100.millis)) {
-      getEvents(deviceUuid, CampaignId(UUID.randomUUID()).some) ~> routes ~> check {
+      getEvents(deviceUuid, TargetSpecCorrelationId(UUID.randomUUID()).some) ~> routes ~> check {
         status should equal(StatusCodes.OK)
         val events = responseAs[List[EventPayload]]
         events shouldBe empty
@@ -181,7 +182,7 @@ class EventJournalSpec
   test("DELETE device archives its indexed events") {
     val uuid = createDeviceOk(genDeviceT.generate)
     val (e, _) = installCompleteEventGen.generate
-    val event = Event(uuid, e.id.toString, e.eventType, e.deviceTime, Instant.now, e.event)
+    val event = Event(uuid, e.id.toString, e.eventType, e.deviceTime, Instant.now, refineMV[ValidEcuIdentifier]("ecuId").some, e.event)
     val deviceEventMessage = DeviceEventMessage(defaultNs, event)
     val journal = new EventJournal()
 

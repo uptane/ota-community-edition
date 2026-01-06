@@ -1,25 +1,17 @@
 package com.advancedtelematic.director.manifest
 
+import cats.implicits.catsSyntaxOptionId
 import com.advancedtelematic.director.data.AdminDataType.TargetUpdate
 import com.advancedtelematic.director.data.Codecs.*
-import com.advancedtelematic.director.data.DataType.{ScheduledUpdate, ScheduledUpdateId}
-import com.advancedtelematic.director.data.DbDataType.{
-  Assignment,
-  DeviceKnownState,
-  EcuTarget,
-  EcuTargetId
-}
-import com.advancedtelematic.director.data.DeviceRequest.{
-  DeviceManifest,
-  EcuManifest,
-  MissingInstallationReport
-}
+import com.advancedtelematic.director.data.DataType.{TargetSpecId, Update, UpdateId}
+import com.advancedtelematic.director.data.DbDataType.{Assignment, DeviceKnownState, EcuTarget, EcuTargetId}
+import com.advancedtelematic.director.data.DeviceRequest.{DeviceManifest, EcuManifest, MissingInstallationReport}
 import com.advancedtelematic.director.data.GeneratorOps.*
 import com.advancedtelematic.director.data.Generators.*
 import com.advancedtelematic.director.data.UptaneDataType.*
 import com.advancedtelematic.director.util.DirectorSpec
 import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libtuf.data.TufDataType.SignedPayload
 import io.circe.syntax.*
 import org.scalatest.LoneElement.*
@@ -286,18 +278,22 @@ class ManifestCompilerSpec extends DirectorSpec {
       targetUpdate.userDefinedCustom
     )
 
-    val su = ScheduledUpdate(
+    val id = UpdateId.generate()
+
+    val su = Update(
       ns,
-      ScheduledUpdateId.generate(),
+      id,
       deviceId,
-      UpdateId.generate(),
-      Instant.now(),
-      ScheduledUpdate.Status.Assigned
+      id.toCorrelationId,
+      TargetSpecId.generate(),
+      Instant.now,
+      Instant.now().some,
+      Update.Status.Assigned
     )
 
     val ecuTargets = Map(ecuTarget.id -> ecuTarget, scheduledEcuTarget.id -> scheduledEcuTarget)
 
-    val ecuTargetsByHardwareId = Map(su.updateId -> List(scheduledEcuTarget.id))
+    val ecuTargetsByHardwareId = Map(su.targetSpecId -> List(scheduledEcuTarget.id))
 
     val currentStatus = DeviceKnownState(
       deviceId,
@@ -313,7 +309,7 @@ class ManifestCompilerSpec extends DirectorSpec {
 
     val resultStatus = ManifestCompiler(ns, manifest).apply(currentStatus).get.knownState
 
-    resultStatus.scheduledUpdates.loneElement.status shouldBe ScheduledUpdate.Status.Completed
+    resultStatus.updates.loneElement.status shouldBe Update.Status.Completed
   }
 
   test(
@@ -348,13 +344,17 @@ class ManifestCompilerSpec extends DirectorSpec {
       targetUpdate1.userDefinedCustom
     )
 
-    val su = ScheduledUpdate(
+    val id = UpdateId.generate()
+
+    val su = Update(
       ns,
-      ScheduledUpdateId.generate(),
+      id,
       deviceId,
-      UpdateId.generate(),
+      id.toCorrelationId,
+      TargetSpecId.generate(),
       Instant.now(),
-      ScheduledUpdate.Status.Assigned
+      Instant.now().some,
+      Update.Status.Assigned
     )
 
     val ecuTargets = Map(
@@ -364,7 +364,7 @@ class ManifestCompilerSpec extends DirectorSpec {
     )
 
     val ecuTargetsByHardwareId =
-      Map(su.updateId -> List(scheduledEcuTarget.id, scheduledEcuTarget1.id))
+      Map(su.targetSpecId -> List(scheduledEcuTarget.id, scheduledEcuTarget1.id))
 
     val currentStatus = DeviceKnownState(
       deviceId,
@@ -380,7 +380,7 @@ class ManifestCompilerSpec extends DirectorSpec {
 
     val resultStatus = ManifestCompiler(ns, manifest).apply(currentStatus).get.knownState
 
-    resultStatus.scheduledUpdates.loneElement.status shouldBe ScheduledUpdate.Status.PartiallyCompleted
+    resultStatus.updates.loneElement.status shouldBe Update.Status.PartiallyCompleted
   }
 
   test(
@@ -403,18 +403,22 @@ class ManifestCompilerSpec extends DirectorSpec {
       targetUpdate.userDefinedCustom
     )
 
-    val su = ScheduledUpdate(
+    val id = UpdateId.generate()
+
+    val su = Update(
       ns,
-      ScheduledUpdateId.generate(),
+      id,
       deviceId,
-      UpdateId.generate(),
+      id.toCorrelationId,
+      TargetSpecId.generate(),
       Instant.now(),
-      ScheduledUpdate.Status.Assigned
+      Instant.now().some,
+      Update.Status.Assigned
     )
 
     val ecuTargets = Map(ecuTarget.id -> ecuTarget, scheduledEcuTarget.id -> scheduledEcuTarget)
 
-    val ecuTargetsByHardwareId = Map(su.updateId -> List(scheduledEcuTarget.id))
+    val ecuTargetsByHardwareId = Map(su.targetSpecId -> List(scheduledEcuTarget.id))
 
     val currentStatus = DeviceKnownState(
       deviceId,
@@ -430,7 +434,7 @@ class ManifestCompilerSpec extends DirectorSpec {
 
     val resultStatus = ManifestCompiler(ns, manifest).apply(currentStatus).get.knownState
 
-    resultStatus.scheduledUpdates.loneElement.status shouldBe ScheduledUpdate.Status.Completed
+    resultStatus.updates.loneElement.status shouldBe Update.Status.Completed
   }
 
   test("Ecu.installed_target for device gets updated with new target id if target was not known") {

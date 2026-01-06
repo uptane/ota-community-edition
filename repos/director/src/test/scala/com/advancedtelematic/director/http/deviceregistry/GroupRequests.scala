@@ -8,9 +8,9 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.StatusCodes.*
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, Multipart}
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.model.Uri.Query
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest, Multipart}
 import cats.syntax.show.*
 import com.advancedtelematic.director.deviceregistry.data.Device.DeviceOemId
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
@@ -22,7 +22,7 @@ import com.advancedtelematic.director.deviceregistry.data.{GroupExpression, Grou
 import com.advancedtelematic.director.util.ResourceSpec
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
 import org.scalatest.Assertion
 

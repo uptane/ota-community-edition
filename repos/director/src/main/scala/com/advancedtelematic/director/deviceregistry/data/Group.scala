@@ -10,7 +10,7 @@ package com.advancedtelematic.director.deviceregistry.data
 
 import java.time.Instant
 import java.util.UUID
-import akka.http.scaladsl.unmarshalling.Unmarshaller
+import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller
 import com.advancedtelematic.libats.codecs.CirceCodecs._
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.UUIDKey.{UUIDKey, UUIDKeyObj}

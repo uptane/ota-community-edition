@@ -1,29 +1,10 @@
 package com.advancedtelematic.director.deviceregistry.data
 
 import java.time.Instant
-
-import com.advancedtelematic.libats.data.DataType.{
-  CampaignId,
-  CorrelationId,
-  MultiTargetUpdateId,
-  Namespace,
-  ResultCode,
-  ResultDescription
-}
-import com.advancedtelematic.libats.data.EcuIdentifier
-import com.advancedtelematic.libats.data.EcuIdentifier.validatedEcuIdentifier
-import com.advancedtelematic.libats.messaging_datatype.DataType.{
-  DeviceId,
-  EcuInstallationReport,
-  InstallationResult
-}
-import com.advancedtelematic.libats.messaging_datatype.Messages.{
-  DeviceUpdateCompleted,
-  EcuAndHardwareId,
-  EcuReplaced,
-  EcuReplacement,
-  EcuReplacementFailed
-}
+import com.advancedtelematic.libats.data.DataType.{CorrelationId, MultiTargetUpdateCorrelationId, Namespace, ResultCode, ResultDescription, TargetSpecCorrelationId}
+import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier, EcuInstallationReport, InstallationResult, ValidEcuIdentifier}
+import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateCompleted, EcuAndHardwareId, EcuReplaced, EcuReplacement, EcuReplacementFailed}
 import org.scalacheck.Gen
 
 import scala.util.{Success, Try}
@@ -32,20 +13,19 @@ object InstallationReportGenerators {
   import DeviceGenerators.*
 
   val genCorrelationId: Gen[CorrelationId] =
-    Gen.uuid.flatMap(uuid => Gen.oneOf(CampaignId(uuid), MultiTargetUpdateId(uuid)))
+    Gen.uuid.flatMap(uuid => Gen.oneOf(TargetSpecCorrelationId(uuid), MultiTargetUpdateCorrelationId(uuid)))
 
   val genEcuIdentifier: Gen[EcuIdentifier] =
     Gen
       .listOfN(64, Gen.alphaNumChar)
       .map(_.mkString(""))
-      .map(validatedEcuIdentifier.from(_).toOption.get)
+      .map(_.refineTry[ValidEcuIdentifier].get)
 
   private def genInstallationResult(
     resultCode: ResultCode,
     resultDescription: Option[ResultDescription] = None): Gen[InstallationResult] = {
     val success = Try(resultCode.value.toInt == 0).orElse(Success(false))
-    val description =
-      resultDescription.getOrElse(Gen.alphaStr.map(ResultDescription.apply).sample.get)
+    val description = resultDescription.getOrElse(Gen.alphaStr.map(ResultDescription.apply).sample.get)
     InstallationResult(success.get, resultCode, description)
   }
 

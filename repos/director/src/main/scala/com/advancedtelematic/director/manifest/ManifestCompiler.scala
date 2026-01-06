@@ -1,7 +1,8 @@
 package com.advancedtelematic.director.manifest
 
 import cats.syntax.option.*
-import com.advancedtelematic.director.data.DataType.ScheduledUpdate
+import com.advancedtelematic.director.data.Codecs.*
+import com.advancedtelematic.director.data.DataType.Update
 import com.advancedtelematic.director.data.DbDataType.{
   Assignment,
   DeviceKnownState,
@@ -20,9 +21,9 @@ import com.advancedtelematic.libats.data.DataType.{
   ResultCode,
   ResultDescription
 }
-import com.advancedtelematic.libats.data.EcuIdentifier
 import com.advancedtelematic.libats.messaging_datatype.DataType.{
   DeviceId,
+  EcuIdentifier,
   EcuInstallationReport,
   InstallationResult
 }
@@ -36,7 +37,6 @@ import org.slf4j.LoggerFactory
 
 import java.time.Instant
 import scala.util.{Failure, Success, Try}
-import com.advancedtelematic.director.data.Codecs.*
 
 object ManifestCompiler {
   private val _log = LoggerFactory.getLogger(this.getClass)
@@ -60,92 +60,87 @@ object ManifestCompiler {
       assignmentTarget.checksum.hash == installedChecksum
     }
 
-  private def compileScheduleUpdatesChanges(
+  private def compileUpdatesChanges(
     knownState: DeviceKnownState,
     msgs: List[DeviceUpdateEvent]): (DeviceKnownState, List[DeviceUpdateEvent]) = {
     /*
     This is not ideal because in compileManifest we match existing assignments using `ecu_version_manifests`
     and checking what is installed on the device. We then do the same again here, to match against the
-    scheduled updates ecu targets.
+    updates ecu targets.
 
-    We cannot rely on processed assignments **only** because scheduled updates might not have generated assignments yet.
-    Processed assignments still need to be checked in case the assignment was processed, but not installed, for example,
-    if the update as cancelled.
-
-    We cannot rely on correlation id, because we might not have an assignment, which contains the correlation id.
+    We cannot rely on processed assignments **only** because updates might not have generated assignments yet.
+    Processed assignments still need to be checked in case the assignment was processed, but not installed,
+    for example, if the update was cancelled.
 
     Here we use knownStatus.ecuStatus rather than `ecu_version_manifests` as we don't have the manifest
     at this point, but knownStatus.ecuStatus is populated based on matching `ecu_version_manifests` so
     that is what would need to end up doing here anyway.
      */
 
-    if (knownState.scheduledUpdates.nonEmpty)
+    if (knownState.updates.nonEmpty)
       _log
         .atInfo()
-        .addKeyValue("scheduledUpdatesMtuIds", knownState.scheduledUpdates.map(_.updateId).asJson)
         .addKeyValue("deviceId", knownState.deviceId.asJson)
-        .log("calculating scheduled updates changes")
+        .log("calculating updates changes")
     else
       _log
         .atDebug()
         .addKeyValue("deviceId", knownState.deviceId.asJson)
-        .log("no scheduled updates")
+        .log("no updates scheduled")
 
-    val newScheduledUpdates = knownState.scheduledUpdates.map { su =>
-      val scheduledUpdateEcuTargets = knownState.scheduledUpdatesEcuTargetIds
-        .get(su.updateId)
+    val newUpdates = knownState.updates.map { u =>
+      val updatesEcuTargets = knownState.updatesTargetIds
+        .get(u.targetSpecId)
         .toList
         .flatten
         .flatMap(knownState.ecuTargets.get)
 
-      if (scheduledUpdateEcuTargets.isEmpty) {
+      if (updatesEcuTargets.isEmpty) {
         _log
           .atWarn()
           .addKeyValue("deviceId", knownState.deviceId.asJson)
-          .addKeyValue("scheduledUpdateId", su.id.asJson)
-          .log("no ecu targets for scheduled update")
+          .addKeyValue("updateTargetSpecId", u.id.asJson)
+          .log("no ecu targets for update")
       }
 
-      val totalTargetsForScheduledUpdate =
-        knownState.scheduledUpdatesEcuTargetIds.get(su.updateId).toList.flatten.size
+      val totalTargetsForUpdate =
+        knownState.updatesTargetIds.get(u.targetSpecId).toList.flatten.size
 
       val processedInEcuStatus = knownState.ecuStatus.values.flatten.filter { ecuTargetId =>
-        scheduledUpdateEcuTargets.exists { ecuTarget =>
+        updatesEcuTargets.exists { ecuTarget =>
           knownState.ecuTargets.get(ecuTargetId).exists(_.matches(ecuTarget))
         }
       }
 
       val processedInAssignment = knownState.processedAssignments
+        .filter(_.correlationId == u.correlationId)
         .map(_.ecuTargetId)
-        .filter(scheduledUpdateEcuTargets.map(_.id).contains)
 
       val alreadyProcessedIds = (processedInEcuStatus ++ processedInAssignment).toSet
 
       val updated =
-        if (
-          alreadyProcessedIds.nonEmpty && (alreadyProcessedIds.size >= totalTargetsForScheduledUpdate)
-        )
-          su.copy(status = ScheduledUpdate.Status.Completed)
+        if (alreadyProcessedIds.nonEmpty && (alreadyProcessedIds.size >= totalTargetsForUpdate))
+          u.copy(status = Update.Status.Completed, completedAt = Some(Instant.now))
         else if (alreadyProcessedIds.nonEmpty)
-          su.copy(status = ScheduledUpdate.Status.PartiallyCompleted)
+          u.copy(status = Update.Status.PartiallyCompleted)
         else
-          su
+          u
 
       _log
         .atInfo()
         .addKeyValue("deviceId", knownState.deviceId.asJson)
-        .addKeyValue("totalTargetsForScheduledUpdate", totalTargetsForScheduledUpdate)
+        .addKeyValue("totalTargetsForUpdate", totalTargetsForUpdate)
         .addKeyValue("alreadyProcessedCount", alreadyProcessedIds.size)
         .addKeyValue("processedAsAssignment", processedInAssignment.asJson)
         .addKeyValue("processedInEcuStatus", processedInEcuStatus.asJson)
-        .addKeyValue("scheduledUpdateEcuTargets", scheduledUpdateEcuTargets.map(_.id).asJson)
+        .addKeyValue("updatesEcuTargets", updatesEcuTargets.map(_.id).asJson)
         .addKeyValue("result", updated.asJson)
-        .log(s"updating scheduled updates for ${su.id}")
+        .log(s"updating updates for ${u.id}")
 
       updated
     }
 
-    (knownState.copy(scheduledUpdates = newScheduledUpdates), msgs)
+    (knownState.copy(updates = newUpdates), msgs)
   }
 
   def apply(ns: Namespace,
@@ -153,7 +148,7 @@ object ManifestCompiler {
     (beforeState: DeviceKnownState) =>
       validateManifest(manifest, beforeState).map { _ =>
         val (nextStatus, msgs) = compileManifest(ns, manifest)
-          .andThen(compileScheduleUpdatesChanges.tupled)
+          .andThen(compileUpdatesChanges.tupled)
           .apply(beforeState)
         ManifestCompileResult(nextStatus, msgs)
       }
@@ -231,8 +226,8 @@ object ManifestCompiler {
         knownStatus.ecuTargets ++ newEcuTargets,
         currentAssignments = Set.empty,
         processedAssignments = Set.empty,
-        scheduledUpdates = knownStatus.scheduledUpdates,
-        knownStatus.scheduledUpdatesEcuTargetIds,
+        knownStatus.updates,
+        knownStatus.updatesTargetIds,
         generatedMetadataOutdated = knownStatus.generatedMetadataOutdated
       )
 

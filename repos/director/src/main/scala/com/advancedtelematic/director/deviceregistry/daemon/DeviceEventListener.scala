@@ -8,7 +8,7 @@
 
 package com.advancedtelematic.director.deviceregistry.daemon
 
-import akka.Done
+import org.apache.pekko.Done
 import com.advancedtelematic.director.db.deviceregistry.EventJournal
 import com.advancedtelematic.libats.messaging.MsgOperation.MsgOperation
 import com.advancedtelematic.libats.messaging_datatype.Messages.DeviceEventMessage

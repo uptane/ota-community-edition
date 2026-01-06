@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.director.data.AdminDataType.RegisterDevice
 import com.advancedtelematic.director.data.DeviceRequest.DeviceManifest
 import com.advancedtelematic.director.data.Generators.GenRegisterEcu
@@ -14,7 +14,7 @@ import org.scalactic.source.Position
 import com.advancedtelematic.director.data.GeneratorOps.*
 import cats.syntax.show.*
 import cats.syntax.option.*
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import com.advancedtelematic.director.data.Codecs.*
 import com.advancedtelematic.libtuf.data.TufCodecs.*
 

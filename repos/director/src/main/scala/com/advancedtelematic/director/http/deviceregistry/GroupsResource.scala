@@ -8,22 +8,17 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.marshalling.Marshaller.*
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.*
-
-import akka.http.scaladsl.unmarshalling.{FromStringUnmarshaller, Unmarshaller}
-import akka.http.scaladsl.util.FastFuture
-import akka.stream.Materializer
-import akka.stream.scaladsl.Framing.FramingException
-import akka.stream.scaladsl.{Framing, Sink, Source}
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.marshalling.Marshaller.*
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.*
+import org.apache.pekko.http.scaladsl.unmarshalling.{FromStringUnmarshaller, Unmarshaller}
+import org.apache.pekko.http.scaladsl.util.FastFuture
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Framing.FramingException
+import org.apache.pekko.stream.scaladsl.{Framing, Sink, Source}
+import org.apache.pekko.util.ByteString
 import cats.syntax.either.*
-import com.advancedtelematic.director.db.deviceregistry.{
-  DeviceRepository,
-  GroupInfoRepository,
-  GroupMemberRepository
-}
+import com.advancedtelematic.director.db.deviceregistry.{DeviceRepository, GroupInfoRepository, GroupMemberRepository}
 import com.advancedtelematic.director.deviceregistry.data.*
 import com.advancedtelematic.director.deviceregistry.data.Codecs.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.UpdateHibernationStatusRequest
@@ -33,9 +28,11 @@ import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.GroupSortBy.GroupSortBy
 import com.advancedtelematic.director.deviceregistry.data.GroupType.GroupType
 import com.advancedtelematic.director.deviceregistry.{AllowUUIDPath, GroupMembership}
+import com.advancedtelematic.director.http.PaginationParametersDirectives.PaginationParameters
 import com.advancedtelematic.libats.data.DataType.Namespace
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.{Codec, Decoder, Encoder, Json, KeyDecoder, KeyEncoder}
 import slick.jdbc.MySQLProfile.api.*
 
@@ -65,9 +62,8 @@ object DeviceGroupStats {
 
 }
 
-import Unmarshallers.nonNegativeLong
-import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
-import com.advancedtelematic.libats.http.UUIDKeyAkka.*
+import org.apache.pekko.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
+import com.advancedtelematic.libats.http.UUIDKeyPekko.*
 import GroupId.*
 import io.circe.syntax.*
 
@@ -107,14 +103,14 @@ class GroupsResource(namespaceExtractor: Directive1[Namespace],
   val groupMembership = new GroupMembership()
 
   def getDevicesInGroup(groupId: GroupId): Route =
-    parameters(Symbol("offset").as(nonNegativeLong).?, Symbol("limit").as(nonNegativeLong).?) {
+    PaginationParameters {
       (offset, limit) =>
         complete(groupMembership.listDevices(groupId, offset, limit))
     }
 
   def listGroups(ns: Namespace,
-                 offset: Option[Long],
-                 limit: Option[Long],
+                 offset: Offset,
+                 limit: Limit,
                  sortBy: GroupSortBy,
                  nameContains: Option[String]): Route =
     complete(db.run(GroupInfoRepository.list(ns, offset, limit, sortBy, nameContains)))
@@ -209,9 +205,7 @@ class GroupsResource(namespaceExtractor: Directive1[Namespace],
   val route: Route =
     (pathPrefix("device_groups") & namespaceExtractor) { ns =>
       pathEnd {
-        (get & parameters(
-          Symbol("offset").as(nonNegativeLong).?,
-          Symbol("limit").as(nonNegativeLong).?,
+        (get & PaginationParameters & parameters(
           Symbol("sortBy").as[GroupSortBy].?,
           Symbol("nameContains").as[String].?
         )) { (offset, limit, sortBy, nameContains) =>

@@ -11,7 +11,12 @@ package com.advancedtelematic.director.db.deviceregistry
 import java.time.Instant
 import cats.syntax.show.*
 import com.advancedtelematic.libats.data.DataType.CorrelationId
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, Event, EventType}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{
+  DeviceId,
+  EcuIdentifier,
+  Event,
+  EventType
+}
 import com.advancedtelematic.libats.slick.db.SlickCirceMapper.*
 import com.advancedtelematic.libats.slick.db.SlickExtensions.javaInstantMapping
 import com.advancedtelematic.libats.slick.db.SlickUUIDKey.*
@@ -25,6 +30,7 @@ import slick.jdbc.MySQLProfile.api.*
 import com.advancedtelematic.libats.slick.db.SlickExtensions.*
 
 import scala.concurrent.{ExecutionContext, Future}
+import com.advancedtelematic.libats.codecs.CirceRefined.*
 
 object EventJournal {
 
@@ -39,7 +45,7 @@ object EventJournal {
 
     def pk = primaryKey("events_pk", (deviceUuid, eventId))
 
-    private def fromEvent(e: Event) =
+    private def toRow(e: Event) =
       Some(
         e.deviceUuid,
         e.eventId,
@@ -50,8 +56,10 @@ object EventJournal {
         e.payload
       )
 
-    private def toEvent(x: (DeviceId, String, String, Int, Instant, Instant, Json)): Event =
-      Event(x._1, x._2, EventType(x._3, x._4), x._5, x._6, x._7)
+    private def toEvent(x: (DeviceId, String, String, Int, Instant, Instant, Json)): Event = {
+      val ecu = x._7.hcursor.downField("ecu").as[Option[EcuIdentifier]].toOption.flatten
+      Event(x._1, x._2, EventType(x._3, x._4), x._5, x._6, ecu, x._7)
+    }
 
     override def * =
       (
@@ -62,7 +70,7 @@ object EventJournal {
         deviceTime,
         receivedAt,
         event
-      ).shaped <> (toEvent, fromEvent)
+      ).shaped <> (toEvent, toRow)
 
   }
 

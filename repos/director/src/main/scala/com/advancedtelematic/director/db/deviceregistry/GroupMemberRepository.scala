@@ -17,16 +17,10 @@ import com.advancedtelematic.libats.slick.db.SlickUUIDKey.*
 import com.advancedtelematic.director.http.deviceregistry.Errors.MemberAlreadyExists
 import com.advancedtelematic.director.deviceregistry.data.DataType.HibernationStatus
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
-import com.advancedtelematic.director.deviceregistry.data.{
-  Device,
-  DeviceDB,
-  GroupExpression,
-  GroupExpressionAST,
-  GroupType,
-  TagId
-}
-import DbOps.PaginationResultOps
+import com.advancedtelematic.director.deviceregistry.data.{Device, DeviceDB, GroupExpression, GroupExpressionAST, GroupType, TagId}
+import DbOps.*
 import com.advancedtelematic.director.http.deviceregistry.Errors
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import slick.jdbc.{PositionedParameters, SetParameter}
 import slick.jdbc.MySQLProfile.api.*
 import slick.lifted.Tag
@@ -89,16 +83,16 @@ object GroupMemberRepository {
       .filter(_.deviceUuid === deviceUuid)
       .delete
 
-  def listDevicesInGroup(groupId: GroupId, offset: Option[Long], limit: Option[Long])(
+  def listDevicesInGroup(groupId: GroupId, offset: Offset, limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[DeviceId]] =
     listDevicesInGroupAction(groupId, offset, limit)
 
-  def listDevicesInGroupAction(groupId: GroupId, offset: Option[Long], limit: Option[Long])(
+  def listDevicesInGroupAction(groupId: GroupId, offset: Offset, limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[DeviceId]] =
     groupMembers
       .filter(_.groupId === groupId)
       .map(_.deviceUuid)
-      .paginateResult(offset.orDefaultOffset, limit.orDefaultLimit)
+      .paginateResult(offset, limit)
 
   def countDevicesInGroup(groupIds: Set[GroupId])(
     implicit ec: ExecutionContext): DBIO[Map[GroupId, Long]] =
@@ -150,12 +144,12 @@ object GroupMemberRepository {
       _ <- GroupMemberRepository.addDeviceToDynamicGroups(namespace, device, tags.toMap)
     } yield ()
 
-  def listGroupsForDevice(deviceUuid: DeviceId, offset: Option[Long], limit: Option[Long])(
+  def listGroupsForDevice(deviceUuid: DeviceId, offset: Offset, limit: Limit)(
     implicit ec: ExecutionContext): DBIO[PaginationResult[GroupId]] =
     groupMembers
       .filter(_.deviceUuid === deviceUuid)
       .map(_.groupId)
-      .paginateResult(offset.orDefaultOffset, limit.orDefaultLimit)
+      .paginateResult(offset, limit)
 
   def listGroupsForDevices(deviceUuids: Seq[DeviceId])(
     implicit ec: ExecutionContext): DBIO[Map[DeviceId, Seq[GroupId]]] = {

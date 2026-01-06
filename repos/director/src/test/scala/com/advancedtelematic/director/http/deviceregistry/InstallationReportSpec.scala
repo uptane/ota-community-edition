@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
 import com.advancedtelematic.director.db.DeleteDeviceDBIO
 import com.advancedtelematic.director.db.deviceregistry.EcuReplacementRepository
 import com.advancedtelematic.director.deviceregistry.daemon.DeviceUpdateEventListener
@@ -19,8 +19,11 @@ import com.advancedtelematic.libats.messaging_datatype.MessageCodecs.{
   deviceUpdateCompletedCodec,
   ecuReplacementCodec
 }
-import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateCompleted, EcuReplaced}
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.advancedtelematic.libats.messaging_datatype.Messages.{
+  DeviceUpdateCompleted,
+  EcuReplaced
+}
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
 import org.scalacheck.Gen
 import org.scalatest.EitherValues.*

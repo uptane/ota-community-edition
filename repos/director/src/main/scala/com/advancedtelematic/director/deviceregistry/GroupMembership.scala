@@ -1,22 +1,14 @@
 package com.advancedtelematic.director.deviceregistry
 
-import akka.http.scaladsl.util.FastFuture
-import com.advancedtelematic.director.db.deviceregistry.{
-  GroupInfoRepository,
-  GroupMemberRepository,
-  SearchDBIO
-}
+import org.apache.pekko.http.scaladsl.util.FastFuture
+import com.advancedtelematic.director.db.deviceregistry.{GroupInfoRepository, GroupMemberRepository, SearchDBIO}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.PaginationResult
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.GroupType.GroupType
-import com.advancedtelematic.director.deviceregistry.data.{
-  Group,
-  GroupExpression,
-  GroupName,
-  GroupType
-}
+import com.advancedtelematic.director.deviceregistry.data.{Group, GroupExpression, GroupName, GroupType}
 import com.advancedtelematic.director.http.deviceregistry.Errors
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -95,8 +87,8 @@ class GroupMembership(implicit val db: Database, ec: ExecutionContext) {
     }
 
   def listDevices(groupId: GroupId,
-                  offset: Option[Long],
-                  limit: Option[Long]): Future[PaginationResult[DeviceId]] =
+                  offset: Offset,
+                  limit: Limit): Future[PaginationResult[DeviceId]] =
     db.run(GroupMemberRepository.listDevicesInGroup(groupId, offset, limit))
 
   def addGroupMember(groupId: GroupId, deviceId: DeviceId): Future[Unit] =

@@ -1,22 +1,19 @@
 package com.advancedtelematic.director.http
 
 import java.time.Instant
-
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Directive1, Route}
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
+import com.advancedtelematic.director.data.DataType.TargetSpecId
 import com.advancedtelematic.director.db.{EcuRepositorySupport, ProvisionedDeviceRepositorySupport}
-import com.advancedtelematic.director.http.PaginationParametersDirectives._
-import com.advancedtelematic.libats.data.DataType.{MultiTargetUpdateId, Namespace}
-import com.advancedtelematic.libats.http.UUIDKeyAkka._
+import com.advancedtelematic.director.http.PaginationParametersDirectives.*
+import com.advancedtelematic.libats.data.DataType.{MultiTargetUpdateCorrelationId, Namespace}
+import com.advancedtelematic.libats.http.UUIDKeyPekko.*
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
-import com.advancedtelematic.libats.messaging_datatype.Messages.{
-  DeviceUpdateAssigned,
-  DeviceUpdateEvent
-}
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import slick.jdbc.MySQLProfile.api._
+import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
+import com.advancedtelematic.libats.messaging_datatype.Messages.{DeviceUpdateAssigned, DeviceUpdateEvent}
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,11 +27,12 @@ class LegacyRoutes(extractNamespace: Directive1[Namespace])(
 
   private val deviceAssignments = new DeviceAssignments()
 
+  // TODO: Remove this, and its endpoint, no longer used
   private def createDeviceAssignment(ns: Namespace,
                                      deviceId: DeviceId,
-                                     mtuId: UpdateId): Future[Unit] = {
-    val correlationId = MultiTargetUpdateId(mtuId.uuid)
-    val assignment = deviceAssignments.createForDevice(ns, correlationId, deviceId, mtuId)
+                                     targetSpecId: TargetSpecId): Future[Unit] = {
+    val correlationId = MultiTargetUpdateCorrelationId(targetSpecId.uuid)
+    val assignment = deviceAssignments.createForDevice(ns, correlationId, deviceId, targetSpecId)
 
     assignment.map { d =>
       val msg: DeviceUpdateEvent = DeviceUpdateAssigned(ns, Instant.now(), correlationId, d)
@@ -45,10 +43,10 @@ class LegacyRoutes(extractNamespace: Directive1[Namespace])(
   val route: Route =
     extractNamespace { ns =>
       concat(
-        path("admin" / "devices" / DeviceId.Path / "multi_target_update" / UpdateId.Path) {
-          (deviceId, updateId) =>
+        path("admin" / "devices" / DeviceId.Path / "multi_target_update" / TargetSpecId.Path) {
+          (deviceId, TargetSpecId) =>
             put {
-              val f = createDeviceAssignment(ns, deviceId, updateId).map(_ => StatusCodes.OK)
+              val f = createDeviceAssignment(ns, deviceId, TargetSpecId).map(_ => StatusCodes.OK)
               complete(f)
             }
         },
@@ -58,7 +56,7 @@ class LegacyRoutes(extractNamespace: Directive1[Namespace])(
             complete(a.map(_.map(_.deviceId)))
           }
         },
-        (path("admin" / "devices") & PaginationParameters) { (limit, offset) =>
+        (path("admin" / "devices") & PaginationParameters) { (offset, limit) =>
           get {
             complete(provisionedDeviceRepository.findAllDeviceIds(ns, offset, limit))
           }

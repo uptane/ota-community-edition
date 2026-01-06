@@ -8,7 +8,7 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.StatusCodes.*
+import org.apache.pekko.http.scaladsl.model.StatusCodes.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.DeviceT
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*
 import com.advancedtelematic.director.deviceregistry.data.{CredentialsType, Device}
@@ -25,7 +25,7 @@ class PublicCredentialsResourceSpec
     with PublicCredentialsRequests {
 
   import Device.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   val genCredentialsType: Gen[CredentialsType.CredentialsType] =
     Gen.oneOf(CredentialsType.values.toSeq)

@@ -1,7 +1,7 @@
 package com.advancedtelematic.director.util
 
 import java.security.Security
-import akka.http.scaladsl.model.{headers, HttpRequest}
+import org.apache.pekko.http.scaladsl.model.{headers, HttpRequest}
 import com.advancedtelematic.director.data.GeneratorOps._
 import com.advancedtelematic.director.http.AdminResources
 import com.advancedtelematic.libats.data.DataType.Namespace

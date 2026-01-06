@@ -1,5 +1,6 @@
 package com.advancedtelematic.director.db
 
+import com.advancedtelematic.director.data.DbDataType.MurmurHash3Checksum
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import slick.jdbc.MySQLProfile.api.*
@@ -114,10 +115,10 @@ class DirectorDbDebug()(implicit val db: Database, ec: ExecutionContext) {
         readTable("DeviceType", id => sql"""select * from DeviceType where id = $id""")
       ),
       TableResource(
-        "scheduled_updates",
+        "device_manifests",
         readTable(
-          "scheduled_updates",
-          id => sql"""select * from scheduled_updates where device_id = $id"""
+          "device_manifests",
+          id => sql"""select * from device_manifests where device_id = $id order by received_at desc limit 20"""
         )
       )
     )

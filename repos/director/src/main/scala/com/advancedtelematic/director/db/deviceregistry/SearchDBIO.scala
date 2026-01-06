@@ -1,28 +1,30 @@
 package com.advancedtelematic.director.db.deviceregistry
 
+import com.advancedtelematic.director.data.ClientDataType.TagSearchOps
 import com.advancedtelematic.director.db
-import com.advancedtelematic.director.db.deviceregistry.DbOps.{
-  deviceTableToSlickOrder,
-  PaginationResultOps
-}
+import com.advancedtelematic.director.db.deviceregistry.DbOps.deviceTableToSlickOrder
 import com.advancedtelematic.director.db.deviceregistry.GroupInfoRepository.groupInfos
 import com.advancedtelematic.director.db.deviceregistry.GroupMemberRepository.groupMembers
 import com.advancedtelematic.director.db.deviceregistry.Schema.*
 import com.advancedtelematic.director.db.deviceregistry.SlickMappings.*
+import com.advancedtelematic.director.db.deviceregistry.TaggedDeviceRepository.taggedDevices
 import com.advancedtelematic.director.deviceregistry.data.*
 import com.advancedtelematic.director.deviceregistry.data.DataType.{
   DeviceCountParams,
   DeviceStatusCounts,
   SearchParams
 }
+import com.advancedtelematic.director.deviceregistry.data.Device.DeviceOemId
 import com.advancedtelematic.director.deviceregistry.data.Group.GroupId
 import com.advancedtelematic.director.deviceregistry.data.GroupType.GroupType
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.PaginationResult
+import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.advancedtelematic.libats.slick.codecs.SlickRefined.*
 import com.advancedtelematic.libats.slick.db.SlickExtensions.*
 import com.advancedtelematic.libats.slick.db.SlickUUIDKey.*
+import com.advancedtelematic.libats.slick.db.{SlickAnyVal, SlickUUIDKey}
 import slick.jdbc.GetResult
 import slick.jdbc.MySQLProfile.api.*
 import slick.lifted.Rep
@@ -79,9 +81,9 @@ object SearchDBIO {
       .filter(notSeenSinceFilter)
   }
 
-  private def runQueryFilteringByName(ns: Namespace,
-                                      query: Query[DeviceTable, DeviceDB, Seq],
-                                      nameContains: Option[String]) = {
+  private def searchQueryByName(ns: Namespace,
+                                query: Query[DeviceTable, DeviceDB, Seq],
+                                nameContains: Option[String]) = {
     val deviceIdsByName = searchQuery(ns, nameContains, None, None).map(_.id)
     query.filter(_.id in deviceIdsByName)
   }
@@ -98,107 +100,9 @@ object SearchDBIO {
       .map(_._2)
       .distinct
 
-  def search(ns: Namespace, params: SearchParams)(
+  private def applyCommonSearchFiltersTo(params: SearchParams,
+                                         query: Query[DeviceTable, DeviceDB, Seq])(
     implicit ec: ExecutionContext): DBIO[PaginationResult[DeviceDB]] = {
-    val deviceTableQuery = params match {
-
-      case SearchParams(
-            Some(oemId),
-            _,
-            _,
-            None,
-            None,
-            None,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) =>
-        DeviceRepository.findByDeviceIdQuery(ns, oemId)
-
-      case SearchParams(
-            None,
-            Some(true),
-            gt,
-            None,
-            nameContains,
-            None,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) =>
-        runQueryFilteringByName(ns, groupedDevicesQuery(ns, gt), nameContains)
-
-      case SearchParams(
-            None,
-            Some(false),
-            gt,
-            None,
-            nameContains,
-            None,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) =>
-        val ungroupedDevicesQuery =
-          devices.filterNot(_.id.in(groupedDevicesQuery(ns, gt).map(_.id)))
-        runQueryFilteringByName(ns, ungroupedDevicesQuery, nameContains)
-
-      case SearchParams(
-            None,
-            _,
-            _,
-            gid,
-            nameContains,
-            notSeenSinceHours,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _,
-            _
-          ) =>
-        searchQuery(ns, nameContains, gid, notSeenSinceHours)
-
-      case _ => throw new IllegalArgumentException("Invalid parameter combination.")
-    }
-
     val sortBy = params.sortBy.getOrElse(DeviceSortBy.Name)
     val sortDirection = params.sortDirection.getOrElse(SortDirection.Asc)
 
@@ -229,7 +133,7 @@ object SearchDBIO {
         _ => true.bind
     }
 
-    deviceTableQuery
+    query
       .maybeFilter(r => r.deviceStatus === params.status)
       .maybeFilter(_.hibernated === params.hibernated)
       .maybeFilter(_.createdAt > params.createdAtStart)
@@ -240,7 +144,194 @@ object SearchDBIO {
       .filter(lastSeenEndFilter)
       .filter(hardwareIdFilter)
       .sortBy(devices => devices.ordered(sortBy, sortDirection))
-      .paginateResult(params.offset.orDefaultOffset, params.limit.orDefaultLimit)
+      .paginateResult(params.offset, params.limit)
+  }
+
+  def search(ns: Namespace, params: SearchParams)(
+    implicit ec: ExecutionContext): DBIO[PaginationResult[DeviceDB]] = {
+    params match {
+
+      case SearchParams(
+            Some(oemId),
+            _,
+            _,
+            None,
+            None,
+            None,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _
+          ) =>
+        applyCommonSearchFiltersTo(params, DeviceRepository.findByDeviceIdQuery(ns, oemId))
+
+      case SearchParams(
+            None,
+            Some(true),
+            gt,
+            None,
+            nameContains,
+            None,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _
+          ) =>
+        applyCommonSearchFiltersTo(
+          params,
+          searchQueryByName(ns, groupedDevicesQuery(ns, gt), nameContains)
+        )
+
+      case SearchParams(
+            None,
+            Some(false),
+            gt,
+            None,
+            nameContains,
+            None,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _
+          ) =>
+        val ungroupedDevicesQuery =
+          devices.filterNot(_.id.in(groupedDevicesQuery(ns, gt).map(_.id)))
+        applyCommonSearchFiltersTo(
+          params,
+          searchQueryByName(ns, ungroupedDevicesQuery, nameContains)
+        )
+
+      case SearchParams(None, _, _, _, _, _, _, _, _, _, _, _, _, _, _, deviceTags, _, _, _, _)
+          if deviceTags.nonEmpty =>
+        tagsSearch(ns, params)
+
+      case SearchParams(
+            None,
+            _,
+            _,
+            gid,
+            nameContains,
+            notSeenSinceHours,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _,
+            _
+          ) =>
+        applyCommonSearchFiltersTo(params, searchQuery(ns, nameContains, gid, notSeenSinceHours))
+
+      case _ => throw new IllegalArgumentException("Invalid parameter combination.")
+    }
+  }
+
+  private def tagsSearch(ns: Namespace, params: SearchParams)(
+    implicit ec: ExecutionContext): DBIO[PaginationResult[DeviceDB]] = {
+
+    trait SearchQuery {
+      type Result
+      val query: String
+      val limit: Limit
+      val offset: Offset
+      implicit val getResult: GetResult[Result]
+    }
+
+    object Count extends SearchQuery {
+      override type Result = Long
+      override val query: String = "SELECT COUNT(*)"
+      override val limit: Limit = Limit(Long.MaxValue)
+      override val offset: Offset = Offset(0)
+      override implicit val getResult: GetResult[Long] = GetResult.GetLong
+    }
+
+    object Results extends SearchQuery {
+      override type Result = DeviceDB
+      override val query: String = """SELECT DISTINCT uuid, device_name, device_id, device_type,
+                    last_seen, devices.created_at, activated_at, device_status, notes,
+                    hibernated, mqtt_status, mqtt_last_seen"""
+      override val limit: Limit = params.limit
+      override val offset: Offset = params.offset
+      override implicit val getResult: GetResult[DeviceDB] = pr =>
+        DeviceDB(
+          ns,
+          SlickUUIDKey.dbMapping[DeviceId].getValue(pr.rs, 1),
+          SlickAnyVal.stringAnyValSerializer[DeviceName].getValue(pr.rs, 2),
+          SlickAnyVal.stringAnyValSerializer[DeviceOemId].getValue(pr.rs, 3),
+          SlickMappings.deviceTypeMaper.getValue(pr.rs, 4),
+          Option(javaInstantMapping.getValue(pr.rs, 5)),
+          javaInstantMapping.getValue(pr.rs, 6),
+          Option(javaInstantMapping.getValue(pr.rs, 7)),
+          SlickMappings.deviceStatusColumnType.getValue(pr.rs, 8),
+          Option(pr.rs.getString(9)),
+          pr.rs.getBoolean(10),
+          SlickMappings.mqttStatusMapper.getValue(pr.rs, 11),
+          Option(javaInstantMapping.getValue(pr.rs, 12))
+        )
+    }
+
+    def buildQuery(squery: SearchQuery) = {
+      import squery.*
+
+      // this is SQL injection safe only because we validate the parameters format
+      val tags = params.deviceTags.map(t => s"('${t.tagId.value}','${t.tagValue}')").mkString(",")
+
+      sql"""
+             #${squery.query} FROM Device devices
+             JOIN #${taggedDevices.baseTableRow.tableName} tags ON devices.uuid = tags.device_uuid
+             WHERE
+               devices.namespace = ${ns.get} AND
+               (tags.tag_id, tags.tag_value) IN (#$tags)
+             ORDER BY ${params.sortBy.map(_.columnName).getOrElse("uuid")} ${params.sortDirection
+          .getOrElse(SortDirection.Asc)
+          .toString}
+             LIMIT ${squery.limit.value}
+             OFFSET ${squery.offset.value}
+        """.as[squery.Result]
+    }
+
+    buildQuery(Count).flatMap { count =>
+      buildQuery(Results).map { d =>
+        PaginationResult(d, count.headOption.getOrElse(0L), params.offset, params.limit)
+      }
+    }
   }
 
   def countByStatus(ns: Namespace, params: DeviceCountParams): DBIO[DeviceStatusCounts] = {

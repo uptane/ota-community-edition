@@ -19,6 +19,10 @@ import com.advancedtelematic.director.deviceregistry.data.Device.{DeviceOemId, D
 import com.advancedtelematic.director.deviceregistry.data.DeviceStatus.*
 import io.circe.{Decoder, Encoder, KeyDecoder, KeyEncoder}
 import DataType.{mqttStatusDecoder, mqttStatusEncoder}
+import com.advancedtelematic.director.db.deviceregistry.Schema
+import com.advancedtelematic.director.db.deviceregistry.Schema.DeviceTable
+import slick.ast.{FieldSymbol, Select}
+import slick.lifted.{Rep, TableQuery}
 
 final case class DeviceDB(namespace: Namespace,
                           uuid: DeviceId,
@@ -81,16 +85,6 @@ object Device {
   type DeviceType = DeviceType.DeviceType
 
   final object DeviceType extends Enumeration {
-
-    // TODO: We should encode Enums as strings, not Ints
-    // Moved this from SlickEnum, because this should **NOT** be used
-    // It's difficult to read this when reading from the database and the Id is not stable when we add/remove
-    // values from the enum
-    import slick.jdbc.MySQLProfile.MappedJdbcType
-    import slick.jdbc.MySQLProfile.api._
-
-    implicit val enumMapper: slick.jdbc.MySQLProfile.BaseColumnType[Value] =
-      MappedJdbcType.base[Value, Int](_.id, this.apply)
 
     type DeviceType = Value
     val Other, Vehicle = Value
@@ -158,11 +152,17 @@ object SortDirection {
 }
 
 object DeviceSortBy {
-  sealed trait DeviceSortBy
-  case object Name extends DeviceSortBy
-  case object CreatedAt extends DeviceSortBy
-  case object DeviceId extends DeviceSortBy
-  case object Uuid extends DeviceSortBy
-  case object ActivatedAt extends DeviceSortBy
-  case object LastSeen extends DeviceSortBy
+  sealed abstract class DeviceSortBy(column: DeviceTable => Rep[?]) {
+    def columnName: String =
+      column(TableQuery[Schema.DeviceTable].baseTableRow).toNode match {
+        case Select(_, FieldSymbol(name)) => name
+        case col => throw new IllegalArgumentException(s"$col cannot be used as device sort column")
+      }
+  }
+  case object Name extends DeviceSortBy(_.deviceName)
+  case object CreatedAt extends DeviceSortBy(_.createdAt)
+  case object DeviceId extends DeviceSortBy(_.oemId)
+  case object Uuid extends DeviceSortBy(_.id)
+  case object ActivatedAt extends DeviceSortBy(_.activatedAt)
+  case object LastSeen extends DeviceSortBy(_.lastSeen)
 }

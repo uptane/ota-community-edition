@@ -8,7 +8,7 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, StatusCodes}
 import com.advancedtelematic.director.deviceregistry.data.Codecs.*
 import com.advancedtelematic.director.deviceregistry.data.CredentialsType.CredentialsType
 import com.advancedtelematic.director.deviceregistry.data.DataType.DeviceT
@@ -23,7 +23,7 @@ trait PublicCredentialsRequests { self: ResourceSpec =>
 
   import StatusCodes.*
   import com.advancedtelematic.director.deviceregistry.data.Device.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   private val credentialsApi = "devices"
 

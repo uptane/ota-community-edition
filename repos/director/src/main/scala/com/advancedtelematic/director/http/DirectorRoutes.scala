@@ -1,6 +1,6 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.server.{Directives, _}
+import org.apache.pekko.http.scaladsl.server.{Directives, _}
 import com.advancedtelematic.libats.http.{ErrorHandler, NamespaceDirectives}
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient
@@ -24,8 +24,9 @@ class DirectorRoutes(keyserverClient: KeyserverClient, allowEcuReplacement: Bool
         new AdminResource(extractNamespace, keyserverClient).route ~
           new AssignmentsResource(extractNamespace).route ~
           new DeviceResource(extractNamespace, keyserverClient, allowEcuReplacement).route ~
-          new MultiTargetUpdatesResource(extractNamespace).route ~
-          new LegacyRoutes(extractNamespace).route
+          new TargetUpdateSpecsResource(extractNamespace).route ~
+          new LegacyRoutes(extractNamespace).route ~
+          new UpdateResource(extractNamespace).route
       } ~
         new DirectorDebugResource().route
     }

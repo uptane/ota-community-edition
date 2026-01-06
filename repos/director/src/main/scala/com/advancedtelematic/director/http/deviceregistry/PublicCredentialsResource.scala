@@ -8,10 +8,10 @@
 
 package com.advancedtelematic.director.http.deviceregistry
 
-import akka.http.scaladsl.marshalling.Marshaller.*
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.server.{Directive1, Route}
-import akka.http.scaladsl.util.FastFuture
+import org.apache.pekko.http.scaladsl.marshalling.Marshaller.*
+import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.server.{Directive1, Route}
+import org.apache.pekko.http.scaladsl.util.FastFuture
 import com.advancedtelematic.director.db.deviceregistry.{
   DeviceRepository,
   PublicCredentialsRepository
@@ -51,7 +51,7 @@ class PublicCredentialsResource(
   deviceNamespaceAuthorizer: Directive1[DeviceId])(implicit db: Database, ec: ExecutionContext) {
 
   import PublicCredentialsResource.*
-  import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+  import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 
   lazy val base64Decoder = Base64.getDecoder()
   lazy val base64Encoder = Base64.getEncoder()

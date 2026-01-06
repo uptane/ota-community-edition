@@ -1,18 +1,18 @@
 package com.advancedtelematic.director.http
 
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import cats.Show
-import cats.data.NonEmptyList
-import com.advancedtelematic.director.data.DataType.AdminRoleName
+import cats.data.{NonEmptyList, NonEmptySet}
+import com.advancedtelematic.director.data.DataType.{AdminRoleName, TargetSpecId, UpdateId}
 import com.advancedtelematic.director.data.DbDataType.{EcuTargetId, HardwareUpdate}
 import com.advancedtelematic.libats.data.DataType.CorrelationId
-import com.advancedtelematic.libats.data.{EcuIdentifier, ErrorCode}
+import com.advancedtelematic.libats.data.ErrorCode
 import com.advancedtelematic.libats.http.Errors.{Error, JsonError, MissingEntityId, RawError}
-import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, UpdateId}
+import com.advancedtelematic.libats.messaging_datatype.DataType.{DeviceId, EcuIdentifier}
 import com.advancedtelematic.libtuf.data.ClientDataType.TufRole
 import com.advancedtelematic.libtuf.data.TufDataType.RepoId
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
-import io.circe.Encoder
+import io.circe.{Encoder, Json}
 import io.circe.syntax.*
 
 object ErrorCodes {
@@ -49,7 +49,13 @@ object ErrorCodes {
 
   val UpdateScheduleError = ErrorCode("update_schedule_error")
 
-  val DeviceHasScheduledUpdate = ErrorCode("update_already_scheduled_error")
+  val DeviceHasActiveUpdate = ErrorCode("device_has_active_update")
+
+  val UpdateCannotBeCancelled = ErrorCode("update_cannot_be_cancelled")
+
+  val DeviceCannotBeUpdated = ErrorCode("device_cannot_be_updated")
+
+  val AssignmentBelongsToUpdate = ErrorCode("assignment_belongs_to_update")
 }
 
 object Errors {
@@ -76,25 +82,27 @@ object Errors {
         s"Ecu $deviceId/$ecuIdentifier not affected for $update, installed target is already the target update"
       )
 
-  case class DeviceNoCompatibleHardware(deviceId: DeviceId, mtuId: UpdateId)
+  case class DeviceNoCompatibleHardware(deviceId: DeviceId, targetSpecId: TargetSpecId)
       extends Error(
         ErrorCodes.DeviceNoCompatibleHardware,
         StatusCodes.BadRequest,
-        s"$deviceId not affected for $mtuId, device does not have any ecu with compatible hardware"
+        s"$deviceId not affected for $targetSpecId, device does not have any ecu with compatible hardware"
       )
 
-  case class DeviceHasScheduledUpdate(deviceId: DeviceId, mtuId: UpdateId)
+  case class DeviceHasActiveUpdate(deviceId: DeviceId, targetSpecId: TargetSpecId)
       extends Error(
-        ErrorCodes.DeviceHasScheduledUpdate,
+        ErrorCodes.DeviceHasActiveUpdate,
         StatusCodes.BadRequest,
-        s"$deviceId not affected for $mtuId, there is an update scheduled for the device"
+        s"$deviceId not affected for $targetSpecId, there is an update scheduled for the device"
       )
 
-  case class NotAffectedByMtu(deviceId: DeviceId, ecuIdentifier: EcuIdentifier, mtuId: UpdateId)
+  case class NotAffectedByMtu(deviceId: DeviceId,
+                              ecuIdentifier: EcuIdentifier,
+                              targetSpecId: TargetSpecId)
       extends Error(
         ErrorCodes.NotAffectedByMtu,
         StatusCodes.BadRequest,
-        s"ecu $deviceId$ecuIdentifier not affected by $mtuId"
+        s"ecu $deviceId$ecuIdentifier not affected by $targetSpecId"
       )
 
   case class InvalidAssignment(targetId: EcuTargetId, correlationId: CorrelationId)
@@ -114,6 +122,17 @@ object Errors {
         StatusCodes.NotFound,
         s"admin role $repoId/$name not found"
       )
+
+  import com.advancedtelematic.libats.data.ErrorRepresentation.*
+  import com.advancedtelematic.libats.codecs.CirceRefined.*
+
+  def DeviceCannotBeUpdated(deviceId: DeviceId, reasons: Map[EcuIdentifier, Error]) = JsonError(
+    ErrorCodes.DeviceCannotBeUpdated,
+    StatusCodes.BadRequest,
+    reasons.view.mapValues(_.toErrorRepr).toMap.asJson,
+    msg =
+      s"Device $deviceId cannot be updated: ${reasons.view.mapValues(_.msg).toList.mkString(", ")}"
+  )
 
   def DeviceMissingPrimaryEcu(deviceId: DeviceId) = RawError(
     ErrorCodes.DeviceMissingPrimaryEcu,
@@ -182,6 +201,13 @@ object Errors {
       s"there is an assignmement in flight for $deviceId"
     )
 
+  def AssignmentInFlight(deviceIds: NonEmptyList[DeviceId]) =
+    RawError(
+      ErrorCode("assignment_in_flight_devices"),
+      StatusCodes.Conflict,
+      s"there is an assignment in flight for $deviceIds"
+    )
+
   def TooManyOfflineRoles(max: Int) =
     RawError(
       ErrorCodes.TooManyOfflineRoles,
@@ -202,7 +228,20 @@ object Errors {
       ErrorCodes.UpdateScheduleError,
       StatusCodes.BadRequest,
       reasons.asJson,
-      msg = "Invalid ecu status for scheduled update"
+      msg = s"Invalid ecu ($deviceId) status for scheduled update"
     )
 
+  def UpdateCannotBeCancelled(updateId: UpdateId) =
+    RawError(
+      ErrorCodes.UpdateCannotBeCancelled,
+      StatusCodes.Conflict,
+      s"Update $updateId cannot be cancelled because it is not in the Assigned status"
+    )
+
+  def AssignmentBelongsToUpdate(correlationIds: NonEmptyList[CorrelationId]) =
+    RawError(
+      ErrorCodes.AssignmentBelongsToUpdate,
+      StatusCodes.Conflict,
+      s"The assignment cannot be cancelled using the assignments API because it belongs to an update. Use the updates API"
+    )
 }

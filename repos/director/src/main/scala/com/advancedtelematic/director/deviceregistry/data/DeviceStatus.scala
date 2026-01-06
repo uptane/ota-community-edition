@@ -8,7 +8,7 @@
 
 package com.advancedtelematic.director.deviceregistry.data
 
-import akka.http.scaladsl.unmarshalling.Unmarshaller
+import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshaller
 import io.circe.{Decoder, Encoder}
 
 object DeviceStatus extends Enumeration {
