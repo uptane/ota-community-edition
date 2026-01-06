@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 
 class BandwidthUpdateSpec extends TreeHubSpec with UsageUpdateSpec with TestKitBase {
 
-  lazy val subject = TestActorRef(new BandwidthUpdate(messageBus, objectStore))
+  lazy val subject = TestActorRef(new UsageMetricsRouter(messageBus, objectStore))
 
   system.eventStream.subscribe(testActor, classOf[BandwidthUsage])
 

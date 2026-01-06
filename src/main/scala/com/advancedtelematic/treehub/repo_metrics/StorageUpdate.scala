@@ -2,9 +2,8 @@ package com.advancedtelematic.treehub.repo_metrics
 
 import java.time.Instant
 import java.util.UUID
-
-import scala.concurrent.duration._
-import akka.actor.{Actor, ActorLogging, ActorRef, Props, Status}
+import scala.concurrent.duration.*
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Status}
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{Sink, Source}
 import com.advancedtelematic.data.DataType.ObjectId
@@ -13,7 +12,9 @@ import com.advancedtelematic.libats.messaging.MessageBusPublisher
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType
 import com.advancedtelematic.treehub.object_store.ObjectStore
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter.{Done, UpdateBandwidth, UpdateStorage}
-import com.advancedtelematic.libats.messaging_datatype.Messages._
+import com.advancedtelematic.libats.messaging_datatype.Messages.*
+import com.advancedtelematic.treehub.Settings
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -30,17 +31,29 @@ object UsageMetricsRouter {
     Props(new UsageMetricsRouter(messageBusPublisher, objectStore))
 }
 
-class UsageMetricsRouter(messageBusPublisher: MessageBusPublisher, objectStore: ObjectStore) extends Actor {
+class UsageMetricsRouter(messageBusPublisher: MessageBusPublisher, objectStore: ObjectStore) extends Actor with Settings {
 
   val storageActor = context.actorOf(StorageUpdate(messageBusPublisher, objectStore))
   val bandwidthActor = context.actorOf(BandwidthUpdate(messageBusPublisher, objectStore))
 
-  override def receive: Receive = {
+  private lazy val log = LoggerFactory.getLogger(this.getClass)
+
+  private def ignoringMessages: Receive = {
+    case msg =>
+      log.debug(s"ignoring msg ${msg.getClass.getSimpleName}, publishing is disabled")
+  }
+
+  private def acceptingMessages: Receive = {
     case m: UpdateStorage =>
       storageActor.forward(m)
     case m: UpdateBandwidth =>
       bandwidthActor.forward(m)
   }
+
+  override def receive: Receive = if(usageMessagesEnabled) {
+    acceptingMessages
+  } else
+    ignoringMessages
 }
 
 protected object StorageUpdate {
@@ -60,7 +73,7 @@ protected class StorageUpdate(publisher: MessageBusPublisher, objectStore: Objec
 
   var namespaceUsageStream: ActorRef = null
 
-  implicit val _system = context.system
+  implicit val _system: ActorSystem = context.system
 
   override def preStart(): Unit = {
     namespaceUsageStream =

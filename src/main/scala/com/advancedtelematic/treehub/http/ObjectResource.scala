@@ -1,19 +1,19 @@
 package com.advancedtelematic.treehub.http
 
 import java.io.File
-
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.*
 import akka.stream.Materializer
 import com.advancedtelematic.data.DataType
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.http.Errors.ObjectExists
+import com.advancedtelematic.treehub.http.PathMatchers.PrefixedObjectId
 import com.advancedtelematic.treehub.object_store.BlobStore.UploadAt
 import com.advancedtelematic.treehub.object_store.ObjectStore
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter.{UpdateBandwidth, UpdateStorage}
-import slick.jdbc.MySQLProfile.api._
+import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.ExecutionContext
 import scala.util.Success
@@ -21,12 +21,8 @@ import scala.util.Success
 class ObjectResource(namespace: Directive1[Namespace],
                      objectStore: ObjectStore,
                      usageHandler: UsageMetricsRouter.HandlerRef)
-                    (implicit db: Database, ec: ExecutionContext, mat: Materializer) {
-  import akka.http.scaladsl.server.Directives._
-
-  val PrefixedObjectId: PathMatcher1[ObjectId] = (Segment / Segment).tflatMap { case (oprefix, osuffix) =>
-    ObjectId.parse(oprefix + osuffix).toOption.map(Tuple1(_))
-  }
+                    (implicit db: Database, ec: ExecutionContext) {
+  import akka.http.scaladsl.server.Directives.*
 
   private def hintNamespaceStorage(namespace: Namespace): Directive0 = mapResponse { resp =>
     if(resp.status.isSuccess())
@@ -76,7 +72,7 @@ class ObjectResource(namespace: Directive1[Namespace],
         complete(objectStore.completeClientUpload(ns, objectId).map(_ => StatusCodes.NoContent))
       } ~
       (post & hintNamespaceStorage(ns)) {
-        (outOfBandStorageEnabled & headerValueByType[OutOfBandStorageHeader](()) & parameter("size".as[Long])) { (_, size) =>
+        (outOfBandStorageEnabled & headerValueByType(OutOfBandStorageHeader) & parameter("size".as[Long])) { (_, size) =>
           onSuccess(objectStore.storeOutOfBand(ns, objectId, size)) { case UploadAt(uri) =>
             redirect(uri, StatusCodes.Found)
           }

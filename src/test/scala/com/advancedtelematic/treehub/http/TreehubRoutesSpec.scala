@@ -13,30 +13,38 @@ import com.advancedtelematic.util.ResourceSpec.ClientTObject
 import com.advancedtelematic.util.{ResourceSpec, TreeHubSpec}
 import com.amazonaws.SdkClientException
 
+import java.nio.file.Path
 import scala.concurrent.Future
 
 class TreehubRoutesSpec extends TreeHubSpec with ResourceSpec {
 
   val errorBlobStore = new BlobStore {
-    override def storeStream(namespace: DataType.Namespace, id: ObjectId, size: Long, blob: Source[ByteString, _]): Future[Long] = ???
+    override def deleteObject(ns: DataType.Namespace, path: Path): Future[Done] =
+      FastFuture.failed(new RuntimeException("[test] delete failed"))
+
+    override def deleteObjects(ns: DataType.Namespace, pathPrefix: Path): Future[Done] =
+      FastFuture.failed(new RuntimeException("[test] delete failed"))
+
+    override def storeStream(namespace: DataType.Namespace, path: Path, size: Long, blob: Source[ByteString, _]): Future[Long] =
+      ???
 
     override val supportsOutOfBandStorage: Boolean = false
 
-    override def storeOutOfBand(namespace: DataType.Namespace, id: ObjectId): Future[BlobStore.OutOfBandStoreResult] = ???
+    override def storeOutOfBand(namespace: DataType.Namespace, path: Path): Future[BlobStore.OutOfBandStoreResult] = ???
 
-    override def buildResponse(namespace: DataType.Namespace, id: ObjectId): Future[HttpResponse] = ???
+    override def buildResponse(namespace: DataType.Namespace, path: Path): Future[HttpResponse] = ???
 
-    override def readFull(namespace: DataType.Namespace, id: ObjectId): Future[ByteString] = ???
+    override def readFull(namespace: DataType.Namespace, path: Path): Future[ByteString] = ???
 
-    override def exists(namespace: DataType.Namespace, id: ObjectId): Future[Boolean] = FastFuture.failed(new SdkClientException("Timeout on waiting"))
+    override def exists(namespace: DataType.Namespace, path: Path): Future[Boolean] =
+      FastFuture.failed(new SdkClientException("Timeout on waiting"))
 
-    override def deleteObject(ns: DataType.Namespace, objectId: ObjectId): Future[Done] = FastFuture.failed(new RuntimeException("[test] delete failed"))
   }
 
   val errorObjectStore = new ObjectStore(errorBlobStore)
 
   override lazy val routes = new TreeHubRoutes(
-    namespaceExtractor, messageBus, errorObjectStore, deltaStore, fakeUsageUpdate).routes
+    namespaceExtractor, messageBus, errorObjectStore, deltas, fakeUsageUpdate).routes
 
   test("returns 408 when an aws.SdkClientException is thrown") {
     val obj = new ClientTObject()

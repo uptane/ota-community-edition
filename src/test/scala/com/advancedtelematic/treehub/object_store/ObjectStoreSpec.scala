@@ -1,25 +1,23 @@
 package com.advancedtelematic.treehub.object_store
 
-import java.nio.file.Files
-import cats.syntax.either._
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
+import com.advancedtelematic.treehub.http.Errors
 import com.advancedtelematic.util.{DatabaseSpec, TreeHubSpec}
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.time.{Seconds, Span}
 
-import scala.concurrent.ExecutionContext
-import com.advancedtelematic.treehub.http.Errors
+import java.nio.file.Files
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 class ObjectStoreSpec extends TreeHubSpec with DatabaseSpec with ObjectRepositorySupport with PatienceConfiguration {
 
-  implicit val ec = ExecutionContext.global
-  implicit val system = ActorSystem("ObjectStoreSpecSystem")
+  implicit val ec: ExecutionContextExecutor = ExecutionContext.global
+  implicit val system: ActorSystem = ActorSystem("ObjectStoreSpecSystem")
 
   override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(3, Seconds))
 
@@ -36,14 +34,14 @@ class ObjectStoreSpec extends TreeHubSpec with DatabaseSpec with ObjectRepositor
 
     res shouldBe tobj
     objectRepository.exists(tobj.namespace, tobj.id).futureValue shouldBe true
-    localStorage.exists(tobj.namespace, tobj.id).futureValue shouldBe true
+    localStorage.exists(tobj.namespace, tobj.id.asPrefixedPath).futureValue shouldBe true
   }
 
   test("findBlob fails if object is not found") {
     val tobj = TObject(defaultNs, ObjectId.parse("ce720e82a727efa4b30a6ab73cefe31a8d4ec6c0d197d721f07605913d2a279a.commit").toOption.get, 0L, ObjectStatus.UPLOADED)
 
     whenReady(objectRepository.create(tobj)) { _ =>
-      objectStore.findBlob(tobj.namespace, tobj.id).failed.futureValue shouldBe Errors.ObjectNotFound
+      objectStore.findBlob(tobj.namespace, tobj.id).failed.futureValue.getMessage shouldBe Errors.ObjectNotFound(tobj.id).getMessage
     }
   }
 

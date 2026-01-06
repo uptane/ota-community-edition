@@ -4,16 +4,17 @@
   */
 package com.advancedtelematic.treehub.http
 
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.unmarshalling.PredefinedFromEntityUnmarshallers.byteArrayUnmarshaller
 import akka.pattern.ask
-import com.advancedtelematic.libats.http.Errors.MissingEntity
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.util.FakeUsageUpdate.{CurrentBandwith, CurrentStorage}
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
 import com.advancedtelematic.util.{LongHttpRequest, LongTest, ResourceSpec, TreeHubSpec}
 
-import scala.concurrent.duration._
+import java.util.UUID
+import scala.concurrent.duration.*
 
 class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRequest with LongTest with ObjectRepositorySupport {
 
@@ -71,9 +72,9 @@ class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRequ
       status shouldBe StatusCodes.NoContent
     }
 
-    objectRepository.find(defaultNs, obj.objectId).failed.futureValue shouldBe Errors.ObjectNotFound
+    objectRepository.find(defaultNs, obj.objectId).failed.futureValue.getMessage shouldBe Errors.ObjectNotFound(obj.objectId).getMessage
     objectStore.exists(defaultNs, obj.objectId).futureValue shouldBe false
-    localFsBlobStore.exists(defaultNs, obj.objectId).futureValue shouldBe false
+    localFsBlobStore.exists(defaultNs, obj.objectId.asPrefixedPath).futureValue shouldBe false
   }
 
   test("DELETE keeps other objects intact") {
@@ -153,7 +154,7 @@ class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRequ
 
     val usage = fakeUsageUpdate.ask(CurrentStorage(defaultNs))(1.second).mapTo[Long].futureValue
 
-    usage should be >= 1l
+    usage should be >= 1L
   }
 
   test("GET hints updater to update current bandwidth") {
@@ -215,6 +216,14 @@ class ObjectResourceSpec extends TreeHubSpec with ResourceSpec with LongHttpRequ
 
     Head(apiUri(s"objects/${obj.prefixedObjectId}")) ~> routes ~> check {
       status shouldBe StatusCodes.OK
+    }
+  }
+
+  test("returns 404 if commit doesn't exist, with a uuid as namespace") {
+    val obj = new ClientTObject()
+
+    Get(apiUri(s"objects/${obj.prefixedObjectId}")).addHeader(RawHeader("x-ats-namespace", UUID.randomUUID().toString)) ~> routes ~> check {
+      status shouldBe StatusCodes.NotFound
     }
   }
 }

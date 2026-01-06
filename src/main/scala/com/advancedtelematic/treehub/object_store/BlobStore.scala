@@ -1,13 +1,14 @@
 package com.advancedtelematic.treehub.object_store
 
 import akka.Done
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.object_store.BlobStore.OutOfBandStoreResult
 
+import java.nio.file.Path
 import scala.concurrent.Future
 import scala.util.control.NoStackTrace
 
@@ -17,25 +18,24 @@ object BlobStore {
 }
 
 trait BlobStore {
-  def deleteObject(ns: Namespace, objectId: ObjectId): Future[Done]
+  def deleteObject(ns: Namespace, path: Path): Future[Done]
 
-  def storeStream(namespace: Namespace, id: ObjectId, size: Long, blob: Source[ByteString, _]): Future[Long]
+  def deleteObjects(ns: Namespace, pathPrefix: Path): Future[Done]
+
+  def storeStream(namespace: Namespace, path: Path, size: Long, blob: Source[ByteString, _]): Future[Long]
 
   val supportsOutOfBandStorage: Boolean
 
-  def storeOutOfBand(namespace: Namespace, id: ObjectId): Future[OutOfBandStoreResult]
+  def storeOutOfBand(namespace: Namespace, path: Path): Future[OutOfBandStoreResult]
 
-  def buildResponse(namespace: Namespace, id: ObjectId): Future[HttpResponse]
+  def buildResponse(namespace: Namespace, path: Path): Future[HttpResponse]
 
-  def readFull(namespace: Namespace, id: ObjectId): Future[ByteString]
+  def readFull(namespace: Namespace, path: Path): Future[ByteString]
 
-  def exists(namespace: Namespace, id: ObjectId): Future[Boolean]
+  def exists(namespace: Namespace, path: Path): Future[Boolean]
 
-  protected def buildResponseFromBytes(source: Source[ByteString, _]): HttpResponse = {
+  protected def buildResponseFromBytes(source: Source[ByteString, ?]): HttpResponse = {
     val entity = HttpEntity(MediaTypes.`application/octet-stream`, source)
     HttpResponse(StatusCodes.OK, entity = entity)
   }
 }
-
-case class BlobStoreError(msg: String, cause: Throwable = null) extends Throwable(msg, cause) with NoStackTrace
-

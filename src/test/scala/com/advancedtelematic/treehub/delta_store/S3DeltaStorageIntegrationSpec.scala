@@ -1,65 +1,54 @@
 package com.advancedtelematic.treehub.delta_store
 
-import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import com.advancedtelematic.data.DataType.ValidDeltaId
-import com.advancedtelematic.libats.data.DataType.Namespace
-import com.advancedtelematic.treehub.delta_store.StaticDeltaStorage.StaticDeltaRedirectResponse
-import com.advancedtelematic.treehub.http.Errors
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import com.advancedtelematic.common.DigestCalculator
+import com.advancedtelematic.data.DataType.{CommitTupleOps, SuperBlockHash}
+import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
+import com.advancedtelematic.libats.messaging_datatype.DataType.{Commit, ValidCommit}
+import com.advancedtelematic.treehub.db.StaticDeltaMetaRepositorySupport
 import com.advancedtelematic.treehub.object_store
-import com.advancedtelematic.treehub.object_store.S3Client
-import com.advancedtelematic.util.TreeHubSpec
-import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.advancedtelematic.treehub.object_store.S3BlobStore
+import com.advancedtelematic.util.{ResourceSpec, TreeHubSpec}
+import eu.timepit.refined.api.RefType
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.time.{Seconds, Span}
 
-import scala.concurrent.ExecutionContext
+import java.nio.file.Paths
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.util.Random
 
-class S3DeltaStorageIntegrationSpec extends TreeHubSpec with BeforeAndAfterAll {
-  implicit val ec = ExecutionContext.global
-
-  implicit lazy val system = ActorSystem("S3BlobStoreSpec")
+class S3DeltaStorageIntegrationSpec extends TreeHubSpec with ResourceSpec with BeforeAndAfterAll with StaticDeltaMetaRepositorySupport {
+  implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
   val s3Client = object_store.S3Client(s3Credentials)
 
-  val s3DeltaStore = new S3DeltaStorage(s3Credentials, s3Client)
+  val s3DeltaStore = new S3BlobStore(s3Credentials, s3Client, allowRedirects = false, root = Some(Paths.get("deltas")))
+
+  override val deltas = new StaticDeltas(s3DeltaStore)
 
   override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(5, Seconds))
 
-  import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
+  test("returns static delta part") {
+    val superblockHash = RefType.applyRef[SuperBlockHash](randomHash()).toOption.get
+    val deltaId = (randomCommit(), randomCommit()).toDeltaId
 
-  val deltaId = "18/181901808-19279127".refineTry[ValidDeltaId].get
+    val bytes = ByteString("some static delta data")
+    deltas.store(defaultNs, deltaId, "0", Source.single(bytes), bytes.size, superblockHash).futureValue
 
-  override protected def beforeAll(): Unit = {
-    super.beforeAll()
+    deltas.store(defaultNs, deltaId, "superblock", Source.single(bytes), bytes.size, superblockHash).futureValue
 
-    val summaryPath = s3DeltaStore.summaryPath(defaultNs)
-    val superBlockPath = s3DeltaStore.deltaDir(defaultNs, deltaId).resolve("superblock")
+    val (size, result) = deltas.retrieve(defaultNs, deltaId, "0").futureValue
 
-    s3DeltaStore.s3client.putObject(s3Credentials.deltasBucketId, summaryPath.toString, "some summary")
+    size shouldBe bytes.size * 2
+    val savedBytes = result.entity.dataBytes.runFold(ByteString.empty)(_ ++ _).futureValue
 
-    s3DeltaStore.s3client.putObject(s3Credentials.deltasBucketId, superBlockPath.toString, "superblockstuff")
+    savedBytes.utf8String shouldBe "some static delta data"
   }
 
-  test("can retrieve delta superblock") {
-    val result = s3DeltaStore.retrieve(defaultNs, deltaId, "superblock").futureValue
-    result shouldBe a[StaticDeltaRedirectResponse]
-    result.asInstanceOf[StaticDeltaRedirectResponse].length shouldBe "superblockstuff".getBytes.length
-  }
+  def randomCommit(): Commit =
+    randomHash().refineTry[ValidCommit].get
 
-  test("can retrieve delta summary") {
-    val result = s3DeltaStore.summary(defaultNs).futureValue
-    val summary = result.runReduce(_ ++ _).futureValue.utf8String
-    summary shouldBe "some summary"
-  }
-
-  test("returns proper error if summary does not exist") {
-    val result = s3DeltaStore.summary(Namespace("doesnotexist")).failed.futureValue
-    result shouldBe Errors.SummaryDoesNotExist
-  }
-
-  test("returns proper error if delta superblock does not exist") {
-    val result = s3DeltaStore.retrieve(Namespace("doesnotexist"), deltaId, "superblock").failed.futureValue
-    result shouldBe Errors.StaticDeltaDoesNotExist
-  }
+  def randomHash() =
+    DigestCalculator.digest()(new Random().nextString(10))
 }

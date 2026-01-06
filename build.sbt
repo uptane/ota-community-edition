@@ -1,8 +1,8 @@
 name := "treehub"
 organization := "io.github.uptane"
-scalaVersion := "2.12.15"
+scalaVersion := "2.13.11"
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
+scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-Xasync", "-Xsource:3")
 
 def itFilter(name: String): Boolean = name endsWith "IntegrationSpec"
 
@@ -21,10 +21,10 @@ lazy val treehub = (project in file("."))
   .settings(UnitTest / testOptions := Seq(Tests.Filter(unitFilter)))
   .settings(IntegrationTest / testOptions := Seq(Tests.Filter(itFilter)))
   .settings(Seq(libraryDependencies ++= {
-    val akkaV = "2.6.17"
-    val akkaHttpV = "10.2.7"
+    val akkaV = "2.6.20"
+    val akkaHttpV = "10.2.10"
     val scalaTestV = "3.0.9"
-    val libatsV = "2.0.3"
+    val libatsV = "2.1.2"
 
     Seq(
       "com.typesafe.akka" %% "akka-actor" % akkaV,
@@ -35,8 +35,8 @@ lazy val treehub = (project in file("."))
       "com.typesafe.akka" %% "akka-slf4j" % akkaV,
       "org.scalatest"     %% "scalatest" % scalaTestV % "test,it",
 
-      "ch.qos.logback" % "logback-classic" % "1.2.6",
-      "org.slf4j" % "slf4j-api" % "1.7.32",
+      "ch.qos.logback" % "logback-classic" % "1.5.22",
+      "org.slf4j" % "slf4j-api" % "2.0.17",
 
       "io.github.uptane" %% "libats" % libatsV,
       "io.github.uptane" %% "libats-http" % libatsV,
@@ -49,12 +49,21 @@ lazy val treehub = (project in file("."))
       "io.github.uptane" %% "libats-logging" % libatsV,
       "io.github.uptane" %% "libats-logging" % libatsV,
 
-      "org.scala-lang.modules" %% "scala-async" % "0.9.6",
-      "org.mariadb.jdbc" % "mariadb-java-client" % "2.7.4",
+      "org.scala-lang.modules" %% "scala-async" % "1.0.1",
+      "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.6",
 
-      "com.amazonaws" % "aws-java-sdk-s3" % "1.12.105"
+      "org.scodec" %% "scodec-bits" % "1.1.37",
+      "org.scodec" %% "scodec-core" % "1.11.10",
+
+      "com.beachape" %% "enumeratum" % "1.7.2",
+      "com.beachape" %% "enumeratum-circe" % "1.7.2",
+      "com.amazonaws" % "aws-java-sdk-s3" % "1.12.796"
     )
   }))
+
+resolvers += "sonatype-snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+
+resolvers += "sonatype-releases" at "https://s01.oss.sonatype.org/content/repositories/releases"
 
 Compile / mainClass := Some("com.advancedtelematic.treehub.Boot")
 
@@ -70,16 +79,9 @@ dockerAliases ++= Seq(dockerAlias.value.withTag(git.gitHeadCommit.value))
 
 Docker / defaultLinuxInstallLocation := s"/opt/${moduleName.value}"
 
-dockerCommands := Seq(
-  Cmd("FROM", "advancedtelematic/alpine-jre:adoptopenjdk-jre8u262-b10"),
-  ExecCmd("RUN", "mkdir", "-p", s"/var/log/${moduleName.value}"),
-  Cmd("ADD", "opt /opt"),
-  Cmd("WORKDIR", s"/opt/${moduleName.value}"),
-  ExecCmd("ENTRYPOINT", s"/opt/${moduleName.value}/bin/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /opt/${moduleName.value}"),
-  Cmd("RUN", s"chown -R daemon:daemon /var/log/${moduleName.value}"),
-  Cmd("USER", "daemon")
-)
+dockerBaseImage := "eclipse-temurin:17.0.3_7-jre-jammy"
+
+Docker / daemonUser := "daemon"
 
 enablePlugins(JavaAppPackaging, GitVersioning, BuildInfoPlugin)
 

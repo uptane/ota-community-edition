@@ -1,6 +1,6 @@
-import com.typesafe.sbt.SbtGit._
-import com.typesafe.sbt.SbtGit.GitKeys._
-import com.typesafe.sbt.GitVersioning
+import com.github.sbt.git.SbtGit._
+import com.github.sbt.git.SbtGit.GitKeys._
+import com.github.sbt.git.GitVersioning
 import scala.util.Try
 import sbt._
 import sbt.Keys._

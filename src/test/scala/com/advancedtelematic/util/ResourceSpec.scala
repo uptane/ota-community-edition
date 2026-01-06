@@ -1,33 +1,30 @@
 package com.advancedtelematic.util
 
-import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import akka.testkit.TestDuration
-import scala.concurrent.duration._
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.http.scaladsl.model.Multipart.FormData.BodyPart
 import akka.http.scaladsl.model.{HttpEntity, MediaTypes, Multipart}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.advancedtelematic.common.DigestCalculator
-import com.advancedtelematic.data.DataType.{Commit, ObjectId}
-import com.advancedtelematic.treehub.Settings
-import com.advancedtelematic.treehub.http._
-import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, ObjectStore}
-import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter.{UpdateBandwidth, UpdateStorage}
-import com.advancedtelematic.util.FakeUsageUpdate.{CurrentBandwith, CurrentStorage}
-import eu.timepit.refined.api.Refined
-
-import java.nio.file.Files
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
 import akka.stream.scaladsl.Source
+import akka.testkit.TestDuration
 import akka.util.ByteString
-import org.scalatest.Suite
-
-import scala.util.Random
-import cats.syntax.either._
+import com.advancedtelematic.common.DigestCalculator
+import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.http.NamespaceDirectives
 import com.advancedtelematic.libats.messaging.test.MockMessageBus
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
-import com.advancedtelematic.treehub.delta_store.LocalDeltaStorage
+import com.advancedtelematic.treehub.Settings
+import com.advancedtelematic.treehub.delta_store.StaticDeltas
+import com.advancedtelematic.treehub.http.*
+import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, ObjectStore}
+import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter.{UpdateBandwidth, UpdateStorage}
+import com.advancedtelematic.util.FakeUsageUpdate.{CurrentBandwith, CurrentStorage}
+import eu.timepit.refined.api.Refined
+import org.scalatest.Suite
+
+import java.nio.file.Files
+import scala.concurrent.duration.*
+import scala.util.Random
 
 object ResourceSpec {
   class ClientTObject(val blobStr: String = Random.nextString(10)) {
@@ -63,26 +60,25 @@ class FakeUsageUpdate extends Actor with ActorLogging {
   var storageUsages = Map.empty[Namespace, Long]
   var bandwidthUsages = Map.empty[ObjectId, Long]
 
-
   override def receive: Receive = {
     case UpdateStorage(ns) =>
-      storageUsages += (ns -> (storageUsages.getOrElse(ns, 0l) + 1l))
+      storageUsages += (ns -> (storageUsages.getOrElse(ns, 0L) + 1L))
       log.info(s"Would publish storage bus message for $ns")
 
     case u @ UpdateBandwidth(_, usedBandwidth, objectId) =>
-      bandwidthUsages += (objectId -> (bandwidthUsages.getOrElse(objectId, 0l) + usedBandwidth))
+      bandwidthUsages += (objectId -> (bandwidthUsages.getOrElse(objectId, 0L) + usedBandwidth))
       log.info(s"Would publish bw bus message for $u")
 
     case CurrentStorage(ns) =>
-      sender ! storageUsages.getOrElse(ns, 0l)
+      sender() ! storageUsages.getOrElse(ns, 0L)
 
     case CurrentBandwith(objectId) =>
-      sender ! bandwidthUsages.getOrElse(objectId, 0l)
+      sender() ! bandwidthUsages.getOrElse(objectId, 0L)
   }
 }
 
 trait LongHttpRequest {
-  implicit def default(implicit system: ActorSystem) =
+  implicit def default(implicit system: ActorSystem): RouteTestTimeout =
     RouteTestTimeout(15.seconds.dilated(system))
 }
 
@@ -98,7 +94,7 @@ trait ResourceSpec extends ScalatestRouteTest with DatabaseSpec with Settings {
 
   val objectStore = new ObjectStore(localFsBlobStore)
 
-  val deltaStore = new LocalDeltaStorage(Files.createTempDirectory("treehub-deltas"))
+  val deltas = new StaticDeltas(LocalFsBlobStore(Files.createTempDirectory("treehub-deltas")))
 
   val fakeUsageUpdate = system.actorOf(Props(new FakeUsageUpdate), "fake-usage-update")
 
@@ -108,6 +104,6 @@ trait ResourceSpec extends ScalatestRouteTest with DatabaseSpec with Settings {
     namespaceExtractor,
     messageBus,
     objectStore,
-    deltaStore,
+    deltas,
     fakeUsageUpdate).routes
 }
