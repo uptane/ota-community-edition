@@ -1,9 +1,9 @@
 package com.advancedtelematic.treehub
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.{Directives, Route}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.Http.ServerBinding
+import org.apache.pekko.http.scaladsl.server.{Directives, Route}
 import com.advancedtelematic.libats.http.LogDirectives.*
 import com.advancedtelematic.libats.http.VersionDirectives.*
 import com.advancedtelematic.libats.http.tracing.Tracing
@@ -12,7 +12,7 @@ import com.advancedtelematic.libats.messaging.MessageBus
 import com.advancedtelematic.libats.slick.db.{BootMigrations, CheckMigrations, DatabaseSupport}
 import com.advancedtelematic.libats.slick.monitoring.DatabaseMetrics
 import com.advancedtelematic.metrics.prometheus.PrometheusMetricsSupport
-import com.advancedtelematic.metrics.{AkkaHttpConnectionMetrics, AkkaHttpRequestMetrics, MetricsSupport}
+import com.advancedtelematic.metrics.{PekkoHttpConnectionMetrics, PekkoHttpRequestMetrics, MetricsSupport}
 import com.advancedtelematic.treehub.daemon.{DeletedDeltaCleanupActor, StaleObjectArchiveActor}
 import com.advancedtelematic.treehub.delta_store.StaticDeltas
 import com.advancedtelematic.treehub.http.TreeHubRoutes
@@ -35,8 +35,8 @@ class TreehubBoot(override val globalConfig: Config,
     with DatabaseSupport
     with MetricsSupport
     with DatabaseMetrics
-    with AkkaHttpRequestMetrics
-    with AkkaHttpConnectionMetrics
+    with PekkoHttpRequestMetrics
+    with PekkoHttpConnectionMetrics
     with PrometheusMetricsSupport
     with CheckMigrations
     with VersionInfo

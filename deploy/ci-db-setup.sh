@@ -2,16 +2,16 @@
 
 set -xeuo pipefail
 
-MYSQL_COMMAND=mysql
+MYSQL_COMMAND=mariadb
 HOST=$1
-MYSQL=mysql
-MYSQLADMIN=mysqladmin
+MYSQL=mariadb
+MYSQLADMIN=mariadb-admin
 
-until $MYSQLADMIN ping --silent --protocol=TCP -h $HOST -P 3306 -u root -proot; do
+until $MYSQLADMIN ping --skip-ssl --silent --protocol=TCP -h $HOST -P 3306 -u root -proot; do
     echo waiting for mysql; sleep 1
 done
 
-$MYSQL -v -h $HOST -u root -proot <<EOF
+$MYSQL --skip-ssl -v -h $HOST -u root -proot <<EOF
 CREATE DATABASE IF NOT EXISTS ota_treehub;
 
 CREATE USER IF NOT EXISTS 'treehub' IDENTIFIED BY 'treehub';

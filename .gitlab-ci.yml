@@ -14,19 +14,19 @@ variables:
   SBT_OPTS: "-sbt-launch-dir .sbt/launchers -sbt-dir .sbt -ivy .ivy2 -Dsbt.color=true -Dscala.color=true"
   SERVICE: treehub
 
-image: registry.gitlab.com/torizon-platform/ci-container-build:scala-jvm17-0.0.5
+image: registry.gitlab.com/toradex/torizon-cloud/ci-container-build/scala:4acf34bc
 
 include:
-  - project: torizon-platform/ci-container-build
+  - project: toradex/torizon-cloud/ci-container-build
     file: gitlab-ci-templates/gitlab-sbt-docker-publish.yaml
     ref: master
-  - project: 'torizon-platform/deploy-env'
+  - project: 'toradex/torizon-cloud/deploy-env'
     ref: master
     file: '/gitlab/deploy-core-service.yml'
 
 services:
-  - name: docker:dind
-  - name: mariadb:10.4
+  - name: docker:28.5.0-dind
+  - name: mariadb:10.11
     alias: db
     command:
       - --character-set-server=utf8
@@ -54,6 +54,8 @@ test:
     - mysql -v -h db -u root -proot < db_user.sql
   script:
     - sbt ut:test
+  tags:
+    - torizon-cloud-team
 
 build docker image:
   stage: build image
@@ -63,3 +65,5 @@ build docker image:
   extends: .sbt-docker-publish
   variables:
     SERVICE_NAME: treehub
+  tags:
+    - torizon-cloud-team

@@ -2,9 +2,9 @@ package com.advancedtelematic.treehub.http
 
 import java.io.File
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.stream.scaladsl.FileIO
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.stream.scaladsl.FileIO
 import com.advancedtelematic.data.DataType.{Commit, ObjectId, ObjectStatus, Ref, RefName, TObject}
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
 import com.advancedtelematic.treehub.db.{ObjectRepositorySupport, RefRepositorySupport}

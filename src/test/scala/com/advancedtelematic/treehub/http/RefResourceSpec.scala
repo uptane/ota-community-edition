@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.http
 
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import org.apache.pekko.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.common.DigestCalculator
 import com.advancedtelematic.treehub.db.RefRepositorySupport
 import com.advancedtelematic.util.ResourceSpec.ClientTObject

@@ -1,17 +1,18 @@
 package com.advancedtelematic.treehub.http
 
-import akka.actor.Props
-import akka.http.scaladsl.model.*
-import akka.http.scaladsl.model.headers.Location
-import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.util.ByteString
+import org.apache.pekko.actor.Props
+import org.apache.pekko.http.scaladsl.model.*
+import org.apache.pekko.http.scaladsl.model.headers.Location
+import org.apache.pekko.http.scaladsl.server.Directives
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.util.ByteString
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.libats.http.{DefaultRejectionHandler, ErrorHandler}
 import com.advancedtelematic.util.LongTest
 import com.advancedtelematic.treehub.object_store.{ObjectStore, S3BlobStore}
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
 import com.advancedtelematic.util.{DatabaseSpec, FakeUsageUpdate, TreeHubSpec}
+import org.apache.pekko.http.scaladsl.Http
 
 import java.nio.file.Paths
 
@@ -58,7 +59,7 @@ class ObjectResourceIntegrationSpec extends TreeHubSpec with ScalatestRouteTest 
 
     val entity = HttpEntity.Strict(ContentTypes.`application/octet-stream`, ByteString(obj.blob))
     val req = HttpRequest(HttpMethods.PUT, url, entity = entity)
-    val awsResponse = akka.http.scaladsl.Http().singleRequest(req).futureValue
+    val awsResponse = Http().singleRequest(req).futureValue
     awsResponse.status shouldBe StatusCodes.OK
 
     Get(s"/objects/${obj.prefixedObjectId}") ~> routes ~> check {

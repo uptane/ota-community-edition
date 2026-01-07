@@ -1,8 +1,8 @@
 package com.advancedtelematic.treehub.daemon
 
-import akka.actor.{Actor, ActorLogging, Props}
-import akka.actor.Status.Failure
-import akka.pattern.{BackoffOpts, BackoffSupervisor}
+import org.apache.pekko.actor.{Actor, ActorLogging, Props}
+import org.apache.pekko.actor.Status.Failure
+import org.apache.pekko.pattern.{BackoffOpts, BackoffSupervisor}
 import com.advancedtelematic.data.DataType.StaticDeltaMeta
 import com.advancedtelematic.treehub.daemon.DeletedDeltaCleanupActor.{Done, Tick, defaultTickInterval}
 import com.advancedtelematic.treehub.db.StaticDeltaMetaRepositorySupport
@@ -29,7 +29,7 @@ class DeletedDeltaCleanupActor(storage: BlobStore, tickInterval: FiniteDuration 
   with StaticDeltaMetaRepositorySupport
   with ActorLogging {
 
-  import akka.pattern.pipe
+  import org.apache.pekko.pattern.pipe
 
   import scala.async.Async.*
 

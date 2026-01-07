@@ -1,6 +1,6 @@
 name := "treehub"
 organization := "io.github.uptane"
-scalaVersion := "2.13.11"
+scalaVersion := "2.13.16"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-Xasync", "-Xsource:3")
 
@@ -21,18 +21,18 @@ lazy val treehub = (project in file("."))
   .settings(UnitTest / testOptions := Seq(Tests.Filter(unitFilter)))
   .settings(IntegrationTest / testOptions := Seq(Tests.Filter(itFilter)))
   .settings(Seq(libraryDependencies ++= {
-    val akkaV = "2.6.20"
-    val akkaHttpV = "10.2.10"
+    val pekkoV = "1.1.5"
+    val pekkoHttpV = "1.2.0"
     val scalaTestV = "3.0.9"
-    val libatsV = "2.1.2"
+    val libatsV = "5.0.0"
 
     Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaV,
-      "com.typesafe.akka" %% "akka-stream" % akkaV,
-      "com.typesafe.akka" %% "akka-stream-testkit" % akkaV % "test",
-      "com.typesafe.akka" %% "akka-http" % akkaHttpV,
-      "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "test",
-      "com.typesafe.akka" %% "akka-slf4j" % akkaV,
+      "org.apache.pekko" %% "pekko-actor" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream" % pekkoV,
+      "org.apache.pekko" %% "pekko-stream-testkit" % pekkoV % "test",
+      "org.apache.pekko" %% "pekko-http" % pekkoHttpV,
+      "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpV % "test",
+      "org.apache.pekko" %% "pekko-slf4j" % pekkoV,
       "org.scalatest"     %% "scalatest" % scalaTestV % "test,it",
 
       "ch.qos.logback" % "logback-classic" % "1.5.22",
@@ -44,7 +44,7 @@ lazy val treehub = (project in file("."))
       "io.github.uptane" %% "libats-messaging" % libatsV,
       "io.github.uptane" %% "libats-messaging-datatype" % libatsV,
       "io.github.uptane" %% "libats-slick" % libatsV,
-      "io.github.uptane" %% "libats-metrics-akka" % libatsV,
+      "io.github.uptane" %% "libats-metrics-pekko" % libatsV,
       "io.github.uptane" %% "libats-metrics-prometheus" % libatsV,
       "io.github.uptane" %% "libats-logging" % libatsV,
       "io.github.uptane" %% "libats-logging" % libatsV,
