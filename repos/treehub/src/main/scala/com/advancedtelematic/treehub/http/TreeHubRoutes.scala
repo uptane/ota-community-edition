@@ -1,8 +1,8 @@
 package com.advancedtelematic.treehub.http
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.*
-import akka.stream.Materializer
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.*
+import org.apache.pekko.stream.Materializer
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.ErrorRepresentation
 import com.advancedtelematic.libats.data.ErrorRepresentation.*
@@ -14,7 +14,7 @@ import com.advancedtelematic.treehub.delta_store.StaticDeltas
 import com.advancedtelematic.treehub.object_store.ObjectStore
 import com.advancedtelematic.treehub.repo_metrics.UsageMetricsRouter
 import com.amazonaws.SdkClientException
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import slick.jdbc.MySQLProfile.api.*
 
 import scala.concurrent.ExecutionContext

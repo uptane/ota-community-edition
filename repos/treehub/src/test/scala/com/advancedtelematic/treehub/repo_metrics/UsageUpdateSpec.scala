@@ -1,8 +1,8 @@
 package com.advancedtelematic.treehub.repo_metrics
 
 import java.nio.file.{Files, Paths}
-import akka.actor.ActorSystem
-import akka.testkit.TestKitBase
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.testkit.TestKitBase
 import com.advancedtelematic.libats.messaging.MessageBus
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
 import com.advancedtelematic.treehub.object_store.{LocalFsBlobStore, ObjectStore}
