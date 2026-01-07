@@ -63,7 +63,7 @@ Configuration is done through a single config file, rather than using enviroment
 
 ## Running
 
-If you already have kafka and mariadb instances you can just run the ota-lith binary using sbt or docker.
+If you already have MariaDB (and optionally Kafka) instances you can just run the ota-lith binary using sbt or docker. Note that Kafka is only required if using Kafka message bus mode; the test message bus mode works without Kafka.
 
 ### Using sbt
 
@@ -73,7 +73,7 @@ You'll need a valid ota-lith.conf, then run:
 
 ### Using docker
 
-The scala apps run in a single container, but you'll need kafka and mariadb. Write a valid ota-lith.conf.
+The scala apps run in a single container. You'll need MariaDB, and optionally Kafka if using Kafka message bus mode. Write a valid ota-lith.conf. For simple deployments, you can use the test message bus mode which doesn't require Kafka.
 
     sbt docker:publishLocal
     docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf uptane/ota-lith:latest -Dconfig.file=/tmp/ota-lith.conf
@@ -85,7 +85,7 @@ If you don't have `sbt` or prefer to use a pre built image, you can use:
 
 ## Running With Docker Compose
 
-If you don't have kafka or mariadb running and just want to try ota-ce, run using docker-compose:
+The simplest way to deploy ota-community-edition is using docker-compose. This will build the Docker image, set up MariaDB with the required databases, and start all services in a single container.
 
 1. Generate the required certificates using `scripts/gen-server-certs.sh` 
 
@@ -96,25 +96,25 @@ If you don't have kafka or mariadb running and just want to try ota-ce, run usin
 0.0.0.0         keyserver.ota.ce
 0.0.0.0         director.ota.ce
 0.0.0.0         treehub.ota.ce
-0.0.0.0         deviceregistry.ota.ce
-0.0.0.0         campaigner.ota.ce
-0.0.0.0         app.ota.ce
 0.0.0.0         ota.ce
 ```
 
-3. build docker image or pull from docker
+3. Build the Docker image:
 
 `sbt docker:publishLocal`
 
-Or:
-
-    export img=uptane/ota-lith:$(git rev-parse master)
-    docker pull $img
-    docker tag $img uptane/ota-lith:latest
-
-4. Run docker-compose
+4. Run docker-compose:
  
 `docker-compose -f ota-ce.yaml up`
+
+The docker-compose configuration will:
+- Build the ota-lith image from the local source
+- Start MariaDB 10.11 with automatic database initialization
+- Start all HTTP API services (reposerver, keyserver, director, treehub) and background daemons in a single container
+- Use the test message bus mode (no Kafka required for simple deployments)
+- Set up the gateway and reverse-proxy for routing
+
+Note: Kafka and Zookeeper are commented out in the docker-compose file since the default configuration uses the test message bus. If you need Kafka for production, uncomment those services in `ota-ce.yaml` and update `ota-lith-ce.conf` to use `messaging.mode = "kafka"`.
 
 5. Test
 
