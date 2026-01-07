@@ -1,6 +1,6 @@
 package com.advancedtelematic.treehub.http
 
-import org.apache.pekko.util.ByteString
+import akka.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
 import com.advancedtelematic.data.DataType.{TObject, _}
 import org.slf4j.LoggerFactory

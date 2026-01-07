@@ -1,12 +1,12 @@
 package com.advancedtelematic.treehub.object_store
 
-import org.apache.pekko.Done
+import akka.Done
 
 import java.io.File
-import org.apache.pekko.http.scaladsl.model.HttpResponse
-import org.apache.pekko.http.scaladsl.util.FastFuture
-import org.apache.pekko.stream.scaladsl.{FileIO, Source}
-import org.apache.pekko.util.ByteString
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.util.FastFuture
+import akka.stream.scaladsl.{FileIO, Source}
+import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport

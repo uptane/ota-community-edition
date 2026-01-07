@@ -1,11 +1,11 @@
 package com.advancedtelematic.treehub.daemon
 
 import java.time.Instant
-import org.apache.pekko.actor.Status.Failure
-import org.apache.pekko.actor.{Actor, ActorLogging, Props}
-import org.apache.pekko.pattern.{BackoffOpts, BackoffSupervisor}
-import org.apache.pekko.stream.Materializer
-import org.apache.pekko.stream.scaladsl.{Flow, Sink}
+import akka.actor.Status.Failure
+import akka.actor.{Actor, ActorLogging, Props}
+import akka.pattern.{BackoffOpts, BackoffSupervisor}
+import akka.stream.Materializer
+import akka.stream.scaladsl.{Flow, Sink}
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.treehub.daemon.StaleObjectArchiveActor.{Done, Tick}
 import com.advancedtelematic.treehub.db.{ArchivedObjectRepositorySupport, ObjectRepositorySupport}
@@ -35,7 +35,7 @@ class StaleObjectArchiveActor(blobStore: BlobStore, objectsExpireAfter: java.tim
   with ArchivedObjectRepositorySupport
   with ActorLogging {
 
-  import org.apache.pekko.pattern.pipe
+  import akka.pattern.pipe
   import context.dispatcher
 
   import scala.async.Async.*

@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.delta_store
 
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
 import com.advancedtelematic.data.DataType.{CommitTupleOps, SuperBlockHash}
 import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
@@ -27,7 +27,7 @@ class S3DeltaStorageIntegrationSpec extends TreeHubSpec with ResourceSpec with B
 
   override val deltas = new StaticDeltas(s3DeltaStore)
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig().copy(timeout = Span(5, Seconds))
+  override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(5, Seconds))
 
   test("returns static delta part") {
     val superblockHash = RefType.applyRef[SuperBlockHash](randomHash()).toOption.get

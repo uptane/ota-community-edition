@@ -2,7 +2,7 @@ package com.advancedtelematic.treehub.http
 
 class ConfResource {
 
-  import org.apache.pekko.http.scaladsl.server.Directives._
+  import akka.http.scaladsl.server.Directives._
 
   val route = path("config") {
 

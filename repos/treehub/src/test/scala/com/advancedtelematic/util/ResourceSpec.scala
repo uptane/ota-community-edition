@@ -1,12 +1,12 @@
 package com.advancedtelematic.util
 
-import org.apache.pekko.actor.{Actor, ActorLogging, ActorSystem, Props}
-import org.apache.pekko.http.scaladsl.model.Multipart.FormData.BodyPart
-import org.apache.pekko.http.scaladsl.model.{HttpEntity, MediaTypes, Multipart}
-import org.apache.pekko.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.testkit.TestDuration
-import org.apache.pekko.util.ByteString
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.http.scaladsl.model.Multipart.FormData.BodyPart
+import akka.http.scaladsl.model.{HttpEntity, MediaTypes, Multipart}
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.stream.scaladsl.Source
+import akka.testkit.TestDuration
+import akka.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace

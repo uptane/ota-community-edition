@@ -1,13 +1,13 @@
 package com.advancedtelematic.treehub.http
 
-import org.apache.pekko.http.scaladsl.model.{HttpRequest, StatusCodes}
-import org.apache.pekko.http.scaladsl.model.headers.{Location, RawHeader}
+import akka.http.scaladsl.model.{HttpRequest, StatusCodes}
+import akka.http.scaladsl.model.headers.{Location, RawHeader}
 import com.advancedtelematic.data.DataType.{CommitTupleOps, DeltaIndexId, StaticDeltaMeta, SuperBlockHash, ValidDeltaId, ValidDeltaIndexId}
 import com.advancedtelematic.treehub.db.{ObjectRepositorySupport, StaticDeltaMetaRepositorySupport}
 import com.advancedtelematic.util.{ResourceSpec, TreeHubSpec}
 import com.advancedtelematic.libats.data.RefinedUtils.RefineTry
 import com.advancedtelematic.util.FakeUsageUpdate.CurrentBandwith
-import org.apache.pekko.pattern.ask
+import akka.pattern.ask
 
 import scala.concurrent.duration.*
 import com.advancedtelematic.common.DigestCalculator
@@ -210,7 +210,7 @@ class DeltaResourceSpec extends TreeHubSpec with ResourceSpec with ObjectReposit
 
     val request = CommitInfoRequest(Seq(commit1, commit2, commit3, commit4))
 
-    import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport._
+    import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
     Post(apiUri("deltas"), request) ~> routes ~> check {
       status shouldBe StatusCodes.OK
@@ -237,7 +237,7 @@ class DeltaResourceSpec extends TreeHubSpec with ResourceSpec with ObjectReposit
 
     val request = CommitInfoRequest(Seq(commit3))
 
-    import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport._
+    import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
     Post(apiUri("deltas"), request) ~> routes ~> check {
       status shouldBe StatusCodes.OK

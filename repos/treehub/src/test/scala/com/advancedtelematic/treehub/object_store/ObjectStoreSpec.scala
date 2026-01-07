@@ -1,8 +1,8 @@
 package com.advancedtelematic.treehub.object_store
 
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
+import akka.actor.ActorSystem
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.db.ObjectRepositorySupport
@@ -19,7 +19,7 @@ class ObjectStoreSpec extends TreeHubSpec with DatabaseSpec with ObjectRepositor
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
   implicit val system: ActorSystem = ActorSystem("ObjectStoreSpecSystem")
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig().copy(timeout = Span(3, Seconds))
+  override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(3, Seconds))
 
   val localStorageDir = Files.createTempDirectory("treehub")
 

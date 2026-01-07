@@ -45,7 +45,8 @@ object GVariantEncoder {
 
           buf ++= ByteVector.fill(8 - buf.length % 8)(0)
 
-          buf ++= ByteVector.fromValidHex(superblockHash.value) ++ ByteVector.fromByte(0) ++ ByteVector("ay".getBytes()) ++ ByteVector.fromByte(keyEndsAt.toByte)
+          buf ++= ByteVector.fromValidHex(superblockHash.value) ++ ByteVector.fromByte(0)
+            ++ ByteVector("ay".getBytes()) ++ ByteVector.fromByte(keyEndsAt.toByte)
 
           val offsetBeforePadding = buf.length
 

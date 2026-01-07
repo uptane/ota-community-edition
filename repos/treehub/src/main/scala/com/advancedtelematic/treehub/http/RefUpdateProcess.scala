@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.http
 
-import org.apache.pekko.http.scaladsl.marshalling.ToResponseMarshallable
-import org.apache.pekko.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.data.DataType.{ObjectId, Ref, RefName, _}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.treehub.db.RefRepositorySupport
@@ -9,7 +9,7 @@ import com.advancedtelematic.treehub.object_store.ObjectStore
 import slick.jdbc.MySQLProfile.api._
 import com.advancedtelematic.libats.codecs.CirceCodecs._
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
-import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport._
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -1,9 +1,9 @@
 package com.advancedtelematic.treehub.daemon
 
-import org.apache.pekko.actor.{ActorRef, ActorSystem, PoisonPill}
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.testkit.{ImplicitSender, TestException, TestKitBase}
-import org.apache.pekko.util.ByteString
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.stream.scaladsl.Source
+import akka.testkit.{ImplicitSender, TestException, TestKitBase}
+import akka.util.ByteString
 import com.advancedtelematic.common.DigestCalculator
 import com.advancedtelematic.data.DataType.{CommitTupleOps, StaticDeltaMeta, SuperBlockHash}
 import com.advancedtelematic.libats.data.DataType
@@ -71,7 +71,7 @@ class DeletedDeltaCleanupActorSpec extends DeletedDeltaCleanupActorSpecUtil {
     storage.exists(defaultNs, deltaId.asPrefixedPath.resolve("superblock")).futureValue shouldBe true
 
     // Mark delta for deletion
-    deltas.markDeleted(defaultNs, deltaId).futureValue
+    deltas.markDeleted(defaultNs, deltaId)
 
     // Validate delta is not available anymore
     staticDeltaMetaRepository.find(defaultNs, deltaId).failed.futureValue shouldBe Errors.StaticDeltaDoesNotExist
@@ -108,7 +108,7 @@ class DeletedDeltaCleanupActorSpec extends DeletedDeltaCleanupActorSpecUtil {
 
     subject ! Done(0, 0)
 
-    deltas.markDeleted(defaultNs, deltaId).futureValue
+    deltas.markDeleted(defaultNs, deltaId)
 
     eventually({
       // Validate delta parts were deleted from storage
@@ -202,8 +202,8 @@ class DeletedDeltaCleanupActorMockStorageSpec extends DeletedDeltaCleanupActorSp
     result2.status shouldBe StaticDeltaMeta.Status.Available
 
     // Mark deltas for deletion
-    deltas.markDeleted(defaultNs, deltaId1).futureValue
-    deltas.markDeleted(defaultNs, deltaId2).futureValue
+    deltas.markDeleted(defaultNs, deltaId1)
+    deltas.markDeleted(defaultNs, deltaId2)
 
     // Validate deltas are not available anymore
     staticDeltaMetaRepository.find(defaultNs, deltaId1).failed.futureValue shouldBe Errors.StaticDeltaDoesNotExist

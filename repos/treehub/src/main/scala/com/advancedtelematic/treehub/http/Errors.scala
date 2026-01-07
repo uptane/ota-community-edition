@@ -1,6 +1,6 @@
 package com.advancedtelematic.treehub.http
 
-import org.apache.pekko.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.StatusCodes
 import com.advancedtelematic.data.DataType.{DeltaId, ObjectId, SuperBlockHash}
 import com.advancedtelematic.libats.data.ErrorCode
 import com.advancedtelematic.libats.http.Errors.{Error, RawError}

@@ -2,7 +2,7 @@ package com.advancedtelematic.treehub
 
 import java.nio.file.Paths
 
-import org.apache.pekko.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.Uri
 import com.advancedtelematic.treehub.object_store.S3Credentials
 import com.amazonaws.regions.Regions
 import com.typesafe.config.ConfigFactory
