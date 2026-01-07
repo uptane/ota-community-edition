@@ -14,10 +14,23 @@ import cats.syntax.option.*
 import cats.syntax.show.*
 import com.advancedtelematic.libtuf.crypt.{Sha256FileDigest, TufCrypto}
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, TargetCustom, TargetsRole}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  ClientTargetItem,
+  TargetCustom,
+  TargetsRole
+}
 import com.advancedtelematic.libtuf.data.TufCodecs.*
 import com.advancedtelematic.libtuf.data.TufDataType.RepoId.*
-import com.advancedtelematic.libtuf.data.TufDataType.{Ed25519KeyType, RepoId, RoleType, SignedPayload, TargetFormat, TargetName, TargetVersion, ValidTargetFilename}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  Ed25519KeyType,
+  RepoId,
+  RoleType,
+  SignedPayload,
+  TargetFormat,
+  TargetName,
+  TargetVersion,
+  ValidTargetFilename
+}
 import com.advancedtelematic.libtuf.http.ReposerverHttpClient
 import com.advancedtelematic.libtuf_server.data.Requests
 import com.advancedtelematic.tuf.reposerver.Settings
@@ -29,7 +42,7 @@ import org.scalatest.OptionValues.*
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.prop.Whenever
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{BeforeAndAfterAll, Inspectors, time}
+import org.scalatest.{time, BeforeAndAfterAll, Inspectors}
 import sttp.capabilities
 import sttp.client4.{Backend, GenericRequest, Request, Response}
 import sttp.client4.pekkohttp.{PekkoHttpBackend, PekkoHttpClient}
@@ -145,7 +158,8 @@ class S3StorageResourceIntegrationSpec
       PekkoHttpBackend.usingClient(system, http = PekkoHttpClient.stubFromRoute(Route.seal(routes)))
 
     val testBackendWithFallback = new Backend[Future]() {
-      override def send[T](request: GenericRequest[T, Any & capabilities.Effect[Future]]): Future[Response[T]] =
+      override def send[T](
+        request: GenericRequest[T, Any & capabilities.Effect[Future]]): Future[Response[T]] =
         monad.flatMap(testBackend.send(request.followRedirects(false))) {
           case resp if resp.code == StatusCode.Found =>
             realClient.send(request.followRedirects(true))
@@ -156,7 +170,6 @@ class S3StorageResourceIntegrationSpec
       override def close(): Future[Unit] = testBackend.close()
 
       override def monad: MonadError[Future] = testBackend.monad
-
 
     }
 

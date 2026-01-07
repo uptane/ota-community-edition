@@ -12,14 +12,27 @@ import org.apache.pekko.stream.IOResult
 import org.apache.pekko.util.ByteString
 import org.apache.pekko.Done
 import com.advancedtelematic.libtuf.crypt.{Sha256FileDigest, TufCrypto}
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, TargetCustom, TargetsRole}
-import com.advancedtelematic.libtuf.data.TufDataType.{Ed25519KeyType, RepoId, RoleType, SignedPayload, TargetFormat, TargetName, TargetVersion, ValidTargetFilename}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  ClientTargetItem,
+  TargetCustom,
+  TargetsRole
+}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  Ed25519KeyType,
+  RepoId,
+  RoleType,
+  SignedPayload,
+  TargetFormat,
+  TargetName,
+  TargetVersion,
+  ValidTargetFilename
+}
 import com.advancedtelematic.libtuf.http.ReposerverHttpClient
 import com.advancedtelematic.libtuf_server.data.Requests
 import com.advancedtelematic.tuf.reposerver.target_store.{AzureTargetStoreEngine, TargetStore}
 import com.advancedtelematic.tuf.reposerver.util.{ResourceSpec, TufReposerverSpec}
 import com.advancedtelematic.tuf.reposerver.Settings
-import org.scalatest.{BeforeAndAfterAll, Inspectors, time}
+import org.scalatest.{time, BeforeAndAfterAll, Inspectors}
 import org.scalatest.concurrent.PatienceConfiguration
 import org.scalatest.prop.Whenever
 import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
@@ -32,13 +45,17 @@ import cats.syntax.option.*
 import cats.syntax.show.*
 import io.circe.syntax.*
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, TargetCustom, TargetsRole}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  ClientTargetItem,
+  TargetCustom,
+  TargetsRole
+}
 import com.advancedtelematic.libtuf.data.TufCodecs.*
 import sttp.{capabilities, client4}
 import sttp.capabilities.pekko.PekkoStreams
 import sttp.client4.{GenericRequest, WebSocketStreamBackend}
 
-import scala.concurrent.{Future, duration}
+import scala.concurrent.{duration, Future}
 import scala.concurrent.duration.Duration
 import scala.util.{Random, Success}
 
@@ -117,7 +134,10 @@ class AzureIntegrationSpec
       PekkoHttpBackend.usingClient(system, http = PekkoHttpClient.stubFromRoute(Route.seal(routes)))
 
     val testBackendWithFallback = new WebSocketStreamBackend[Future, PekkoStreams]() {
-      override def send[T](request: GenericRequest[T, PekkoStreams & capabilities.WebSockets & capabilities.Effect[Future]]): Future[client4.Response[T]] =
+      override def send[T](
+        request: GenericRequest[T, PekkoStreams & capabilities.WebSockets & capabilities.Effect[
+          Future
+        ]]): Future[client4.Response[T]] =
         if (request.uri.host.contains("0.0.0.0")) {
           testBackend.send(request)
         } else {

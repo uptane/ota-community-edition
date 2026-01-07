@@ -882,44 +882,42 @@ class RootRoleResourceSpec
       }
   }
 
-  keyTypeTest("GET returns the same root on consecutive GET using expires-not-before") {
-    keyType =>
-      val repoId = RepoId.generate()
+  keyTypeTest("GET returns the same root on consecutive GET using expires-not-before") { keyType =>
+    val repoId = RepoId.generate()
 
-      Post(
-        apiUri(s"root/${repoId.show}"),
-        ClientRootGenRequest(1, keyType, forceSync = Some(false))
-      ) ~> routes ~> check {
-        status shouldBe StatusCodes.Accepted
-      }
+    Post(
+      apiUri(s"root/${repoId.show}"),
+      ClientRootGenRequest(1, keyType, forceSync = Some(false))
+    ) ~> routes ~> check {
+      status shouldBe StatusCodes.Accepted
+    }
 
-      processKeyGenerationRequest(repoId).futureValue
+    processKeyGenerationRequest(repoId).futureValue
 
-      val signedRootRoles = new SignedRootRoles()
+    val signedRootRoles = new SignedRootRoles()
 
-      signedRootRoles.findFreshAndPersist(repoId).futureValue
+    signedRootRoles.findFreshAndPersist(repoId).futureValue
 
-      val expiresNotBefore = "2222-01-01T00:00:00Z"
+    val expiresNotBefore = "2222-01-01T00:00:00Z"
 
-      Get(apiUri(s"root/${repoId.show}"))
-        .addHeader(RawHeader("x-trx-expire-not-before", expiresNotBefore)) ~> routes ~> check {
-        status shouldBe StatusCodes.OK
-        val signed = responseAs[SignedPayload[RootRole]].signed
-        signed.version shouldBe 2
-        signed.expires shouldBe Instant.parse(expiresNotBefore).plus(365, ChronoUnit.DAYS)
-      }
+    Get(apiUri(s"root/${repoId.show}"))
+      .addHeader(RawHeader("x-trx-expire-not-before", expiresNotBefore)) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      val signed = responseAs[SignedPayload[RootRole]].signed
+      signed.version shouldBe 2
+      signed.expires shouldBe Instant.parse(expiresNotBefore).plus(365, ChronoUnit.DAYS)
+    }
 
-      val expiresNotBefore2 = "2222-01-01T01:01:11Z"
+    val expiresNotBefore2 = "2222-01-01T01:01:11Z"
 
-      Get(apiUri(s"root/${repoId.show}"))
-        .addHeader(RawHeader("x-trx-expire-not-before", expiresNotBefore2)) ~> routes ~> check {
-        status shouldBe StatusCodes.OK
-        val signed = responseAs[SignedPayload[RootRole]].signed
-        signed.version shouldBe 2
-        signed.expires shouldBe Instant.parse(expiresNotBefore).plus(365, ChronoUnit.DAYS)
-      }
+    Get(apiUri(s"root/${repoId.show}"))
+      .addHeader(RawHeader("x-trx-expire-not-before", expiresNotBefore2)) ~> routes ~> check {
+      status shouldBe StatusCodes.OK
+      val signed = responseAs[SignedPayload[RootRole]].signed
+      signed.version shouldBe 2
+      signed.expires shouldBe Instant.parse(expiresNotBefore).plus(365, ChronoUnit.DAYS)
+    }
   }
-
 
   test("GET on versioned root.json returns renewed root if old expired") {
     val repoId = RepoId.generate()

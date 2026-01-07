@@ -6,7 +6,11 @@ import com.advancedtelematic.libats.codecs.CirceRefined
 import com.advancedtelematic.libats.data.DataType.Checksum
 import com.advancedtelematic.libats.slick.db.{SlickCirceMapper, SlickUriMapper}
 import com.advancedtelematic.libtuf.data.ClientDataType.SortDirection.Asc
-import com.advancedtelematic.libtuf.data.ClientDataType.{AggregatedTargetItemsSort, SortDirection, TargetItemsSort}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  AggregatedTargetItemsSort,
+  SortDirection,
+  TargetItemsSort
+}
 import com.advancedtelematic.libtuf.data.PackageSearchParameters
 import com.advancedtelematic.tuf.reposerver.data.RepoDataType.Package.ValidTargetOrigin
 import com.advancedtelematic.tuf.reposerver.data.RepoDataType.{AggregatedPackage, Package}
