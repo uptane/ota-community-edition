@@ -39,8 +39,7 @@ import com.advancedtelematic.libtuf_server.keyserver.KeyserverClient.RootRoleNot
 
 import scala.util.{Failure, Success}
 
-object DeviceResource {
-}
+object DeviceResource {}
 
 class DeviceResource(extractNamespace: Directive1[Namespace],
                      val keyserverClient: KeyserverClient,
@@ -127,7 +126,7 @@ class DeviceResource(extractNamespace: Directive1[Namespace],
           path(IntNumber ~ ".root.json") { version =>
             logDevice(ns, device) {
               onComplete(fetchRoot(ns, version.some)) {
-                case Success(root) => complete(root)
+                case Success(root)             => complete(root)
                 case Failure(RootRoleNotFound) =>
                   complete(RootRoleNotFound.responseCode -> RootRoleNotFound.toErrorRepr)
                 case Failure(ex) => failWith(ex)

@@ -132,7 +132,10 @@ object TestPayloads {
 
 }
 
-class DeviceMonitoringResourceSpec extends DirectorSpec with ResourceSpec with RegistryDeviceRequests {
+class DeviceMonitoringResourceSpec
+    extends DirectorSpec
+    with ResourceSpec
+    with RegistryDeviceRequests {
 
   import DeviceGenerators.*
   import com.advancedtelematic.director.deviceregistry.data.GeneratorOps.*

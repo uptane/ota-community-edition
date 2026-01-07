@@ -83,7 +83,7 @@ class SystemInfoResource(
       .map { s =>
         parseAktualizrConfigToml(s) match {
           case scala.util.Success(aktualizrConfig) => aktualizrConfig
-          case scala.util.Failure(t) =>
+          case scala.util.Failure(t)               =>
             throw RawError(Codes.MalformedInput, StatusCodes.BadRequest, t.getMessage)
         }
       }

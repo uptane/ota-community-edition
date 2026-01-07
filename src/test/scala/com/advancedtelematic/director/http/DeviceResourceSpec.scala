@@ -15,7 +15,11 @@ import com.advancedtelematic.director.data.Generators.*
 import com.advancedtelematic.director.data.Messages.DeviceManifestReported
 import com.advancedtelematic.director.data.UptaneDataType.{FileInfo, Hashes, Image}
 import com.advancedtelematic.director.db.deviceregistry.{DeviceRepository, EcuReplacementRepository}
-import com.advancedtelematic.director.db.{AssignmentsRepositorySupport, EcuRepositorySupport, UpdateSchedulerDBIO}
+import com.advancedtelematic.director.db.{
+  AssignmentsRepositorySupport,
+  EcuRepositorySupport,
+  UpdateSchedulerDBIO
+}
 import com.advancedtelematic.director.deviceregistry.data.{DeviceGenerators, DeviceStatus}
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.genDeviceT
 import com.advancedtelematic.director.http.deviceregistry.RegistryDeviceRequests
@@ -398,7 +402,9 @@ class DeviceResourceSpec
       resp.code shouldBe ErrorCodes.ReplaceEcuAssignmentExists
     }
 
-    db.run(DeviceRepository.findByUuid(deviceId)).futureValue.deviceStatus shouldBe DeviceStatus.Error
+    db.run(DeviceRepository.findByUuid(deviceId))
+      .futureValue
+      .deviceStatus shouldBe DeviceStatus.Error
   }
 
   testWithRepo("Previously used *secondary* ecus cannot be reused when replacing ecus") {
@@ -1861,7 +1867,6 @@ class DeviceResourceSpec
     assignedMsg.correlationId shouldBe updateId.toCorrelationId
   }
 
-
   testWithRepo(
     "reporting an update that was present in a cancelled scheduled update keeps scheduled update untouched"
   ) { implicit ns =>
@@ -1904,4 +1909,5 @@ class DeviceResourceSpec
     val scheduledUpdate = listUpdatesOK(dev.deviceId).values.loneElement
     scheduledUpdate.status shouldBe Update.Status.Cancelled
   }
+
 }

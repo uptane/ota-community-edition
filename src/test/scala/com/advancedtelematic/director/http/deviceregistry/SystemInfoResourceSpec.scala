@@ -35,7 +35,10 @@ import toml.Value.{Str, Tbl}
 import com.advancedtelematic.director.deviceregistry.data.DeviceGenerators.*
 import com.advancedtelematic.director.deviceregistry.data.SimpleJsonGenerator.*
 
-class SystemInfoResourceSpec extends DirectorSpec with ResourcePropSpec with RegistryDeviceRequests {
+class SystemInfoResourceSpec
+    extends DirectorSpec
+    with ResourcePropSpec
+    with RegistryDeviceRequests {
 
   import org.apache.pekko.http.scaladsl.model.StatusCodes.*
   import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
@@ -124,7 +127,7 @@ class SystemInfoResourceSpec extends DirectorSpec with ResourcePropSpec with Reg
         )
         val sysInfo = sysInfoJson.as[DeviceId => NetworkInfo] match {
           case Right(ninfo) => ninfo
-          case Left(e) =>
+          case Left(e)      =>
             throw new IllegalArgumentException(
               "Failed to parse json string. Error: " + e.toString()
             )

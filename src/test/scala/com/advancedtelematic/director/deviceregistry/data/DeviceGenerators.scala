@@ -59,7 +59,7 @@ object DeviceGenerators {
       Instant.now(),
       activated,
       mqttStatus = MqttStatus.NotSeen,
-      mqttLastSeen = None,
+      mqttLastSeen = None
     )
 
   val genDevice: Gen[Device] = genDeviceWith(genDeviceName, genDeviceId)

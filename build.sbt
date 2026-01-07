@@ -36,7 +36,7 @@ libraryDependencies ++= {
     "org.apache.pekko" %% "pekko-stream-testkit" % pekkoV,
     "org.apache.pekko" %% "pekko-slf4j" % pekkoV,
     "org.scalatest" %% "scalatest" % scalaTestV % Test,
-    "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
     "io.github.uptane" %% "libats" % libatsV,
     "io.github.uptane" %% "libats-messaging" % libatsV,
     "io.github.uptane" %% "libats-messaging-datatype" % libatsV,
@@ -51,9 +51,9 @@ libraryDependencies ++= {
     "org.bouncycastle" % "bcpkix-jdk18on" % bouncyCastleV,
     "org.scala-lang.modules" %% "scala-async" % "1.0.1",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % Provided,
-    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.3",
-    "com.beachape" %% "enumeratum" % "1.7.6",
-    "com.beachape" %% "enumeratum-circe" % "1.7.5",
+    "org.mariadb.jdbc" % "mariadb-java-client" % "3.5.7",
+    "com.beachape" %% "enumeratum" % "1.9.0",
+    "com.beachape" %% "enumeratum-circe" % "1.9.0",
 
     // Device registry specific dependencies
     "org.apache.pekko" %% "pekko-connectors-csv" % "1.0.0",

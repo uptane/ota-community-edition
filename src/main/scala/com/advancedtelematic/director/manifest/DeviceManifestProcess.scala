@@ -102,7 +102,7 @@ class DeviceManifestProcess()(implicit val db: Database, val ec: ExecutionContex
     val verify = deviceManifest.ecu_version_manifests
       .map { case (ecuSerial, ecuManifest) =>
         deviceEcuKeys.get(ecuSerial) match {
-          case None => Invalid(NonEmptyList.of(s"Device has no ECU with $ecuSerial"))
+          case None      => Invalid(NonEmptyList.of(s"Device has no ECU with $ecuSerial"))
           case Some(key) =>
             if (ecuManifest.isValidFor(key))
               Valid(ecuManifest)
