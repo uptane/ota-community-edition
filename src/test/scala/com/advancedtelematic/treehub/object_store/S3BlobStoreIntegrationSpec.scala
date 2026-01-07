@@ -1,10 +1,10 @@
 package com.advancedtelematic.treehub.object_store
 
-import org.apache.pekko.Done
-import org.apache.pekko.actor.ActorSystem
-import org.apache.pekko.http.scaladsl.model.StatusCodes
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
+import akka.Done
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.StatusCodes
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectIdOps, ObjectStatus, TObject}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.util.ResourceSpec.ClientTObject
@@ -25,7 +25,7 @@ class S3BlobStoreIntegrationSpec extends TreeHubSpec {
 
   val s3BlobStore = S3BlobStore(s3Credentials, allowRedirects = false, root = Some(Paths.get("test-objects")))
 
-  override implicit def patienceConfig: PatienceConfig = PatienceConfig().copy(timeout = Span(15, Seconds))
+  override implicit def patienceConfig = PatienceConfig().copy(timeout = Span(15, Seconds))
 
   test("can construct custom")  {
     val creds = new S3Credentials("", "", "", Regions.fromName("eu-central-1"), "https://storage.googleapis.com")

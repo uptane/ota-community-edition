@@ -1,11 +1,11 @@
 package com.advancedtelematic.treehub.http
 
-import org.apache.pekko.Done
-import org.apache.pekko.http.scaladsl.model.{HttpResponse, StatusCodes}
-import org.apache.pekko.http.scaladsl.server.Directives
-import org.apache.pekko.http.scaladsl.util.FastFuture
-import org.apache.pekko.stream.scaladsl.Source
-import org.apache.pekko.util.ByteString
+import akka.Done
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.util.FastFuture
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType
 import com.advancedtelematic.treehub.object_store.{BlobStore, ObjectStore}

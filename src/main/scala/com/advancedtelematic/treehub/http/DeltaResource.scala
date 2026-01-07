@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.http
-import org.apache.pekko.http.scaladsl.model.*
-import org.apache.pekko.http.scaladsl.model.headers.Location
-import org.apache.pekko.http.scaladsl.server.*
+import akka.http.scaladsl.model.*
+import akka.http.scaladsl.model.headers.Location
+import akka.http.scaladsl.server.*
 import com.advancedtelematic.data.ClientDataType.CommitInfoRequest
 import com.advancedtelematic.data.DataType.{CommitTupleOps, DeltaId, SuperBlockHash}
 import com.advancedtelematic.data.GVariantEncoder.*
@@ -18,13 +18,12 @@ import io.circe.syntax.EncoderOps
 import org.slf4j.LoggerFactory
 
 import scala.util.Success
-import com.advancedtelematic.libats.data.PaginationResult.*
 
 class DeltaResource(namespace: Directive1[Namespace],
                     staticDeltas: StaticDeltas,
                     usageHandler: UsageMetricsRouter.HandlerRef) {
 
-  import org.apache.pekko.http.scaladsl.server.Directives.*
+  import akka.http.scaladsl.server.Directives.*
 
   val _log = LoggerFactory.getLogger(this.getClass)
 
@@ -70,7 +69,7 @@ class DeltaResource(namespace: Directive1[Namespace],
             }
           } ~
             post {
-              import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport._
+              import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
               implicit val commitKeyEncoder: KeyEncoder[Commit] = KeyEncoder.encodeKeyString.contramap(_.value)
 
               entity(as[CommitInfoRequest]) { request =>
@@ -81,14 +80,15 @@ class DeltaResource(namespace: Directive1[Namespace],
             (delete & path(PrefixedDeltaIdPath)) { id =>
               val f = staticDeltas.markDeleted(ns, id)
               complete(f.map(_ => StatusCodes.Accepted))
-            } ~
+            }
+            ~
             (pathEnd & parameters(Symbol("from").as[Commit], Symbol("to").as[Commit])) { (from, to) =>
               val deltaId = (from, to).toDeltaId
               val uri = Uri(s"/deltas/${deltaId.asPrefixedPath}")
               complete(HttpResponse(StatusCodes.Found, headers = List(Location(uri))))
             } ~
             (pathEnd & parameters(Symbol("offset").as(nonNegativeLong).?, Symbol("limit").as(nonNegativeLong).?)) { (offset, limit) =>
-              val f = staticDeltas.getAll(ns, offset.map(_.toOffset), limit.map(_.toLimit)).map(_.asJson.toString())
+              val f = staticDeltas.getAll(ns, offset, limit).map(_.asJson.toString())
               complete(f)
             }
         }

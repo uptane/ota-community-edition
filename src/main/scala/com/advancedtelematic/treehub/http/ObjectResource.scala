@@ -1,9 +1,9 @@
 package com.advancedtelematic.treehub.http
 
 import java.io.File
-import org.apache.pekko.http.scaladsl.model.StatusCodes
-import org.apache.pekko.http.scaladsl.server.*
-import org.apache.pekko.stream.Materializer
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.*
+import akka.stream.Materializer
 import com.advancedtelematic.data.DataType
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
@@ -22,7 +22,7 @@ class ObjectResource(namespace: Directive1[Namespace],
                      objectStore: ObjectStore,
                      usageHandler: UsageMetricsRouter.HandlerRef)
                     (implicit db: Database, ec: ExecutionContext) {
-  import org.apache.pekko.http.scaladsl.server.Directives.*
+  import akka.http.scaladsl.server.Directives.*
 
   private def hintNamespaceStorage(namespace: Namespace): Directive0 = mapResponse { resp =>
     if(resp.status.isSuccess())

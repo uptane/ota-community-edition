@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.http
 
-import org.apache.pekko.http.scaladsl.server.{Directive, Directive1, Route}
-import org.apache.pekko.stream.Materializer
+import akka.http.scaladsl.server.{Directive, Directive1, Route}
+import akka.stream.Materializer
 import com.advancedtelematic.data.DataType.{Ref, RefName}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
@@ -17,7 +17,7 @@ class RefResource(namespace: Directive1[Namespace], objectStore: ObjectStore)
                  (implicit db: Database, ec: ExecutionContext, mat: Materializer)
   extends RefRepositorySupport {
 
-  import org.apache.pekko.http.scaladsl.server.Directives._
+  import akka.http.scaladsl.server.Directives._
   import com.advancedtelematic.libats.http.RefinedMarshallingSupport._
 
   private val refUpdateProcess = new RefUpdateProcess(objectStore)

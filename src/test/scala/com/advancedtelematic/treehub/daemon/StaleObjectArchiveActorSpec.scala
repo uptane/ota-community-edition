@@ -4,8 +4,8 @@ import java.nio.file.{Files, Paths}
 import java.sql.Timestamp
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import org.apache.pekko.actor.{ActorRef, ActorSystem, PoisonPill}
-import org.apache.pekko.testkit.{ImplicitSender, TestKitBase}
+import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.testkit.{ImplicitSender, TestKitBase}
 import com.advancedtelematic.data.DataType.{ObjectStatus, TObject}
 import com.advancedtelematic.util.LongTest
 import com.advancedtelematic.treehub.daemon.StaleObjectArchiveActor.{Done, Tick}

@@ -1,7 +1,7 @@
 package com.advancedtelematic.treehub.repo_metrics
 
 import cats.syntax.either._
-import org.apache.pekko.testkit.{TestActorRef, TestKitBase}
+import akka.testkit.{TestActorRef, TestKitBase}
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.messaging_datatype.DataType.UpdateType
 import com.advancedtelematic.libats.messaging_datatype.Messages.BandwidthUsage

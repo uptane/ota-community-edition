@@ -3,9 +3,9 @@ package com.advancedtelematic.treehub.repo_metrics
 import java.time.Instant
 import java.util.UUID
 import scala.concurrent.duration.*
-import org.apache.pekko.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Status}
-import org.apache.pekko.stream.{ActorMaterializer, OverflowStrategy}
-import org.apache.pekko.stream.scaladsl.{Sink, Source}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Status}
+import akka.stream.{ActorMaterializer, OverflowStrategy}
+import akka.stream.scaladsl.{Sink, Source}
 import com.advancedtelematic.data.DataType.ObjectId
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.messaging.MessageBusPublisher
@@ -113,7 +113,7 @@ protected object BandwidthUpdate {
 
 protected class BandwidthUpdate(publisher: MessageBusPublisher, objectStore: ObjectStore) extends Actor with ActorLogging {
   import context.dispatcher
-  import org.apache.pekko.pattern.pipe
+  import akka.pattern.pipe
 
   private def update(namespace: Namespace, usedBandwidthBytes: Long, objectId: ObjectId): Future[Done] = {
     val uuid = UUID.nameUUIDFromBytes(Instant.now.toString.getBytes ++ objectId.value.getBytes)

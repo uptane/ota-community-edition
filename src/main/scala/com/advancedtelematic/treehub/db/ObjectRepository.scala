@@ -2,8 +2,8 @@ package com.advancedtelematic.treehub.db
 
 import java.time.Instant
 
-import org.apache.pekko.NotUsed
-import org.apache.pekko.stream.scaladsl.Source
+import akka.NotUsed
+import akka.stream.scaladsl.Source
 import com.advancedtelematic.data.DataType.ObjectStatus.ObjectStatus
 import com.advancedtelematic.data.DataType.{ObjectId, ObjectStatus, TObject}
 import com.advancedtelematic.libats.data.DataType.Namespace

@@ -4,7 +4,6 @@ import com.advancedtelematic.data.ClientDataType.StaticDelta
 import com.advancedtelematic.data.DataType.{DeltaId, StaticDeltaMeta, SuperBlockHash}
 import com.advancedtelematic.libats.data.DataType.Namespace
 import com.advancedtelematic.libats.data.PaginationResult
-import com.advancedtelematic.libats.data.PaginationResult.{Limit, Offset}
 import com.advancedtelematic.libats.messaging_datatype.DataType.Commit
 import com.advancedtelematic.libats.slick.codecs.SlickRefined.*
 import com.advancedtelematic.libats.slick.db.SlickAnyVal.*
@@ -51,7 +50,7 @@ protected class StaticDeltaMetaRepository()(implicit db: Database, ec: Execution
       .result
   }
 
-  def findAll(ns: Namespace, status: StaticDeltaMeta.Status, offset: Offset, limit: Limit): Future[PaginationResult[StaticDelta]] = db.run {
+  def findAll(ns: Namespace, status: StaticDeltaMeta.Status, offset: Long, limit: Long): Future[PaginationResult[StaticDelta]] = db.run {
     staticDeltas
       .filter(_.namespace === ns)
       .filter(_.status === status)

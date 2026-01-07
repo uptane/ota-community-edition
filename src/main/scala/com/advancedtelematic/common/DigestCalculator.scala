@@ -6,8 +6,8 @@ package com.advancedtelematic.common
 
 import java.security.MessageDigest
 
-import org.apache.pekko.stream.scaladsl.Sink
-import org.apache.pekko.util.ByteString
+import akka.stream.scaladsl.Sink
+import akka.util.ByteString
 
 import scala.concurrent.{ExecutionContext, Future}
 
