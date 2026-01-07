@@ -25,7 +25,8 @@ object InstallationReportGenerators {
     resultCode: ResultCode,
     resultDescription: Option[ResultDescription] = None): Gen[InstallationResult] = {
     val success = Try(resultCode.value.toInt == 0).orElse(Success(false))
-    val description = resultDescription.getOrElse(Gen.alphaStr.map(ResultDescription.apply).sample.get)
+    val description =
+      resultDescription.getOrElse(Gen.alphaStr.map(ResultDescription.apply).sample.get)
     InstallationResult(success.get, resultCode, description)
   }
 

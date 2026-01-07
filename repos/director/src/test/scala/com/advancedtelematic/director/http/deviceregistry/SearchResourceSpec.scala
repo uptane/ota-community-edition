@@ -24,15 +24,14 @@ import com.advancedtelematic.libats.messaging_datatype.DataType.DeviceId
 import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.Json
 
-
 trait SearchRequests {
   self: DirectorSpec & ResourceSpec & RegistryDeviceRequests =>
 
   def listDevices(sortBy: Option[DeviceSortBy] = None,
                   sortDirection: Option[SortDirection] = None): HttpRequest = {
     val m = (sortBy, sortDirection) match {
-      case (None, _)          => Map.empty[String, String]
-      case (Some(sort), None) => Map("sortBy" -> sort.toString)
+      case (None, _)                   => Map.empty[String, String]
+      case (Some(sort), None)          => Map("sortBy" -> sort.toString)
       case (Some(sort), Some(sortDir)) =>
         Map("sortBy" -> sort.toString, "sortDirection" -> sortDir.toString)
     }

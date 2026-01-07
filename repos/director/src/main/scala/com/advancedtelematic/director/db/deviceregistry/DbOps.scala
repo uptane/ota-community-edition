@@ -37,7 +37,7 @@ object DbOps {
           ColumnOrdered(d.deviceName, Ordering(slickDirection(sortDirection)))
         case DeviceSortBy.DeviceId =>
           ColumnOrdered(d.oemId, Ordering(slickDirection(sortDirection)))
-        case DeviceSortBy.Uuid => ColumnOrdered(d.id, Ordering(slickDirection(sortDirection)))
+        case DeviceSortBy.Uuid      => ColumnOrdered(d.id, Ordering(slickDirection(sortDirection)))
         case DeviceSortBy.CreatedAt =>
           ColumnOrdered(d.createdAt, Ordering(slickDirection(sortDirection)))
         case DeviceSortBy.ActivatedAt =>

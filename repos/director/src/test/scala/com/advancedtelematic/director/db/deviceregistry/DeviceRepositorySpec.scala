@@ -25,11 +25,7 @@ import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.LoneElement.*
 
-class DeviceRepositorySpec
-    extends DirectorSpec
-    with MysqlDatabaseSpec
-    with Matchers
-    with LongTest {
+class DeviceRepositorySpec extends DirectorSpec with MysqlDatabaseSpec with Matchers with LongTest {
 
   test("updateLastSeen sets activated_at the first time only") {
 
