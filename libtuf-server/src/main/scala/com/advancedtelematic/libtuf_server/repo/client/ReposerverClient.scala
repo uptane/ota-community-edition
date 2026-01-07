@@ -19,13 +19,48 @@ import com.advancedtelematic.libats.http.HttpCodecs.*
 import com.advancedtelematic.libats.http.tracing.Tracing.ServerRequestTracing
 import com.advancedtelematic.libats.http.tracing.TracingHttpClient
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
-import com.advancedtelematic.libtuf.data.ClientDataType.{AggregatedTargetItemsSort, ClientAggregatedPackage, ClientPackage, ClientTargetItem, DelegatedRoleName, Delegation, DelegationFriendlyName, DelegationInfo, RootRole, SortDirection, TargetHash, TargetItemsSort, TargetsRole}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  AggregatedTargetItemsSort,
+  ClientAggregatedPackage,
+  ClientPackage,
+  ClientTargetItem,
+  DelegatedRoleName,
+  Delegation,
+  DelegationFriendlyName,
+  DelegationInfo,
+  RootRole,
+  SortDirection,
+  TargetHash,
+  TargetItemsSort,
+  TargetsRole
+}
 import com.advancedtelematic.libtuf.data.PackageSearchParameters
 import com.advancedtelematic.libtuf.data.TufCodecs.*
 import com.advancedtelematic.libtuf.data.TufDataType.TargetFormat.TargetFormat
-import com.advancedtelematic.libtuf.data.TufDataType.{HardwareIdentifier, JsonSignedPayload, KeyType, RepoId, SignedPayload, TargetFilename, TargetName, TargetVersion, TufKey, ValidTargetFilename}
-import com.advancedtelematic.libtuf_server.data.Requests.{CommentRequest, CreateRepositoryRequest, ExpireNotBeforeRequest, FilenameComment, TargetComment}
-import com.advancedtelematic.libtuf_server.repo.client.ReposerverClient.{KeysNotReady, NotFound, RootNotInKeyserver}
+import com.advancedtelematic.libtuf.data.TufDataType.{
+  HardwareIdentifier,
+  JsonSignedPayload,
+  KeyType,
+  RepoId,
+  SignedPayload,
+  TargetFilename,
+  TargetName,
+  TargetVersion,
+  TufKey,
+  ValidTargetFilename
+}
+import com.advancedtelematic.libtuf_server.data.Requests.{
+  CommentRequest,
+  CreateRepositoryRequest,
+  ExpireNotBeforeRequest,
+  FilenameComment,
+  TargetComment
+}
+import com.advancedtelematic.libtuf_server.repo.client.ReposerverClient.{
+  KeysNotReady,
+  NotFound,
+  RootNotInKeyserver
+}
 import eu.timepit.refined.api.Refined
 
 //import com.advancedtelematic.tuf.reposerver.data.RepoDataType.Package
@@ -449,7 +484,11 @@ class ReposerverHttpClient(reposerverUri: Uri,
         )
     )
 
-    execJsonHttpWithNamespace[PaginationResult[ClientPackage], PackageSearchParameters](namespace, req, params).ok
+    execJsonHttpWithNamespace[PaginationResult[ClientPackage], PackageSearchParameters](
+      namespace,
+      req,
+      params
+    ).ok
   }
 
   def searchTargetsGroupedV2(

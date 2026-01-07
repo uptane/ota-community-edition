@@ -23,7 +23,11 @@ class KeysToJsonEncodedMigrationSpec
 
   implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
 
-  val migration = new KeysToJsonEncodedMigration()(db.asInstanceOf[slick.jdbc.JdbcBackend.Database], implicitly, implicitly)
+  val migration = new KeysToJsonEncodedMigration()(
+    db.asInstanceOf[slick.jdbc.JdbcBackend.Database],
+    implicitly,
+    implicitly
+  )
 
   def runFreshMigration = {
     db.run(sqlu"drop table rsa_keys_pem").futureValue

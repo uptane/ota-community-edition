@@ -17,7 +17,14 @@ import com.advancedtelematic.libats.messaging.MemoryMessageBus
 import com.advancedtelematic.libats.test.MysqlDatabaseSpec
 import com.advancedtelematic.libtuf.crypt.{Sha256FileDigest, TufCrypto}
 import com.advancedtelematic.libtuf.data.ClientCodecs.*
-import com.advancedtelematic.libtuf.data.ClientDataType.{ClientTargetItem, RoleKeys, RootRole, TargetCustom, TargetsRole, TufRole}
+import com.advancedtelematic.libtuf.data.ClientDataType.{
+  ClientTargetItem,
+  RoleKeys,
+  RootRole,
+  TargetCustom,
+  TargetsRole,
+  TufRole
+}
 import com.advancedtelematic.libtuf.data.TufDataType.RoleType.RoleType
 import com.advancedtelematic.libtuf.data.TufDataType.*
 import com.advancedtelematic.libtuf.http.ReposerverHttpClient
