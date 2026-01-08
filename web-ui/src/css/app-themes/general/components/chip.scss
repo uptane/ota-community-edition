@@ -1,0 +1,15 @@
+@import '../../common.variables';
+.q-chip {
+  &.filter-tag {
+    &.q-hoverable:hover > .q-focus-helper {
+      background: $accent;
+      opacity: 0.15;
+    }
+    &:not(.active):hover {
+      border-color: $accent;
+      .q-chip__content {
+        color: $accent;
+      }
+    }
+  }
+}

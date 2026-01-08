@@ -1,0 +1,98 @@
+@import '../../common.variables';
+
+.q-table {
+  // background-color: $dark-theme-bg;
+  // color: $dark-theme-fg;
+
+  th {
+    // color: $dark-theme-fg;
+    font-size: 1rem;
+  }
+
+  th:hover {
+    color: $secondary;
+  }
+
+  td,
+  th,
+  tr,
+  thead {
+    border-color: rgba($light-theme-fg, 0.12);
+  }
+
+  .hoverable:hover td {
+    background-color: rgba($primary, 0.1);
+    cursor: pointer;
+  }
+
+  .clickable:active td {
+    background-color: rgba($primary, 0.4);
+    cursor: pointer;
+  }
+
+  .selectable.selected td {
+    background-color: rgba($primary, 0.2);
+  }
+}
+
+.q-table-bottom {
+  // color: $dark-theme-fg;
+}
+
+.sticky-header-column-table {
+  /* specifying max-width so the example can
+    highlight the sticky column on any browser window */
+  // max-width: 600px;
+
+  /* max height is important */
+  .q-table__middle {
+    // max-height: 200px;
+  }
+
+  td:first-child {
+    /* bg color is important for td; just specify one */
+    background-color: lighten($light-theme-bg, 1) !important;
+    border-right: 2px solid rgba($light-theme-bg-dark, 0.3);
+    min-width: 13rem;
+  }
+
+  tr th {
+    position: sticky;
+    /* higher than z-index for td below */
+    z-index: 2;
+    /* bg color is important; just specify one */
+    background-color: lighten($light-theme-bg, 1) !important;
+    border-bottom: 2px solid rgba($light-theme-bg-dark, 0.3);
+  }
+
+  /* this will be the loading indicator */
+  thead tr:last-child th {
+    /* height of all previous header rows */
+    top: 48px;
+    /* highest z-index */
+    z-index: 3;
+  }
+
+  thead tr:first-child th {
+    top: 0;
+    z-index: 1;
+  }
+  thead tr:first-child th:first-child {
+    border-right: 2px solid rgba($light-theme-bg-dark, 0.4);
+  }
+
+  tr:first-child th:first-child {
+    /* highest z-index */
+    z-index: 3;
+  }
+
+  td:first-child {
+    z-index: 1;
+  }
+
+  td:first-child,
+  th:first-child {
+    position: sticky;
+    left: 0;
+  }
+}

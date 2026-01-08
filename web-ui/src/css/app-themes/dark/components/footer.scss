@@ -1,0 +1,12 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .q-footer {
+    .q-toolbar {
+      // background-color: $toradex_blue !important;
+      background-color: $dark-theme-bg-dark;
+      color: $dark-theme-fg;
+    }
+  }
+}

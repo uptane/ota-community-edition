@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="82px" height="35px" viewBox="0 0 82 35" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>xmas-lights</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="81.1357317%" gradientTransform="translate(0.500000,0.500000),scale(1.000000,0.608696),rotate(90.000000),scale(1.000000,0.564528),translate(-0.500000,-0.500000)" id="radialGradient-1">
+            <stop stop-color="#F2F2F2" offset="0%"></stop>
+            <stop stop-color="#D5C337" stop-opacity="0.06" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="81.1357317%" gradientTransform="translate(0.500000,0.500000),scale(1.000000,0.608696),rotate(90.000000),scale(1.000000,0.564528),translate(-0.500000,-0.500000)" id="radialGradient-2">
+            <stop stop-color="#F2F2F2" offset="0%"></stop>
+            <stop stop-color="#37D556" stop-opacity="0.06" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="81.1357317%" gradientTransform="translate(0.500000,0.500000),scale(1.000000,0.608696),rotate(90.000000),scale(1.000000,0.564528),translate(-0.500000,-0.500000)" id="radialGradient-3">
+            <stop stop-color="#F2F2F2" offset="0%"></stop>
+            <stop stop-color="#059AFF" stop-opacity="0.0562726449" offset="100%"></stop>
+        </radialGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="81.1357317%" gradientTransform="translate(0.500000,0.500000),scale(1.000000,0.608696),rotate(90.000000),scale(1.000000,0.564528),translate(-0.500000,-0.500000)" id="radialGradient-4">
+            <stop stop-color="#F2F2F2" offset="0%"></stop>
+            <stop stop-color="#FF4F42" stop-opacity="0.0614526721" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="ChristmasPack" transform="translate(-17.000000, -57.000000)">
+            <g id="xmas-lights" transform="translate(17.000000, 58.000000)">
+                <path d="M8,0.805689027 C13.5297724,-0.91838693 20.9766646,5.28870066 24.6197254,6.41306883 C31.4707544,8.52752127 38.9269663,2.1627178 44.1565182,0.352179214 C49.0969971,-1.35827856 52.4842118,3.62902041 56.3769422,5.30107301 C65.1687405,9.07743244 73.8505115,4.71706496 81.6658792,1.31556729" id="Path" stroke="#149F52"></path>
+                <g id="yellow" transform="translate(39.000000, 0.000000)">
+                    <ellipse id="Oval" fill="#8A7D19" cx="7" cy="16.5" rx="5" ry="8.5"></ellipse>
+                    <path d="M7,25 C10.3333333,22.4629469 12,19.6296136 12,16.5 C12,14.8015742 11.4817264,12.0239061 10.5,10.5 C9.94849526,9.64391478 8.78182859,8.81058144 7,8 C8.66666667,10.5370531 9.5,13.3703864 9.5,16.5 C9.5,19.6296136 8.66666667,22.4629469 7,25 Z" id="Oval-Copy-2" fill-opacity="0.139775815" fill="#000000"></path>
+                    <g id="yellowOn" transform="translate(0.000000, 5.000000)">
+                        <ellipse id="Oval" fill="#D5C337" cx="7" cy="11.5" rx="5" ry="8.5"></ellipse>
+                        <ellipse id="Oval-Copy-4" fill="url(#radialGradient-1)" cx="7" cy="11.5" rx="7" ry="11.5"></ellipse>
+                    </g>
+                    <rect id="Rectangle" fill="#149F52" x="4" y="0" width="6" height="10"></rect>
+                </g>
+                <g id="green">
+                    <ellipse id="Oval" fill="#157228" cx="7" cy="16.5" rx="5" ry="8.5"></ellipse>
+                    <path d="M7,25 C10.3333333,22.4629469 12,19.6296136 12,16.5 C12,14.8015742 11.4817264,12.0239061 10.5,10.5 C9.94849526,9.64391478 8.78182859,8.81058144 7,8 C8.66666667,10.5370531 9.5,13.3703864 9.5,16.5 C9.5,19.6296136 8.66666667,22.4629469 7,25 Z" id="Oval-Copy-2" fill-opacity="0.139775815" fill="#000000"></path>
+                    <g id="greenOn" transform="translate(0.000000, 5.000000)">
+                        <ellipse id="Oval" fill="#37D556" cx="7" cy="11.5" rx="5" ry="8.5"></ellipse>
+                        <ellipse id="Oval-Copy-4" fill="url(#radialGradient-2)" cx="7" cy="11.5" rx="7" ry="11.5"></ellipse>
+                    </g>
+                    <rect id="Rectangle" fill="#149F52" x="4" y="0" width="6" height="10"></rect>
+                </g>
+                <g id="blue" transform="translate(60.000000, 6.000000)">
+                    <ellipse id="Oval" fill="#0D65A1" cx="7" cy="16.5" rx="5" ry="8.5"></ellipse>
+                    <path d="M7,25 C10.3333333,22.4629469 12,19.6296136 12,16.5 C12,14.8015742 11.4817264,12.0239061 10.5,10.5 C9.94849526,9.64391478 8.78182859,8.81058144 7,8 C8.66666667,10.5370531 9.5,13.3703864 9.5,16.5 C9.5,19.6296136 8.66666667,22.4629469 7,25 Z" id="Oval-Copy-2" fill-opacity="0.2559726" fill="#000000"></path>
+                    <g id="blueOn" transform="translate(0.000000, 5.000000)">
+                        <ellipse id="Oval" fill="#059AFF" cx="7" cy="11.5" rx="5" ry="8.5"></ellipse>
+                        <ellipse id="Oval-Copy-4" fill="url(#radialGradient-3)" cx="7" cy="11.5" rx="7" ry="11.5"></ellipse>
+                    </g>
+                    <rect id="Rectangle" fill="#149F52" x="4" y="0" width="6" height="10"></rect>
+                </g>
+                <g id="red" transform="translate(20.000000, 6.000000)">
+                    <ellipse id="Oval-Copy-3" fill="#932F2C" cx="7" cy="16.5" rx="5" ry="8.5"></ellipse>
+                    <path d="M7,25 C10.3333333,22.4629469 12,19.6296136 12,16.5 C12,14.8015742 11.4817264,12.0239061 10.5,10.5 C9.94849526,9.64391478 8.78182859,8.81058144 7,8 C8.66666667,10.5370531 9.5,13.3703864 9.5,16.5 C9.5,19.6296136 8.66666667,22.4629469 7,25 Z" id="Oval-Copy-2" fill-opacity="0.223618659" fill="#000000"></path>
+                    <g id="redOn" transform="translate(0.000000, 5.000000)">
+                        <ellipse id="Oval" fill="#EC4B47" cx="7" cy="11.5" rx="5" ry="8.5"></ellipse>
+                        <ellipse id="Oval-Copy-4" fill="url(#radialGradient-4)" cx="7" cy="11.5" rx="7" ry="11.5"></ellipse>
+                    </g>
+                    <rect id="Rectangle" fill="#149F52" x="4" y="0" width="6" height="10"></rect>
+                </g>
+            </g>
+        </g>
+    </g>
+
+    <animate id="greenOn" href="#greenOn"
+             attributeName="visibility" from="visible" to="hidden"
+             dur="2s" begin="0" end="blueOn.begin" repeatCount="indefinite"/>  
+    <animate id="blueOn" href="#blueOn"
+             attributeName="visibility" from="visible" to="hidden"
+             dur="3s" delay="2s" repeatCount="indefinite" />  
+    <animate id="redOn" href="#redOn"
+             attributeName="visibility" from="visible" to="hidden"
+             dur="4s" end="yellowOn.begin"  repeatCount="indefinite"/>  
+    <animate id="yellowOn" href="#yellowOn"
+             attributeName="visibility" from="visible" to="hidden"
+             dur="5s"  repeatCount="indefinite"/>  
+</svg>

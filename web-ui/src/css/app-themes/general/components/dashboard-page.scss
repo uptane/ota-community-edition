@@ -1,0 +1,59 @@
+@import '../../common.variables';
+
+.floating-menu-btn {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  width: 100%;
+  color: #ffffff;
+}
+
+.dashboard-header {
+  min-height: 27rem;
+  background-color: $toradex_blue;
+  background-position: 100% 20%;
+  background-repeat: no-repeat;
+  background-size: 30%;
+  color: #ffffff;
+
+  .dashboard-title {
+    padding: 1rem;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 300;
+  }
+
+  .title-2 {
+    text-align: center;
+    font-size: 1.6rem;
+  }
+
+  .title-3 {
+    font-size: 1.6rem;
+    opacity: 0.4;
+  }
+
+  .step {
+    img {
+      max-height: 6rem;
+    }
+    line-height: 1.8rem;
+  }
+
+  .with-left-divider {
+    min-height: 18rem;
+    position: relative;
+
+    &:before {
+      content: '';
+      height: 70%;
+      // width: 0.2rem;
+      position: absolute;
+      left: 0;
+      top: 15%;
+      opacity: 0.15;
+      border-left: 2px dashed white;
+    }
+  }
+}

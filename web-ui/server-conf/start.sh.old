@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# echo "export const ENV = {" > env.js;
+# for var in `printenv`; do
+#     key="$(cut -d'=' -f1 <<< "$var")"
+#     value="$(cut -d'=' -f2 <<< "$var")"
+#     echo "\"$key\":\"$value\"," >> env.js
+# done 
+# echo "}" >> env.js; 
+
+
+# cd /app
+
+# GUEST_MODE=${GUEST_MODE}  LIMITED_ACCESS=${LIMITED_ACCESS}  quasar build; 
+# # quasar serve /app/dist/spa --proxy /proxy.js;
+# quasar serve /Volumes/dev/Toradex/torizon-ota-admin/dist/spa --proxy /Volumes/dev/Toradex/torizon-ota-admin/server-conf/proxy.js
+
+# DIR=/Volumes/dev/Toradex/torizon-ota-admin/docker-release/;
+DIR=/app/;
+if [ "$LIMITED_ACCESS" == 1 ] && [ "$GUEST_MODE" == 1 ] 
+then
+    DIR+="LA_GM"
+else 
+    if [ "$LIMITED_ACCESS" == 1 ] 
+    then
+        DIR+="LA"
+    else
+        if [ "$GUEST_MODE" == 1 ] 
+        then
+            DIR+="GM"
+        else 
+            DIR+="NON"
+        fi
+    fi
+fi
+    echo $DIR
+
+quasar serve $DIR --proxy /proxy.js;

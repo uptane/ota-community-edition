@@ -1,0 +1,31 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .q-date--dark,
+  .q-time--dark {
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    // .q-item {
+    .q-item__label {
+      .label {
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+      }
+
+      .sublabel {
+        font-size: 0.8rem;
+        margin-bottom: 0.2rem;
+        opacity: 0.5;
+      }
+    }
+    // }
+    background-color: $dark-theme-bg;
+    &.light-card {
+      background-color: lighten($dark-theme-bg, 3);
+    }
+    &.lighter-card {
+      background-color: lighten($dark-theme-bg, 6);
+    }
+    color: #fff;
+  }
+}

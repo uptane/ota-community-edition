@@ -1,0 +1,75 @@
+
+<svg width="265px" height="136px" viewBox="0 0 258 136" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 51.3 (57544) - http://www.bohemiancoding.com/sketch -->
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Symbols" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="loader" fill-rule="nonzero">
+            <g>
+                <circle id="x2" fill="#96C837" cx="85" cy="68" r="68"></circle>
+                <circle id="x1" fill="#96C837" cx="16" cy="72" r="16"></circle>
+               <g id="yg">
+                <ellipse id="y2" fill="#FFFFFF" cx="72" cy="68" rx="16" ry="16"></ellipse>
+                <ellipse id="y1" fill="#FFFFFF" cx="129" cy="68" rx="16" ry="16"></ellipse>
+                </g>
+                <circle id="z2" fill="#FFFFFF" cx="242" cy="68" r="16"></circle>
+                <circle id="z1" fill="#FFFFFF" cx="185" cy="68" r="16"></circle>
+                <!-- <circle id="z2" fill="#1A5586" cx="242" cy="68" r="16"></circle>
+                <circle id="z1" fill="#1A5586" cx="185" cy="68" r="16"></circle> -->
+            </g>
+        </g>
+    </g>
+
+    <animateTransform
+    xlink:href="#yg" attributeName="transform"
+                          attributeType="XML"
+                          type="translate"
+                          keyTimes="0; 0.2; 0.3; 0.3;  0.9; 1"
+                          values="-5 0; -5 0; 5 0; 5 0;  5 0; -5 0"
+                          begin="500ms"
+                          dur="2000ms"
+                          repeatCount="indefinite"/>
+    <animate
+    xlink:href="#y1" attributeName="ry"
+                          type="translate"
+                          keyTimes="0; 0.05; 0.1; 0.9;  0.95; 1"
+                          values="16; 2.5; 16;   16; 2.5; 16"
+                          begin="500ms"
+                          dur="3000ms"
+                          repeatCount="indefinite"/>
+    <animate
+    xlink:href="#y2" attributeName="ry"
+                          type="translate"
+                          keyTimes="0; 0.05; 0.1; 0.9;  0.95; 1"
+                          values="16; 2.5; 16;   16; 2.5; 16"
+                          begin="500ms"
+                          dur="3000ms"
+                          repeatCount="indefinite"/>
+    <animateTransform
+    xlink:href="#x1" attributeName="transform"
+                          attributeType="XML"
+                          type="translate"
+                          keyTimes="0; 0.2; 0.3; 0.3;  0.9; 1"
+                          values="2 0; 2 0; -2 0; -2 0;  -2 0; 2 0"
+                          begin="500ms"
+                          dur="2000ms"
+                          repeatCount="indefinite"/>
+    <animateTransform
+    xlink:href="#z1" attributeName="transform"
+                          attributeType="XML"
+                          type="translate"
+                          keyTimes="0; 0.7; 0.7; 1"
+                          values="0 20; 0 -20; 0 -20; 0 20"
+                          begin="500ms"
+                          dur="700ms"
+                          repeatCount="indefinite"/>
+    <animateTransform
+    xlink:href="#z2" attributeName="transform"
+                          attributeType="XML"
+                          type="translate"
+                          keyTimes="0; 0.7; 0.7; 1"
+                          values="0 10; 0 -10; 0 -10; 0 10"
+                          begin="0ms"
+                          dur="700ms"
+                          repeatCount="indefinite"/>
+</svg>

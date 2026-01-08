@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="732px" height="674px" viewBox="0 0 732 674" version="1.1" xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>custom-package</title>
+    <desc>Created with Sketch.</desc>
+    <g id="custom-package" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <polygon id="Rectangle-Copy-5" fill="#70619C" points="-1.42108547e-14 315.5 73 297 73 222"></polygon>
+        <g id="Group-7"
+            transform="translate(362.000000, 243.500000) rotate(6.000000) translate(-362.000000, -243.500000) translate(85.000000, 58.000000)">
+            <g id="Group-6-Copy-6" transform="translate(147.000000, 0.000000)">
+                <polygon id="Rectangle" fill="#8C1A53" points="99.5 98.3599562 224.5 42.8041575 224.5 165.5 106 226">
+                </polygon>
+                <polygon id="Rectangle-Copy-9" fill="#C0578C" points="0 52.5 99.5 98.3599562 106 224.5 5.5 164">
+                </polygon>
+                <polygon id="Rectangle-Copy-7" fill="#AF477B"
+                    points="1 53.0131291 119.5 0.5 224.5 42.8041575 99.5 98.3599562"></polygon>
+            </g>
+            <g id="Group-6-Copy-5" transform="translate(0.000000, 64.000000)">
+                <polygon id="Rectangle" fill="#38B8F4" points="99.5 98.3599562 224.5 42.8041575 224.5 165.5 106 226">
+                </polygon>
+                <polygon id="Rectangle-Copy-9" fill="#32A0D3" points="0 52.5 99.5 98.3599562 106 224.5 5.5 164">
+                </polygon>
+                <polygon id="Rectangle-Copy-7" fill="#3AB2EB"
+                    points="1 53.0131291 119.5 0.5 224.5 42.8041575 99.5 98.3599562"></polygon>
+            </g>
+            <g id="Group-6" transform="translate(329.000000, 63.000000)">
+                <polygon id="Rectangle" fill="#5C9063" points="99.5 98.3599562 224.5 42.8041575 224.5 165.5 106 226">
+                </polygon>
+                <polygon id="Rectangle-Copy-9" fill="#6EAE77" points="0 52.5 99.5 98.3599562 106 224.5 5.5 164">
+                </polygon>
+                <polygon id="Rectangle-Copy-7" fill="#659D6D"
+                    points="1 53.0131291 119.5 0.5 224.5 42.8041575 99.5 98.3599562"></polygon>
+            </g>
+            <g id="Group-6-Copy-4" transform="translate(167.000000, 145.000000)">
+                <polygon id="Rectangle" fill="#9F7615" points="99.5 98.3599562 224.5 42.8041575 224.5 165.5 106 226">
+                </polygon>
+                <polygon id="Rectangle-Copy-9" fill="#CD9D2D" points="0 52.5 99.5 98.3599562 106 224.5 5.5 164">
+                </polygon>
+                <polygon id="Rectangle-Copy-7" fill="#FAAF00"
+                    points="1 53.0131291 119.5 0.5 224.5 42.8041575 99.5 98.3599562"></polygon>
+            </g>
+        </g>
+        <g id="Group-5" transform="translate(72.000000, 222.000000)">
+            <polygon id="Rectangle" fill="#A18DDD" points="0 0 293 193.772388 293.5 451.5 293 451.5 2 241.242572">
+            </polygon>
+            <polygon id="Rectangle-Copy" fill="#70619C" points="574 30.3991229 568 271.07321 293.5 452 293.5 194.66791">
+            </polygon>
+        </g>
+        <polygon id="Rectangle" fill="#A18DDD" points="366 416.5 640.5 243 732 348.436834 481 529"></polygon>
+    </g>
+</svg>

@@ -1,0 +1,360 @@
+//  ################## TEXTS ###################
+.thin-text {
+  font-weight: 200;
+}
+
+.normal-text {
+  font-weight: 300;
+}
+
+.text-faded {
+  opacity: 0.7;
+}
+
+.faded {
+  opacity: 0.7;
+}
+
+.error-message {
+  color: $negative;
+  background-color: rgba($negative, 0.1);
+}
+
+.success-message {
+  color: $positive;
+  background-color: rgba($positive, 0.1);
+}
+
+.text-1 {
+  font-size: 1rem;
+}
+
+.text-1-5 {
+  font-size: 1.25rem;
+}
+
+.text-2 {
+  font-size: 1.5rem;
+}
+
+.text-3 {
+  font-size: 2rem;
+}
+
+.text-4 {
+  font-size: 3rem;
+}
+
+// hr{
+//   border: 1px solid $border-light !important;
+//   .dark{
+//     border-color: $border-dark;
+//   }
+// }
+
+@for $num from 1 through 6 {
+  h#{$num} {
+    $val: $num;
+
+    @if $num >3 {
+      $val: $val - 3;
+      font-weight: 300;
+    }
+
+    font-size: #{1.4rem * (1 / $val)+0.6};
+  }
+}
+
+//  ################## BOXES AND SIZING ###################
+.main-content {
+  padding: 2rem;
+}
+
+@for $num from 1 through 12 {
+  .col-#{$num} {
+    width: #{100% / $num};
+  }
+}
+
+@for $num from 0 through 5 {
+  $val: #{($num/5) * 5 * 0.7};
+
+  .p-#{$num} {
+    padding: #{$val}rem !important;
+  }
+
+  .pl-#{$num} {
+    padding-left: #{$val}rem !important;
+  }
+
+  .pr-#{$num} {
+    padding-right: #{$val}rem !important;
+  }
+
+  .pt-#{$num} {
+    padding-top: #{$val}rem !important;
+  }
+
+  .pb-#{$num} {
+    padding-bottom: #{$val}rem !important;
+  }
+
+  .m-#{$num} {
+    margin: #{$val}rem !important;
+  }
+
+  .ml-#{$num} {
+    margin-left: #{$val}rem !important;
+  }
+
+  .mr-#{$num} {
+    margin-right: #{$val}rem !important;
+  }
+
+  .mt-#{$num} {
+    margin-top: #{$val}rem !important;
+  }
+
+  .mb-#{$num} {
+    margin-bottom: #{$val}rem !important;
+  }
+}
+
+.m-auto {
+  margin: auto;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+
+.mr-auto {
+  margin-right: auto;
+}
+
+$num: 0.5;
+
+@while $num < 10.5 {
+  .opacity-#{$num*10} {
+    opacity: #{$num / 10};
+  }
+
+  .mnw-#{$num * 10} {
+    min-width: #{$num * 10%} !important;
+  }
+
+  .mxw-#{$num * 10} {
+    max-width: #{$num * 10%} !important;
+  }
+
+  .w-#{$num * 10} {
+    width: #{$num * 10%} !important;
+  }
+
+  .h-#{$num * 10} {
+    height: #{$num * 10%} !important;
+  }
+
+  .w-#{$num * 10}vw {
+    width: #{$num * 10vw} !important;
+  }
+
+  .h-#{$num * 10}vh {
+    height: #{$num * 10vh} !important;
+  }
+
+  .w-#{$num * 10}em {
+    width: #{$num * 10em} !important;
+  }
+
+  .h-#{$num * 10}em {
+    height: #{$num * 10em} !important;
+  }
+
+  .mnw-#{$num * 10}vw {
+    min-width: #{$num * 10vw} !important;
+  }
+
+  .mxw-#{$num * 10}vw {
+    max-width: #{$num * 10vw} !important;
+  }
+
+  .mnh-#{$num * 10}vh {
+    min-height: #{$num * 10vh} !important;
+  }
+
+  .mxh-#{$num * 10}vh {
+    max-height: #{$num * 10vh} !important;
+  }
+
+  .mnh-#{$num * 10}em {
+    min-height: #{$num * 10em} !important;
+  }
+
+  .mxh-#{$num * 10}em {
+    max-height: #{$num * 10em} !important;
+  }
+
+  .mnw-#{$num * 10}em {
+    min-width: #{$num * 10em} !important;
+  }
+
+  .mxw-#{$num * 10}em {
+    max-width: #{$num * 10em} !important;
+  }
+
+  $num: $num + 0.5;
+}
+
+.d-none {
+  display: none;
+}
+
+.ui-item {
+  padding: 0.8rem 0rem;
+  border-top: 1px solid $border-light;
+}
+
+.bt-1 {
+  border-top: 1px solid $border-light;
+}
+
+.bb-1 {
+  border-bottom: 1px solid $border-light;
+}
+
+//  ################## EFFECTS ###################
+
+.y-scroll {
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.bg-light-grey {
+  background-color: #f2f2f2;
+}
+
+.bt-negative {
+  border-top: 2px solid $negative;
+}
+
+.bt-warning {
+  border-top: 2px solid $warning;
+}
+
+.bt-secondary {
+  border-top: 2px solid $secondary;
+}
+
+.bt-primary {
+  border-top: 2px solid $primary;
+}
+
+.selected {
+  background-color: rgba($secondary, 0.25) !important;
+}
+
+.transition-width {
+  -webkit-transition: width 0.2s;
+  /* Safari prior 6.1 */
+  transition: width 0.2;
+}
+
+.highlighted-1 {
+  background-color: rgba($secondary, 0.15);
+}
+
+.chartPlaceholder {
+  background: rgba(0, 0, 0, 0.35);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  text-align: center;
+}
+
+.overflow-x-auto {
+  overflow-x: auto;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+.temp-highlight {
+  -webkit-animation: target-fade 1s;
+  -moz-animation: target-fade 1s;
+  -o-animation: target-fade 1s;
+  animation: target-fade 1s;
+}
+
+/**
+ * Keyframe animation definition
+ *
+ * 1. Insert a color of your choice here
+ */
+
+$fadeColor: rgba($secondary, 0.25);
+
+@-webkit-keyframes target-fade {
+  from {
+    background-color: $fadeColor;
+  }
+
+  /* [1] */
+  to {
+    background-color: transparent;
+  }
+}
+
+@-moz-keyframes target-fade {
+  from {
+    background-color: $fadeColor;
+  }
+
+  /* [1] */
+  to {
+    background-color: transparent;
+  }
+}
+
+@-o-keyframes target-fade {
+  from {
+    background-color: $fadeColor;
+  }
+
+  /* [1] */
+  to {
+    background-color: transparent;
+  }
+}
+
+@keyframes target-fade {
+  from {
+    background-color: $fadeColor;
+  }
+
+  /* [1] */
+  to {
+    background-color: transparent;
+  }
+}
+
+.grabbable,
+.cursor-grab,
+.cursor-drag {
+  cursor: move;
+  /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+
+/* (Optional) Apply a "closed-hand" cursor during drag operation. */
+.grabbable:active,
+.cursor-grab:active,
+.cursor-drag:active {
+  cursor: grabbing;
+  cursor: -moz-grabbing;
+  cursor: -webkit-grabbing;
+}

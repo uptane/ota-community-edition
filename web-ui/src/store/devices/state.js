@@ -1,0 +1,43 @@
+export default {
+  devicesData: [],
+  devices: [],
+  device: {},
+  offset: 0,
+  limit: 10, // default limit for pagination if not provided
+  total: 0,
+  sort: { name: 'asc' },
+  selectedDevice: {},
+  deviceListRefreshRate: {},
+  deviceRefreshRate: {},
+  timeoutId: null,
+  visibleColumns: ['name', 'uuid', 'status', 'hardwareType', 'actions'],
+  columns: [
+    {
+      required: true,
+      label: 'Device Name',
+      align: 'left',
+      field: 'name',
+      format: (val) => `${val}`,
+      sortable: true,
+      classes: 'ellipsis text-bold',
+      style: 'max-width: 100px',
+      headerClasses: 'text-bold',
+      name: 'name',
+      id: 'name',
+      alias: 'name',
+    },
+    { name: 'id', id: 'id', label: 'Device ID', field: 'deviceid', sortable: true, align: 'left', alias: 'deviceId' },
+    { name: 'uuid', id: 'uuid', label: 'UUID', field: 'uuid', sortable: true, align: 'left' },
+    { name: 'status', id: 'status', label: 'Status', field: 'hardwareType', sortable: false, align: 'left' },
+    { name: 'osVersion', id: 'osVersion', label: 'Installed OS Package', field: 'osVersion', sortable: false, align: 'left' },
+    { name: 'appVersion', id: 'appVersion', label: 'Installed Application Package', field: 'appVersion', sortable: false, align: 'left' },
+    { name: 'otherPackages', id: 'otherPackages', label: 'Other Installed Packages', field: 'otherPackages', sortable: false, align: 'left' },
+    { name: 'hardwareType', id: 'hardwareType', label: 'Hardware Type', field: 'hardwareType', sortable: false, align: 'left' },
+    { name: 'createdDate', id: 'createdDate', label: 'Date Created', field: 'createdat', sortable: true, align: 'left' },
+    { name: 'activatedDate', id: 'activatedDate', label: 'Date Activated', field: 'activatedat', sortable: true, align: 'left' },
+    { name: 'lastSeen', id: 'lastSeen', label: 'Last Seen', field: 'lastseen', sortable: true, align: 'left' },
+    { name: 'actions', id: 'actions', label: 'Actions', field: 'actions', sortable: false, align: 'center', required: true },
+  ],
+  updateInstallationEvents: {}, // format {[device_uuid]: events}
+  updateInstallationHistory: {}, // format {[device_uuid]: histories}
+};

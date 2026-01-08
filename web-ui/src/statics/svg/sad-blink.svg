@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="799px" height="732px" viewBox="0 0 799 732" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>sad-face</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Desktop" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" x="0" y="0" width="799" height="732"></rect>
+        <g id="sad-face" transform="translate(70.000000, 37.000000)" fill="#979797">
+            <path d="M329.5,659 C147.522175,659 0,511.477825 0,329.5 C0,147.522175 147.522175,0 329.5,0 C511.477825,0 659,147.522175 659,329.5 C659,511.477825 511.477825,659 329.5,659 Z M329.5,614 C486.625011,614 614,486.625011 614,329.5 C614,172.374989 486.625011,45 329.5,45 C172.374989,45 45,172.374989 45,329.5 C45,486.625011 172.374989,614 329.5,614 Z" id="Oval-Copy-7"></path>
+            <path d="M274.258893,614 L367.243027,614 C352.367378,619.750754 336.280597,623 320.682216,623 C305.083835,623 289.054352,619.750754 274.258906,614.000005 Z M212.002392,543 C212.000798,542.833453 212,542.666786 212,542.5 C212,498.041078 268.732026,462 320.682216,462 C372.632406,462 430,498.041078 430,542.5 C430,542.666786 429.999193,542.833453 429.997581,543 L212.002392,543 Z" id="Oval-Copy-5"></path>
+            
+            
+            <g id="eyes" transform="translate(144.000000, 346.000000)">
+                    <ellipse id="l_eye" cx="50" cy="42" rx="50" ry="42"></ellipse>
+                    <ellipse id="r_eye" cx="318" cy="42" rx="50" ry="42"></ellipse>
+                </g>
+        </g>
+    </g>
+    <animate
+    xlink:href="#l_eye" attributeName="ry"
+                          type="translate"
+                          keyTimes="0; 0.05; 0.1; 1"
+                          values="50; 2.5; 50; 50"
+                          begin="500ms"
+                          dur="4000ms"
+                          repeatCount="indefinite"/>
+    <animate
+    xlink:href="#r_eye" attributeName="ry"
+                          type="translate"
+                          keyTimes="0; 0.05; 0.1; 1"
+                          values="50; 2.5; 50; 50"
+                          begin="500ms"
+                          dur="4000ms"
+                          repeatCount="indefinite"/>
+</svg>

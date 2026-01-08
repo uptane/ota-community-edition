@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1104px" height="777px" viewBox="0 0 1104 777" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>SOM</title>
+    <desc>Created with Sketch.</desc>
+    <g id="SOM" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle" stroke="#716C58" stroke-width="5" fill="#162D2A" x="3" y="3" width="1098" height="771"></rect>
+        <g id="som" transform="translate(141.000000, 24.000000)">
+            <path d="M859,0 C859,8.28427125 865.268014,15 873,15 C880.731986,15 887,8.28427125 887,0 L901,0 L901,192.01815 C900.668108,192.006084 900.33474,192 900,192 C884.536027,192 872,204.983742 872,221 C872,237.016258 884.536027,250 900,250 C900.33474,250 900.668108,249.993916 901.000006,249.98185 L901,488 L213,488 L213,443.5 C213,438.80558 209.19442,435 204.5,435 C199.80558,435 196,438.80558 196,443.5 L196,488 L0,488 L0,250 C15.463973,250 28,237.016258 28,221 C28,204.983742 15.463973,192 0,192 L0,0 L14,0 C14,8.28427125 20.2680135,15 28,15 C35.7319865,15 42,8.28427125 42,0 L859,0 Z M27,423 C34.7319865,423 41,416.284271 41,408 C41,399.715729 34.7319865,393 27,393 C19.2680135,393 13,399.715729 13,408 C13,416.284271 19.2680135,423 27,423 Z M872,423 C879.731986,423 886,416.284271 886,408 C886,399.715729 879.731986,393 872,393 C864.268014,393 858,399.715729 858,408 C858,416.284271 864.268014,423 872,423 Z M27,65 C34.7319865,65 41,58.2842712 41,50 C41,41.7157288 34.7319865,35 27,35 C19.2680135,35 13,41.7157288 13,50 C13,58.2842712 19.2680135,65 27,65 Z M872,65 C879.731986,65 886,58.2842712 886,50 C886,41.7157288 879.731986,35 872,35 C864.268014,35 858,41.7157288 858,50 C858,58.2842712 864.268014,65 872,65 Z" id="Rectangle-2" fill="#085044"></path>
+            <path d="M196,449 L196,488 L0,488 L0,449 L196,449 Z M213,449 L901,449 L901,488 L213,488 L213,449 Z" id="Rectangle-3" fill="#B9A25A"></path>
+            <rect id="Rectangle-Copy-2" fill="#C5C6C8" x="42" y="203" width="278" height="161"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="59" y="203" width="244" height="161"></rect>
+            <path d="M73.5,15.5 L73.5,169.5 L286.5,169.5 L286.5,15.5 L73.5,15.5 Z M75.5,168.5 L75.5,136.5 L116.5,136.5 L116.5,168.5 L75.5,168.5 Z M75.5,17.5 L116.5,17.5 L116.5,49.5 L75.5,49.5 L75.5,17.5 Z" id="Rectangle-4" stroke="#979797" fill="#D8D8D8"></path>
+            <rect id="Rectangle" fill="#2C2F38" x="337" y="65" width="190" height="192"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="616" y="15" width="122" height="182"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="776" y="106" width="62" height="46"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="687" y="231" width="51" height="65"></rect>
+            <rect id="Rectangle" stroke="#D8D8D8" stroke-width="4" fill="#2C2F38" stroke-linejoin="round" x="744" y="327" width="71" height="68"></rect>
+        </g>
+        <rect id="Rectangle" stroke="#979797" fill="#D8D8D8" x="155.5" y="632.5" width="149" height="131"></rect>
+        <path d="M370.5,632.5 L342.5,632.5 L342.5,763.5 L491.5,763.5 L491.5,632.5 L461.5,632.5 L461.5,647.5 L370.5,647.5 L370.5,632.5 Z" id="Rectangle-Copy-5" stroke="#979797" fill="#D8D8D8"></path>
+        <rect id="Rectangle" fill="#8C8282" x="702" y="698" width="325" height="34"></rect>
+        <rect id="Rectangle" fill="#BCBCBC" x="757" y="673" width="222" height="70" rx="2"></rect>
+        <rect id="Rectangle" fill="#D8D8D8" x="791" y="743" width="148" height="14"></rect>
+        <path d="M1042,491 L1042,203 L1060,203 L1060,552 L1051,552 L132,552 L123,552 L123,203 L141,203 L141,491 L1042,491 Z" id="Rectangle-5" fill="#9B9B9B"></path>
+    </g>
+</svg>

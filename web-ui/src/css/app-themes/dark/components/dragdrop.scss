@@ -1,0 +1,14 @@
+@import '../../common.variables';
+.body--dark,
+.dark-theme {
+  .dragged-dropped {
+    background-color: rgba($secondary, 0.05);
+    border: 0.2rem dashed rgba($secondary, 0.35);
+    color: #fff;
+  }
+  .dragged-over {
+    background-color: rgba($primary, 0.05);
+    border: 0.2rem dashed rgba($primary, 0.35);
+    color: #fff;
+  }
+}

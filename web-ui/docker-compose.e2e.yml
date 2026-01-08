@@ -1,0 +1,9 @@
+version: '2'
+services:
+  toradex_ota_ui_e2e-test_cypress:
+    container_name: toradex_ota_ui_cnt_e2e
+    image: cypress/base:10
+    command:
+      - npm install
+      - npm start  & sleep 2m
+      - $(npm bin)/cypress run

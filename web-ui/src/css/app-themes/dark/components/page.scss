@@ -1,0 +1,79 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  background-color: $dark-theme-bg-dark;
+  .q-page-container {
+    .q-page {
+      background-color: $dark-theme-bg-dark;
+      color: #fff;
+    }
+    .q-separator--horizontal,
+    .q-separator--vertical {
+      background: rgba(gray, 0.25);
+    }
+  }
+
+  .v-divide-left {
+    border-left: 2px solid rgba(white, 0.05);
+  }
+
+  .v-divide-right {
+    border-right: 2px solid rgba(white, 0.05);
+  }
+
+  .h-divide-top {
+    border-top: 2px solid rgba(white, 0.05);
+  }
+
+  .h-divide-bottom {
+    border-bottom: 2px solid rgba(white, 0.05);
+  }
+  .v-divide-left-dashed {
+    border-left: 1px dashed rgba(white, 0.15);
+  }
+
+  .v-divide-right-dashed {
+    border-right: 1px dashed rgba(white, 0.15);
+  }
+
+  .h-divide-top-dashed {
+    border-top: 1px dashed rgba(white, 0.15);
+  }
+
+  .h-divide-bottom-dashed {
+    border-bottom: 1px dashed rgba(white, 0.15);
+  }
+
+  .v-divide-left-dotted {
+    border-left: 1px dotted rgba(white, 0.15);
+  }
+
+  .v-divide-right-dotted {
+    border-right: 1px dashed rgba(white, 0.15);
+  }
+
+  .h-divide-top-dotted {
+    border-top: 1px dotted rgba(white, 0.15);
+  }
+
+  .h-divide-bottom-dotted {
+    border-bottom: 1px dashed rgba(white, 0.15);
+  }
+
+  .v-divide-left-thin {
+    border-left: 1px solid rgba(white, 0.075);
+  }
+
+  .v-divide-right-thin {
+    border-right: 1px solid rgba(white, 0.075);
+  }
+
+  .h-divide-top-thin {
+    border-top: 1px solid rgba(white, 0.075);
+  }
+
+  .h-divide-bottom-thin {
+    border-bottom: 1px solid rgba(white, 0.075);
+  }
+}

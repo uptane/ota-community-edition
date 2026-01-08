@@ -1,0 +1,13 @@
+version: '2'
+services:
+  toradex_ota_ui_ui:
+    container_name: toradex_ota_ui_cnt_ui
+    image: topeysoft/toradex-ota-frontend-ui:1.1.31
+    build:
+      context: .
+      dockerfile: gui.Dockerfile
+    restart: always
+    ports:
+      - 8086:4000
+    environment:
+      - 'API_ENDPOINT_HOST=app.api.toradex.int'

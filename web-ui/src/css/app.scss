@@ -1,0 +1,217 @@
+// app global css.
+@import './app-themes/general/all';
+@import './app-themes/dark/all';
+@import './utilities';
+
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body.body--dark {
+  background: $dark-theme-bg-dark;
+
+  .q-drawer__content {
+    background: $dark-theme-bg;
+  }
+
+  .q-dark {
+    background: $dark-theme-bg;
+  }
+
+  .q-darker {
+    background: darken($dark-theme-bg, 1.4);
+  }
+
+  .bg-theme-bg {
+    background: $dark-theme-bg;
+  }
+
+  .bg-theme-bg-dark {
+    background: $dark-theme-bg-dark;
+  }
+
+  .bg-theme-bg-light {
+    background: $dark-theme-bg-light;
+  }
+
+  .app-subheader {
+    background: $dark-theme-bg-dark;
+  }
+
+  .text-default {
+    color: white;
+  }
+
+  .bg-default {
+    background: black;
+  }
+}
+
+body.body--light {
+  background: $light-theme-bg-dark;
+
+  .app-subheader {
+    background: $light-theme-bg-dark;
+  }
+
+  .q-drawer__content {
+    background: $light-theme-bg;
+  }
+
+  .bg-theme-bg {
+    background: $light-theme-bg-light;
+  }
+
+  .bg-theme-bg-dark {
+    background: $light-theme-bg-dark;
+  }
+
+  .bg-theme-bg-light {
+    background: $light-theme-bg-light;
+  }
+
+  .text-default {
+    color: black;
+  }
+
+  .bg-default {
+    background: white;
+  }
+}
+
+.app-subheader {
+  padding: 0.35rem;
+  position: fixed;
+  padding-bottom: 0;
+  top: 8.1em;
+  z-index: 10;
+}
+
+a {
+  color: $primary;
+}
+
+.bg-dark-theme-bg {
+  background-color: $dark-theme-bg;
+}
+
+.bg-dark-theme-bg-dark {
+  background-color: $dark-theme-bg-dark;
+}
+
+.no-scrollbar-wrapper {
+  overflow: hidden;
+  height: 100vh;
+  /* width: 100%; */
+  position: relative;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+  /* display: flex; */
+}
+
+.no-scrollbar-wrapper-content {
+  position: relative;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  overflow-x: auto;
+  margin-right: -2rem;
+  margin-bottom: -2rem;
+  // padding-right: 2rem;
+  padding-bottom: 3rem;
+  /* width: 100%; */
+  height: 100%;
+  /* display: block; */
+  overflow: scroll;
+
+  .q-page:not(.dashboard) {
+    padding-right: 1rem;
+  }
+}
+
+.mk-html-content {
+  @for $num from 1 through 6 {
+    h#{$num},
+    .text-h#{$num} {
+      line-height: 1.4;
+    }
+  }
+}
+
+// Custom branding colors
+
+.text-pkg-nightly {
+  color: $pkg-nightly;
+}
+
+.bg-pkg-nightly {
+  background: $pkg-nightly;
+}
+
+.text-pkg-monthly {
+  color: $pkg-monthly;
+}
+
+.bg-pkg-monthly {
+  background: $pkg-monthly;
+}
+
+.text-pkg-major,
+.bg-pkg-release {
+  color: $pkg-release;
+}
+
+.bg-pkg-major,
+.bg-pkg-release {
+  background: $pkg-release;
+}
+
+.text-pkg-lts {
+  color: $pkg-lts;
+}
+
+.bg-pkg-lts {
+  background: $pkg-lts;
+}
+
+.text-pkg-custom {
+  color: $pkg-custom;
+}
+
+.bg-pkg-custom {
+  background: $pkg-custom;
+}
+
+.text-muted {
+  color: $muted;
+}
+
+.bg-muted {
+  background: $muted;
+}
+
+.text-dark-bg {
+  color: $dark-theme-fg;
+}
+
+.bg-dark-bg {
+  background: $dark-theme-bg-light;
+}
+
+.bg-darker-bg {
+  background: $dark-theme-bg-dark;
+}
+
+.bg-toradex-light-blue {
+  background: $toradex_light_blue;
+}
+
+.right-menu-div {
+  z-index: 10;
+  .q-drawer {
+    position: fixed;
+    right: 1em;
+    margin-top: 8.2em;
+    width: 100%;
+  }
+}

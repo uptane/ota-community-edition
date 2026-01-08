@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Keyshape -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1440px" height="627px" viewBox="0 0 1440 627" style="background: rgba(28,58,77,0.00);">
+    <style>
+@keyframes Star-3_t { 0% { transform: translate(195.25px,205.779368px) rotate(0deg) scale(0.2,0.2) translate(-154.25px,-168.779368px); } 8% { transform: translate(195.25px,205.779368px) rotate(0deg) scale(0.2,0.2) translate(-154.25px,-168.779368px); } 11.2% { transform: translate(195.25px,205.779368px) rotate(144deg) scale(0.6,0.6) translate(-154.25px,-168.779368px); } 12% { transform: translate(195.25px,205.779368px) rotate(180deg) scale(1,1) translate(-154.25px,-168.779368px); } 16% { transform: translate(195.25px,205.779368px) rotate(360deg) scale(0.2,0.2) translate(-154.25px,-168.779368px); } 100% { transform: translate(195.25px,205.779368px) rotate(360deg) scale(0.2,0.2) translate(-154.25px,-168.779368px); } }
+@keyframes Star-3_fo { 0% { fill-opacity: 0; } 8% { fill-opacity: 0; } 12% { fill-opacity: 1; } 16% { fill-opacity: 0; } 100% { fill-opacity: 0; } }
+@keyframes Rectangle-2_t { 0% { transform: translate(-1025.04px,0px); } 8% { transform: translate(-1025.04px,0px); animation-timing-function: cubic-bezier(0.77,0,0.175,1); } 14% { transform: translate(1074.96px,0px); } 100% { transform: translate(1074.96px,0px); } }
+    </style>
+    <title>premium-banner</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <filter id="filter-2" x="-90.7%" y="-21.2%" width="281.4%" height="159.5%" filterUnits="objectBoundingBox">
+            <feOffset dx="0" dy="20" in="SourceAlpha" result="shadowOffsetOuter1"/>
+            <feGaussianBlur stdDeviation="20" in="shadowOffsetOuter1" result="shadowBlurOuter1"/>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.287343785 0" type="matrix" in="shadowBlurOuter1"/>
+        </filter>
+        <filter id="filter-4" x="-90.7%" y="-21.2%" width="281.4%" height="159.5%" filterUnits="objectBoundingBox">
+            <feOffset dx="0" dy="20" in="SourceAlpha" result="shadowOffsetOuter1"/>
+            <feGaussianBlur stdDeviation="20" in="shadowOffsetOuter1" result="shadowBlurOuter1"/>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"/>
+        </filter>
+        <filter id="filter-6" x="-6.5%" y="-4.7%" width="113.1%" height="113.1%" filterUnits="objectBoundingBox">
+            <feOffset dx="0" dy="5" in="SourceAlpha" result="shadowOffsetOuter1"/>
+            <feGaussianBlur stdDeviation="5" in="shadowOffsetOuter1" result="shadowBlurOuter1"/>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.175154092 0" type="matrix" in="shadowBlurOuter1"/>
+        </filter>
+    </defs>
+    <g id="premium-banner" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(651.078,457.75) translate(-651.078,-459.75)">
+        <g id="badge" transform="translate(309.328,286.667) translate(-186.328,-306.667)">
+            <g id="premium-badge" transform="translate(153.156,351.667) translate(-153.156,-213.667)">
+                <g id="shadow" opacity="0.2" transform="translate(72.977,22.6668) translate(-152.977,-150.667)">
+                    <path id="path-1" d="M47.6731,33.0077L106.564,61.3643L124.847,268.326L86.3473,224.861L47.8473,268.326Z" fill="#000000" fill-opacity="0.7" transform="translate(178.39,423.5) rotate(26) translate(-86.2601,-150.667)"/>
+                    <path id="path-3" d="M173.536,3.34162L232.426,31.6982L250.71,238.66L212.21,195.195L173.71,238.66Z" fill="#000000" fill-opacity="0.7" transform="translate(304.253,393.834) rotate(-31) translate(-212.123,-121.001)"/>
+                </g>
+                <path id="Rectangle" fill="#FF6565" d="M55.3657,148.581L132.366,148.581L132.366,391.581L93.8657,348.116L55.3657,391.581Z" filter="none" transform="translate(93.8657,270.081) rotate(26) translate(-93.8657,-270.081)"/>
+                <path id="Rectangle-Copy" fill="#FF6565" d="M172.078,146.475L249.078,146.475L249.078,389.475L210.578,346.01L172.078,389.475Z" filter="none" transform="translate(210.578,267.975) rotate(-31) scale(-1,1) translate(-210.578,-267.975)"/>
+                <g id="Star-2" transform="translate(151.01,133.99) translate(-151.01,-133.99)">
+                    <g filter="url(#filter-6)" fill="black" fill-opacity="1" transform="translate(151.01,133.99) translate(-151.01,-133.99)">
+                        <path id="path-6" d="M78.3739,206.626L42.5917,212.763L58.7544,182.02L24.3005,177.626L49.8516,151.835L17.0204,136.339L50.6538,119.003L23.5584,92.5917L59.4858,87.3712L42.5917,55.2368L76.8248,61.1082L70.3568,26.9828L102.781,43.3135L107.374,7.30051L134.254,33.9308L151,0L167.067,32.5557L192.408,6.55843L197.403,40.9304L227.859,24.2336L222.348,60.1175L258.017,53.3568L240.997,87.1507L278.442,92.5917L252.444,117.933L285,134L253.854,149.372L279.145,173.178L243.314,179.025L260.766,210.859L223.367,205.115L229.763,242.408L197.629,225.514L192.408,261.442L168.164,236.57L153.339,267.98L136.706,235.709L111.822,262.145L105.728,224.801L72.2368,242.408L78.3739,206.626Z" transform="translate(151.01,133.99) translate(-151.01,-133.99)"/>
+                    </g>
+                    <g fill="#F5DB7F" fill-rule="evenodd" transform="translate(151.01,133.99) translate(-151.01,-133.99)">
+                        <path id="path-7" d="M78.3739,206.626L42.5917,212.763L58.7544,182.02L24.3005,177.626L49.8516,151.835L17.0204,136.339L50.6538,119.003L23.5584,92.5917L59.4858,87.3712L42.5917,55.2368L76.8248,61.1082L70.3568,26.9828L102.781,43.3135L107.374,7.30051L134.254,33.9308L151,0L167.067,32.5557L192.408,6.55843L197.403,40.9304L227.859,24.2336L222.348,60.1175L258.017,53.3568L240.997,87.1507L278.442,92.5917L252.444,117.933L285,134L253.854,149.372L279.145,173.178L243.314,179.025L260.766,210.859L223.367,205.115L229.763,242.408L197.629,225.514L192.408,261.442L168.164,236.57L153.339,267.98L136.706,235.709L111.822,262.145L105.728,224.801L72.2368,242.408L78.3739,206.626Z" transform="translate(151.01,133.99) translate(-151.01,-133.99)"/>
+                    </g>
+                </g>
+                <ellipse id="Oval" stroke="#DAC169" stroke-width="5" fill="#ECD173" rx="82" ry="82" transform="translate(151,134)"/>
+                <path id="Star" stroke="#DAC169" stroke-width="4" fill="#FFEAA2" d="M151,158L122.786,172.833L128.175,141.416L105.349,119.167L136.893,114.584L151,86L165.107,114.584L196.651,119.167L173.825,141.416L179.214,172.833Z" transform="translate(151,129.416) translate(-151,-129.416)"/>
+                <path id="Oval-Copy" d="M233,134C241.5,85.5331,186.769,39.8502,129.5,52.4688C97.5,59.5195,84.1392,82.4505,82,91.4559C79.8331,100.578,98.8331,114.093,139,132C171.978,178.907,193.478,201.252,203.5,199.036C213.501,196.824,229.181,155.774,233,134Z" fill-opacity="0.226339" fill="#FFFFFF" transform="translate(157.855,124.765) translate(-157.855,-124.765)"/>
+            </g>
+            <g id="sparkle" fill="#FFFFFF" transform="translate(201.014,220.256) translate(-197.25,-216.779)">
+                <path id="Star-3" d="M143.304,183.83L50,295L139.337,184.777L4.19765,228.67L140.128,181.933L0,119L138.531,177.534L55.061,52.9177L142.376,177.181L179,0L145.93,176.702L269.922,46.8555L148.907,178.456L308.5,153L147.315,181.183L298.667,245.231L147.314,183.828L241,304.049L145.528,184.906L161.38,337.559L143.304,183.83Z" fill-opacity="0" fill="#ffffff" transform="translate(195.25,205.779) scale(0.2,0.2) translate(-154.25,-168.779)" style="animation: 5s linear infinite both Star-3_t, 5s linear infinite both Star-3_fo;"/>
+            </g>
+            <g id="banners" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(31.25,190.779) translate(-154.25,-168.779)">
+                <g id="premium-banner-2" fill="#FFFFFF" transform="translate(154.25,168.779) translate(-341.25,-196.779)">
+                    <g id="badge-2" transform="translate(341.25,196.779) translate(-218.25,-168.779)">
+                        <g id="sparkle-2" transform="translate(218.25,168.779) translate(-154.25,-168.779)"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+        <path id="Rectangle-2" fill-opacity="0.03" fill="#FFFFFF" d="M830.999,-81.5L1028,-38L622.04,694L425.04,650.5Z" transform="translate(-403,459.75) translate(-622.04,-459.75)" style="animation: 5s linear infinite both Rectangle-2_t;"/>
+    </g>
+</svg>

@@ -1,0 +1,196 @@
+/* eslint-disable */
+/**
+ * @jest-environment jsdom
+ */
+
+import { mount, createLocalVue, shallowMount } from '@vue/test-utils';
+
+import $ from 'jquery';
+import FleetMenu from '../../../../src/components/FleetMenu';
+
+import * as All from 'quasar'
+
+const { Quasar, LocalStorage, format } = All;
+
+const components = Object.keys(All).reduce((object, key) => {
+  const val = All[key]
+  if (val && val.component && val.component.name != null) {
+    object[key] = val
+  }
+  return object
+}, {});
+
+describe('Fleet Menu Component', () => {
+
+  const localVue = createLocalVue();
+  localVue.use(Quasar, {
+    components
+  });
+  
+  let wrapper, vm, $parent;
+ 
+  const menuItems = [
+    {
+      text: 'View devices',
+      action: () => {},
+    },
+  ];
+  const resetTest = (props)=>{
+    wrapper = mount(FleetMenu, {
+      propsData:props ||  {},
+      localVue,
+      // stubs,
+    });
+    vm = wrapper.vm;
+  
+    vm.$events = {
+      $emit: () => {},
+      $on: () => {},
+    };
+    vm.$q = {};
+    vm.$q.dialog = () => {
+      return new Promise();
+    };
+    $parent =  $parent = $(wrapper.find('.fleet-menu-wrapper').element);
+  };
+  resetTest();
+  beforeEach(() => {
+      resetTest();
+  });
+  // it('passes the sanity check and creates a wrapper', () => {
+  //   expect(wrapper.isVueInstance()).toBe(true);
+  // });
+  it('Set default fleet object to {} (empty non-null)', () => {
+    expect(vm.fleet).to.deep.equal({devices:[{}]});
+  });
+  it('Has menu items matching the menuItems property count', () => {
+    expect($parent.find('.q-list .q-item.menu-item').length).to.equal(
+      vm.menuItems.filter(f=>!f.hide).length,
+    );
+  });
+  it(`Has title that's the same as the fleet name`, () => {
+    resetTest({ fleet: { groupName: 'Good test' } });
+    expect($parent.find('.menu-title').text()).to.eq(vm.fleet.groupName);
+  });
+  $parent.find('.q-list .q-item.menu-item').each((i, menu) => {
+    const visibleMenuItems = vm.menuItems.filter(f=>!f.hide);
+    it(`Menu item [${i + 1}] has text matching the menuItems ${i +
+      1} text property "${visibleMenuItems[i].text}"`, () => {
+      expect(
+        $(menu)
+          .find('.q-item__label')
+          .text(),
+      ).to.equal(visibleMenuItems[i].text);
+    });
+ 
+    it(`Menu item [${i + 1}] has icon name and size matching the menuItems ${i +
+      1} text property "${visibleMenuItems[i].icon.name},  and  ${
+      visibleMenuItems[i].icon.size
+    }"`, () => {
+      const cls = $(menu)
+        .find('.q-icon')
+        .attr('class');
+      expect(
+        $(menu)
+          .find('.q-icon')
+          .css('font-size'),
+      ).to.eq(visibleMenuItems[i].icon.size);
+      expect(
+        $(menu)
+          .find('.q-icon')
+          .attr('class'),
+      ).to.contains(visibleMenuItems[i].icon.cssClass);
+      expect(
+        $(menu)
+          .attr('class'),
+      ).to.contains(visibleMenuItems[i].cssClass);
+      if (cls.indexOf('fa') !== -1) {
+        expect(cls).to.contain(visibleMenuItems[i].icon.name);
+      } else {
+        expect(
+          $(menu)
+            .find('.q-icon')
+            .text(),
+        ).to.eq(visibleMenuItems[i].icon.name);
+      }
+    });
+    it(`Clicking menu item [${i +
+      1}] perform action matching that of the menuItems ${i +
+      1} action property"`, () => {
+      const spy = spyOn(visibleMenuItems[i], 'action');
+      $(menu).trigger('click');
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
+  
+  describe('Methods', () => {
+    it(`showDevices(): emits "show-devices" event with data that equals 'fleet property'`, () => {
+      const props = { fleet: { groupName: 'showDevices test' } };
+      wrapper.setProps(props);
+      const spy = spyOn(vm, '$emit');
+      vm.showDevices();
+      expect(spy).toHaveBeenCalledWith('show-devices', props.fleet);
+    });
+    it(`showEditDialog(): emits "dialogs:create-fleet:open" event on event-bus with data that matches the 'fleet property'`, () => {
+      const props = { fleet: { groupName: 'showDevices test' } };
+      wrapper.setProps(props);
+      const spy = spyOn(vm.$events, '$emit');
+      vm.showEditDialog();
+      expect(spy).toHaveBeenCalledWith('dialogs:create-fleet:open', {
+        show: true,
+        fleet: props.fleet,
+      });
+    });
+    it(`createUpdate(): emits "dialogs:create-device-update:open" event on event-bus with data that matches the 'fleet property'`, () => {
+      const props = { fleet: { groupName: 'showDevices test' } };
+      wrapper.setProps(props);
+      const spy = spyOn(vm.$events, '$emit');
+      vm.createUpdate();
+      expect(spy).toHaveBeenCalledWith('dialogs:create-device-update:open', {
+        show: true,
+        isFleetUpdate: true,
+        update: {
+          fleetId: props.fleet,
+        },
+      });
+    });
+    it(`promptForDelete(): opens a dialog box with message that matches the 'fleet property'`, () => {
+      const props = { fleet: { groupName: 'promptForDelete test' } };
+      wrapper.setProps(props);
+      const dialogData = {
+        title: `Delete ${vm.fleet.groupName}?`,
+        message: `This can't be undone`,
+        color: 'default',
+        icon: 'bin',
+        ok: {
+          flat: true,
+          label: 'Yes, please!',
+          color: 'negative',
+        },
+        cancel: {
+          flat: true,
+          label: 'No',
+        },
+      };
+      vm.$q.dialog = data => {
+        expect(data).to.be.deep.eq(dialogData);
+        return Promise.resolve();
+      };
+      vm.promptForDelete();
+    });
+    it(`promptForDelete(): sets 'fleet' to 'delete in progress' on success. `, () => {
+      const props = { fleet: { groupName: 'showDevices test' } };
+      wrapper.setProps(props);
+      vm.$q.dialog = data => {
+        return Promise.resolve();
+      };
+      vm.$store = {
+        getters: { 'ui/fleetDeleteInProgress': vm.fleet
+       },
+      };
+      vm.$q.notify = data => {};
+      vm.promptForDelete();
+      expect(vm.fleetDeleteInProgress).to.be.deep.eq(vm.fleet);
+    });
+  });
+});

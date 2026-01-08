@@ -1,0 +1,25 @@
+version: '3'
+services:
+  nginx:
+    image: frontend-env:latest
+    container_name: frontend-env
+    # build: .
+    volumes:
+      - /Volumes/dev/Toradex/ota-mono-repo/app/src/docker-context/start.sh:/start.sh
+    # volumes:
+    # - ./app.template:/etc/nginx/conf.d/app.template
+    environment:
+      - API_HOST=app-stable.int.toradex.com
+      - API_PORT=80
+      - SERVER_NAME="localhost"
+      - SERVER_PORT="80"
+      - DISABLE_PROXY="1"
+      - USER_POOL="prod"
+    ports:
+      - 9003:80
+      # - 443:443
+  # ismydependencysafe:
+  #   image: ismydependencysafe:latest
+  #   container_name: production_ismydependencysafe
+  #   expose:
+  #     - "80"

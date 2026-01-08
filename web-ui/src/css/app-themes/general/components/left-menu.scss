@@ -1,0 +1,32 @@
+@import '../../common.variables';
+
+// $min-bar-size = 60px;
+.body--light,
+.light-theme {
+  .q-drawer {
+    &.q-drawer--left {
+      // color: $light-theme-fg;
+      background-color: $light-theme-bg;
+      // border-right: 2px solid $light-theme-bg-dark !important;
+      overflow-x: hidden;
+
+      .q-list > .q-item {
+        // color: $dark-theme-fg;
+        background-color: transparent;
+        cursor: pointer;
+
+        &:hover {
+          color: darken($primary, 5);
+          background-color: rgba($light-theme-bg-dark, 0.6);
+        }
+
+        &.active {
+          color: darken($secondary, 5);
+          border-left: 0.2em solid darken($secondary, 5);
+          background-color: lighten($light-theme-bg, 2);
+          border-left: -0.2em;
+        }
+      }
+    }
+  }
+}

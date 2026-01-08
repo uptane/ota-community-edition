@@ -1,0 +1,44 @@
+@import '../../common.variables';
+
+// .body--light,
+// .light-theme{
+.user-div {
+  color: darken($light-theme-fg, 5);
+  background-color: darken($light-theme-bg, 5);
+  border-bottom: 1px solid darken($light-theme-bg-dark, 10);
+  height: 10em;
+  padding: 1.5rem;
+}
+
+.mini-bar {
+  .user-div {
+    // min-height: 3em;
+    height: auto;
+    padding: 0.4rem;
+  }
+
+  .user-texts {
+    display: none;
+  }
+
+  .user-actions {
+    display: none;
+  }
+
+  .user-avatar {
+    height: 2.5em;
+    width: 100%;
+    align-items: center;
+
+    .q-avatar {
+      // width: 24px;
+      // height: 24px;
+      // font-size: 32px !important;
+
+      .q-avatar__content {
+      }
+    }
+  }
+}
+
+// }

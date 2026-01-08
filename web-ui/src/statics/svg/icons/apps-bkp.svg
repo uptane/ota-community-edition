@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="500px" height="403px" viewBox="0 0 500 403" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>r copy</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="45.7389033%" y1="31.8509815%" x2="43.4906867%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#CDE1E2" offset="0%"></stop>
+            <stop stop-color="#8CC63D" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="45.7389033%" y1="31.8509815%" x2="43.4906867%" y2="100%" id="linearGradient-2">
+            <stop stop-color="#F1F8E8" offset="0%"></stop>
+            <stop stop-color="#8CC63D" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="r-copy" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group">
+            <g id="Group-2" transform="translate(0.000000, 220.000000)">
+                <polygon id="Rectangle" fill="url(#linearGradient-1)" points="0.693637943 74.4902079 266.5 -4.26325641e-14 499.333967 111.172248 219.986238 182.695652"></polygon>
+                <polygon id="Rectangle-Copy" fill="#000000" opacity="0.438727679" points="0.693637943 74.4902079 266.5 -4.26325641e-14 499.333967 111.172248 219.986238 182.695652"></polygon>
+            </g>
+            <g id="Group-3" transform="translate(0.000000, 147.000000)">
+                <polygon id="Rectangle-Copy-3" fill="url(#linearGradient-2)" points="0.693637943 70.8206522 266.5 -4.26325641e-14 499.333967 105.695652 219.986238 173.695652"></polygon>
+                <polygon id="Rectangle-Copy-3" fill="#010101" opacity="0.146191406" points="0.693637943 70.8206522 266.5 -5.68434189e-14 499.333967 105.695652 219.986238 173.695652"></polygon>
+            </g>
+            <g id="Group-4" transform="translate(0.000000, 74.000000)">
+                <polygon id="Rectangle-Copy-2" fill="url(#linearGradient-2)" points="0.693637943 70.8206522 266.5 -4.26325641e-14 499.333967 105.695652 219.986238 173.695652"></polygon>
+                <polygon id="Rectangle-Copy-2" fill="#000000" opacity="0.325753348" points="0.693637943 70.8206522 266.5 -5.68434189e-14 499.333967 105.695652 219.986238 173.695652"></polygon>
+            </g>
+            <polygon id="Rectangle-Copy-12" fill="url(#linearGradient-2)" points="0.693637943 71.125 266.5 0.3043478 499.333967 106 219.986238 174"></polygon>
+        </g>
+    </g>
+</svg>

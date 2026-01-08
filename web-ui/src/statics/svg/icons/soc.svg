@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1220px" height="1069px" viewBox="0 0 1220 1069" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>SOM</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <rect id="path-1" x="25" y="72" width="1170" height="967"></rect>
+        <filter x="-3.4%" y="-3.6%" width="106.8%" height="108.3%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="5" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="12.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <rect id="path-3" x="0" y="45" width="1055" height="567"></rect>
+        <filter x="-3.8%" y="-6.2%" width="107.6%" height="114.1%" filterUnits="objectBoundingBox" id="filter-4">
+            <feOffset dx="0" dy="5" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="12.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <path d="M984,0 C984,8.28427125 990.268014,15 998,15 C1005.73199,15 1012,8.28427125 1012,0 L1026,0 L1026,192.01815 C1025.66811,192.006084 1025.33474,192 1025,192 C1009.53603,192 997,204.983742 997,221 C997,237.016258 1009.53603,250 1025,250 C1025.33474,250 1025.66811,249.993916 1026.00001,249.98185 L1026,488 L338,488 L338,443.5 C338,438.80558 334.19442,435 329.5,435 C324.80558,435 321,438.80558 321,443.5 L321,488 L125,488 L125,250 C140.463973,250 153,237.016258 153,221 C153,204.983742 140.463973,192 125,192 L125,0 L139,0 C139,8.28427125 145.268014,15 153,15 C160.731986,15 167,8.28427125 167,0 L984,0 Z M152,423 C159.731986,423 166,416.284271 166,408 C166,399.715729 159.731986,393 152,393 C144.268014,393 138,399.715729 138,408 C138,416.284271 144.268014,423 152,423 Z M997,423 C1004.73199,423 1011,416.284271 1011,408 C1011,399.715729 1004.73199,393 997,393 C989.268014,393 983,399.715729 983,408 C983,416.284271 989.268014,423 997,423 Z M152,65 C159.731986,65 166,58.2842712 166,50 C166,41.7157288 159.731986,35 152,35 C144.268014,35 138,41.7157288 138,50 C138,58.2842712 144.268014,65 152,65 Z M997,65 C1004.73199,65 1011,58.2842712 1011,50 C1011,41.7157288 1004.73199,35 997,35 C989.268014,35 983,41.7157288 983,50 C983,58.2842712 989.268014,65 997,65 Z" id="path-5"></path>
+        <filter x="-4.3%" y="-7.5%" width="108.5%" height="115.8%" filterUnits="objectBoundingBox" id="filter-6">
+            <feOffset dx="0" dy="2" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="12.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="SOM" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Rectangle-6-Copy">
+            <use fill="black" fill-opacity="1" filter="url(#filter-2)" xlink:href="#path-1"></use>
+            <use fill="#139A84" fill-rule="evenodd" xlink:href="#path-1"></use>
+        </g>
+        <g id="som" transform="translate(140.000000, 23.000000)">
+            <g id="Rectangle">
+                <use fill="black" fill-opacity="1" filter="url(#filter-4)" xlink:href="#path-3"></use>
+                <use fill="#0F7060" fill-rule="evenodd" xlink:href="#path-3"></use>
+            </g>
+            <g id="Rectangle-2">
+                <use fill="black" fill-opacity="1" filter="url(#filter-6)" xlink:href="#path-5"></use>
+                <use fill="#139A84" fill-rule="evenodd" xlink:href="#path-5"></use>
+            </g>
+            <path d="M321,449 L321,488 L125,488 L125,449 L321,449 Z M338,449 L1026,449 L1026,488 L338,488 L338,449 Z" id="Rectangle-3" fill="#B9A25A"></path>
+            <rect id="Rectangle-Copy-2" fill="#C5C6C8" x="167" y="203" width="278" height="161"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="184" y="203" width="244" height="161"></rect>
+            <path d="M198,15 L412,15 L412,170 L198,170 L198,15 Z M201,137 L201,168 L241,168 L241,137 L201,137 Z M201,18 L201,49 L241,49 L241,18 L201,18 Z" id="Rectangle-4" fill="#139A84"></path>
+            <rect id="Rectangle" fill="#2C2F38" x="462" y="65" width="190" height="192"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="741" y="15" width="122" height="182"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="901" y="106" width="62" height="46"></rect>
+            <rect id="Rectangle" fill="#2C2F38" x="812" y="231" width="51" height="65"></rect>
+            <rect id="Rectangle" stroke="#D8D8D8" stroke-width="4" fill="#2C2F38" stroke-linejoin="round" x="869" y="327" width="71" height="68"></rect>
+        </g>
+        <rect id="Rectangle" fill="#FFFFFF" x="239" y="901" width="150" height="111"></rect>
+        <path d="M455,901 L455,914 L545,914 L545,901 L576,901 L576,1012 L426,1012 L426,901 L455,901 Z" id="Rectangle-Copy-5" fill="#FFFFFF"></path>
+        <rect id="Rectangle" fill="#EFEFEF" x="786" y="967" width="325" height="34"></rect>
+        <rect id="Rectangle" fill="#BCBCBC" x="841" y="942" width="222" height="70" rx="2"></rect>
+        <rect id="Rectangle" fill="#D8D8D8" x="875" y="1002" width="148" height="14"></rect>
+    </g>
+</svg>

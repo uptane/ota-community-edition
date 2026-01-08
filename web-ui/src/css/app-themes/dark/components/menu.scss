@@ -1,0 +1,17 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .q-menu {
+    background-color: lighten($dark-theme-bg, 3);
+    color: #fff;
+
+    &.hoverable:hover {
+      background-color: rgba($secondary, 0.3);
+    }
+
+    &.clickable:active {
+      background-color: rgba(darken($secondary, 15), 0.3);
+    }
+  }
+}

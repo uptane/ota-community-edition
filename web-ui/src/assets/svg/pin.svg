@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="27px" height="56px" viewBox="0 0 27 56" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>pin</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="0%" y1="61.1986891%" x2="100%" y2="61.1986891%" id="linearGradient-1">
+            <stop stop-color="#EEEEEE" offset="0%"></stop>
+            <stop stop-color="#3C3C3C" offset="100%"></stop>
+        </linearGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="53.8628832%" id="radialGradient-2">
+            <stop stop-color="#FFFFFF" offset="0%"></stop>
+            <stop stop-color="#FF0000" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g id="Page-2" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Touch-Bar" transform="translate(-312.000000, -282.000000)">
+            <g id="pin" transform="translate(312.000000, 282.000000)">
+                <rect id="Rectangle" fill="url(#linearGradient-1)" x="11" y="20" width="6" height="36"></rect>
+                <circle id="Oval" fill="url(#radialGradient-2)" cx="13.5" cy="13.5" r="13.5"></circle>
+            </g>
+        </g>
+    </g>
+</svg>

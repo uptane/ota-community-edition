@@ -1,0 +1,42 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .q-list {
+    background-color: $dark-theme-bg;
+    color: $dark-theme-fg;
+    border-color: transparent;
+
+    .q-item-link:hover {
+      background-color: rgba($secondary, 0.3);
+    }
+
+    .q-item-link:active {
+      background-color: darken($secondary, 15);
+    }
+
+    .q-item.selected {
+      background-color: rgba($secondary, 0.2);
+    }
+  }
+
+  .q-menu {
+    .q-list {
+      background-color: $dark-theme-bg;
+      color: $dark-theme-fg;
+      border-color: transparent;
+
+      .q-item-link:hover {
+        background-color: rgba($secondary, 0.3);
+      }
+
+      .q-item-link:active {
+        background-color: darken($secondary, 15);
+      }
+
+      .q-item.selected {
+        background-color: rgba($secondary, 0.2);
+      }
+    }
+  }
+}

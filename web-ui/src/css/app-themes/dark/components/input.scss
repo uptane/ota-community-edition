@@ -1,0 +1,15 @@
+@import '../../common.variables';
+
+.body--dark :not(.login-page),
+.dark-theme :not(.login-page) {
+  .q-field.q-field--outlined.q-field--dark {
+    .q-field__inner {
+      .q-field__control {
+        background-color: $dark-theme-bg-dark;
+        &:before {
+          border-color: $dark-theme-bg-light;
+        }
+      }
+    }
+  }
+}

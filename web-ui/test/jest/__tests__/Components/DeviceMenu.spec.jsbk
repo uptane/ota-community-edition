@@ -1,0 +1,223 @@
+/* eslint-disable */
+/**
+ * @jest-environment jsdom
+ */
+
+import { mount, createLocalVue, shallowMount } from '@vue/test-utils';
+import $ from 'jquery';
+import DeviceMenu from '../../../../src/components/DeviceMenu';
+import * as All from 'quasar'
+
+const { Quasar, LocalStorage, format } = All;
+
+const components = Object.keys(All).reduce((object, key) => {
+  const val = All[key]
+  if (val && val.component && val.component.name != null) {
+    object[key] = val
+  }
+  return object
+}, {})
+describe('Device Menu Component', () => {
+  const componentStubs = {
+    timeago: { template: "<div></div> " },
+    "q-menu": '<div></div>',
+    "q-card-section": { template: "<div></div> " },
+  };
+  const localVue = createLocalVue();
+  localVue.use(Quasar, {
+    components
+  });
+
+  let wrapper, vm, $parent;
+  //  = mount(DeviceMenu, {
+  //     localVue,
+  //     stubs:componentStubs
+  //   });
+
+
+  const menuItems = [
+    {
+      text: 'View devices',
+      action: () => { },
+    },
+  ];
+  const resetTest = (props) => {
+    wrapper = mount(DeviceMenu, {
+      propsData: props || {},
+      localVue,
+      // stubs,
+    });
+    vm = wrapper.vm;
+
+    vm.$events = {
+      $emit: () => { },
+      $on: () => { },
+    };
+    vm.$q = {};
+    vm.$q.dialog = () => {
+      return new Promise();
+    };
+    $parent = $(wrapper.find('.device-menu-wrapper').element);
+  };
+  resetTest();
+  beforeEach(() => {
+    resetTest();
+  });
+  // it('passes the sanity check and creates a wrapper', () => {
+  //   expect(wrapper.isVueInstance()).toBe(true);
+  // });
+  it('Has menu items matching the menuItems property count', () => {
+    expect($parent.find('.q-list .q-item.menu-item').length).to.equal(
+      vm.menuItems.filter(f => !f.hide).length,
+    );
+  });
+  it(`Has title that's the same as the fleet name`, () => {
+    resetTest({ device: { deviceName: 'Good test' } });
+    expect($parent.find('.menu-title').text()).to.eq(vm.device.deviceName);
+  });
+  describe('MenuItems', () => {
+    const props = { device: { deviceName: 'showDevices test', activatedAt: 'today' } };
+    resetTest(props);
+    const visibleMenuItems = vm.menuItems.filter(f => !f.hide);
+    $parent.find('.q-list .q-item.menu-item').each((i, menu) => {
+      it(`Menu item [${i + 1}] has text matching the menuItems ${i +
+        1} text property "${visibleMenuItems[i].text}"`, () => {
+          expect(
+            $(menu)
+              .find('.q-item__label')
+              .text(),
+          ).to.equal(visibleMenuItems[i].text);
+        });
+      it(`Menu item [${i +
+        1}] has icon name and size matching the menuItems ${i +
+        1} text property "${visibleMenuItems[i].icon.name},  and  ${visibleMenuItems[i].icon.size
+        }"`, () => {
+          const cls = $(menu)
+            .find('.q-icon')
+            .attr('class');
+
+          if (cls && cls.indexOf('fa') !== -1) {
+            expect(cls).to.contain(visibleMenuItems[i].icon.name);
+            expect(
+              $(menu)
+                .find('.q-icon')
+                .css('font-size'),
+            ).to.eq(visibleMenuItems[i].icon.size);
+          } else {
+            if (visibleMenuItems[i].icon.type === 'image') {
+              expect(
+                $(menu)
+                  .find('img')
+                  .attr('src'),
+              ).to.eq(visibleMenuItems[i].icon.name);
+              expect(
+                $(menu)
+                  .find('img')
+                  .css('max-width'),
+              ).to.eq(visibleMenuItems[i].icon.size);
+            } else {
+              expect(
+                $(menu)
+                  .find('.q-icon')
+                  .text(),
+              ).to.eq(visibleMenuItems[i].icon.name);
+              expect(
+                $(menu)
+                  .find('.q-icon')
+                  .css('font-size'),
+              ).to.eq(visibleMenuItems[i].icon.size);
+            }
+          }
+        });
+      it(`Clicking menu item [${i +
+        1}] perform action matching that of the menuItems ${i +
+        1} action property"`, () => {
+          const spy = spyOn(visibleMenuItems[i], 'action');
+          $(menu).trigger('click');
+          expect(spy).toHaveBeenCalledTimes(1);
+        });
+    });
+  });
+
+  describe('Methods', () => {
+    it(`showDeviceDatail(): emits "show-devices" event with data that equals 'device property'`, () => {
+      const props = { device: { deviceName: 'showDevices test' } };
+      wrapper.setProps(props);
+      vm.$router = {
+        push: () => { }
+      };
+      const spy = spyOn(vm.$router, 'push');
+      vm.showDeviceDatail();
+      expect(spy).toHaveBeenCalledWith({
+        name: "device-detail",
+        params: { deviceId: vm.device.uuid }
+      });
+    });
+    it(`showEditDialog(): emits "dialogs:create-fleet:open" event on event-bus with data that matches the 'fleet property'`, () => {
+      const props = { device: { deviceName: 'showDevices test', activatedAt: 'today' } };
+      wrapper.setProps(props);
+      const spy = spyOn(vm.$events, '$emit');
+      vm.showEditDialog();
+      expect(spy).toHaveBeenCalledWith('dialogs:create-device:open', {
+        show: true,
+        device: props.device,
+      });
+    });
+    it(`createUpdate(): emits "dialogs:create-device-update:open" event on event-bus with data that matches the 'device property'`, () => {
+      const device = { deviceName: 'showDevices test', activatedAt: 'today' };
+      const props = { device };
+      wrapper.setProps(props);
+      const spy = spyOn(vm.$events, '$emit');
+      vm.createUpdate();
+      expect(spy).toHaveBeenCalledWith('dialogs:create-device-update:open', {
+        show: true,
+        isFleetUpdate: false,
+        fromDeviceDetail: true,
+        selectedDevice: device,
+        update: {
+          deviceIds: [
+            vm.device
+          ]
+        }
+      });
+    });
+    it(`promptForDelete(): opens a dialog box with message that matches the 'device property'`, () => {
+      const props = { device: { deviceName: 'promptForDelete test', activatedAt: 'today' } };
+      wrapper.setProps(props);
+      const dialogData = {
+        title: `Delete ${vm.device.deviceName}?`,
+        message: `This can't be undone`,
+        color: 'default',
+        icon: 'bin',
+        ok: {
+          flat: true,
+          class: 'delete',
+          label: 'Yes, please!',
+          color: 'negative',
+        },
+        cancel: {
+          flat: true,
+          label: 'No',
+        },
+      };
+      vm.$q.dialog = data => {
+        expect(data).to.be.deep.eq(dialogData);
+        return Promise.resolve();
+      };
+      vm.promptForDelete();
+    });
+    it(`promptForDelete(): sets 'device' to 'delete in progress' on success. `, () => {
+      const props = { device: { deviceName: 'showDevices test', activatedAt: 'today' } };
+      wrapper.setProps(props);
+      vm.$q.dialog = data => {
+        return Promise.resolve();
+      };
+      vm.$store = {
+        getters: { 'ui/deviceDeleteInProgress': vm.device },
+      };
+      vm.$q.notify = data => { };
+      vm.promptForDelete();
+      expect(vm.deviceDeleteInProgress).to.be.deep.eq(vm.device);
+    });
+  });
+});

@@ -1,0 +1,242 @@
+{
+  "signatures": [
+    {
+      "keyid": "48a42371f5f69fd7dcad01e7739f83a89ef4773889b2cf8e60e247ec2e108dd8",
+      "method": "rsassa-pss-sha256",
+      "sig": "RkhGX5o4T53rOD3TGNgooGz6WqtyPHADcHXOvxe9FndMCGUVCzKzuPYpBK4nT8T4gnL4nvx2qkUyWqkX+CubYuzedv6YkT+73iCulGkBIIYcLDnY70kgbGviL1GnFZgZr0TbyHyrq1tGhU3imtHua1+nCyhvnc9PQUWNtyDWhfLLFSFMrMFAeUqtxWKbMFvJSmXstQEb3fhk6mdtvHoKTUSf+9SLMhU6DKOXbgx9RtY19j7N422zy/9IiN1O1C+6ILcBqyhUGAx31qzls7A1cZGsZOnWn8Lzsc9fpQpZi5AHJE/WHlGTTB3QB0d7RnkAobnyDxDbJAMtms9ps0OIiw=="
+    }
+  ],
+  "signed": {
+    "_type": "Targets",
+    "expires": "2020-08-15T21:14:59Z",
+    "targets": {
+      "5/colibri-imx6/torizon-rt/torizon-core-podman/nightly-cb364be239f4576b3dce5bad6bab8fcba8e296f6edb1c9da8d6b3b294578153b": {
+        "hashes": {
+          "sha256": "cb364be239f4576b3dce5bad6bab8fcba8e296f6edb1c9da8d6b3b294578153b"
+        },
+        "length": 0,
+        "custom": {
+          "cliUploaded": false,
+          "name": "5/colibri-imx6/torizon-rt/torizon-core-podman/nightly",
+          "version": "cb364be239f4576b3dce5bad6bab8fcba8e296f6edb1c9da8d6b3b294578153b",
+          "hardwareIds": ["colibri-imx6"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-07-31T23:49:02Z",
+          "updatedAt": "2020-07-31T23:49:02Z",
+          "commitSubject": "5.0.0-devel-20200731+build.25",
+          "commitBody": "meta-toradex-torizon    HEAD:4a211330f9b6cdecc15efc51e4cc6dd1354f1141\nmeta-toradex-distro     HEAD:8d978fc91a0e60d978315329e123cd1ca12b2a20\nmeta-toradex-bsp-common HEAD:122c8b8fae28472b3b13c2bbef6c02325cbfcb96\nmeta-oe                 HEAD:cc6fc6b1641ab23089c1e3bba11e0c6394f0867c\nmeta-networking         HEAD:cc6fc6b1641ab23089c1e3bba11e0c6394f0867c\nmeta-filesystems        HEAD:cc6fc6b1641ab23089c1e3bba11e0c6394f0867c\nmeta-python             HEAD:cc6fc6b1641ab23089c1e3bba11e0c6394f0867c\nmeta-perl               HEAD:cc6fc6b1641ab23089c1e3bba11e0c6394f0867c\nmeta-virtualization     HEAD:ffd787fb850e5a1657a01febc8402c74832147a1\nmeta-updater            HEAD:4af1ea60f37d8a63a3a9633be14591f1b2066cd1\nmeta-toradex-nxp        HEAD:d39b90e0040b2cc4071d21110ecb92a29eca09b1\nmeta-freescale          HEAD:c1b638305c1ebf5d05abc3b1a211e99710b795ab\nmeta-freescale-3rdparty HEAD:340a581013eb136ba44a0857fe55ca44e4917ca8\nmeta-yocto-bsp          HEAD:9d7966cf2fb33d827c999fbb88872d8437d8f0c7\nmeta-poky               HEAD:9d7966cf2fb33d827c999fbb88872d8437d8f0c7\nmeta-security           HEAD:982a29bbb7ef32475aea7c4bb56c620065a50927\nmeta-lmp-base           HEAD:7bdef4ad72da08e70e4962055b463082b4bd2589\nmeta                    HEAD:2e128a775a3d51dc1856a35e2f5135d3c156d10e"
+        }
+      },
+      "4/colibri-imx8x/torizon/torizon-core-docker/nightly-a601f55e4236ede2618d8dd07db45e63e44b37e426ad1151127d35ff09f92e85": {
+        "hashes": {
+          "sha256": "a601f55e4236ede2618d8dd07db45e63e44b37e426ad1151127d35ff09f92e85"
+        },
+        "length": 0,
+        "custom": {
+          "cliUploaded": false,
+          "name": "4/colibri-imx8x/torizon/torizon-core-docker/nightly",
+          "version": "a601f55e4236ede2618d8dd07db45e63e44b37e426ad1151127d35ff09f92e85",
+          "hardwareIds": ["colibri-imx8x"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-08-01T20:07:41Z",
+          "updatedAt": "2020-08-01T20:07:41Z",
+          "commitSubject": "4.0.0-devel-20200801+build.185",
+          "commitBody": "meta-toradex-torizon    HEAD:d810348cc0aaa5fee68e597360b73939a44e1aeb\nmeta-toradex-distro     HEAD:276c966a04bbe4d19866becb3b8fc147d1079049\nmeta-toradex-bsp-common HEAD:419eba81a51fb8f8e5a4eef9f23f1734c7044c78\nmeta-oe                 HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-networking         HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-filesystems        HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-python             HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-perl               HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-virtualization     HEAD:514ce5f6b240600f06b9956737be1e33900bacac\nmeta-updater            HEAD:2152ac89c04de19d9660b552c2952e542ed8ecb2\nmeta-toradex-nxp        HEAD:acbfe83716e6a045d9290d932eec29a9afb468f1\nmeta-freescale          HEAD:f535ddcd5cd3da846a34b1721ceda3c8b18b37a0\nmeta-freescale-3rdparty HEAD:dbcc686f52c3c84db8cb86aa8973a4e373651b98\nmeta-yocto-bsp          HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-poky               HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-security           HEAD:440c37f0b623ccc0aa0328613908608d6362adda\nmeta-lmp-base           HEAD:067487d1d4a823237eb6e7bbdebf9b023b58affa\nmeta                    HEAD:f5b90eeed7366432b39c7cd8c6ee8c23e2d4abe8"
+        }
+      },
+      "verdin-imx8mm/torizon/torizon-core-podman-d07b008b20597a95cd28a31b03c23a2b7188b6f44d2a46328ec9c5dd590d406b": {
+        "hashes": {
+          "sha256": "d07b008b20597a95cd28a31b03c23a2b7188b6f44d2a46328ec9c5dd590d406b"
+        },
+        "length": 0,
+        "custom": {
+          "name": "verdin-imx8mm/torizon/torizon-core-podman",
+          "version": "d07b008b20597a95cd28a31b03c23a2b7188b6f44d2a46328ec9c5dd590d406b",
+          "hardwareIds": ["verdin-imx8mm"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-07-09T23:39:24Z",
+          "updatedAt": "2020-07-09T23:39:24Z",
+          "commitSubject": "0.0.0-devel-20200709+build.3",
+          "commitBody": "meta-toradex-torizon    HEAD:4818812dd9a1f8f59d8dafa6ba1e2d69d59e9418\nmeta-toradex-distro     HEAD:e3f94773b8c89097964b6aad19e7d2dd1fcf0a3f\nmeta-toradex-bsp-common HEAD:76e40e33856c0b8f187aaba3f2b42a23eb62d2b8\nmeta-oe                 HEAD:679bb4912613f3860e8527557602251e5e5f2c41\nmeta-networking         HEAD:679bb4912613f3860e8527557602251e5e5f2c41\nmeta-filesystems        HEAD:679bb4912613f3860e8527557602251e5e5f2c41\nmeta-python             HEAD:679bb4912613f3860e8527557602251e5e5f2c41\nmeta-perl               HEAD:679bb4912613f3860e8527557602251e5e5f2c41\nmeta-virtualization     HEAD:2bba10be28d4d7ce45d78a8429caaa6952785901\nmeta-updater            HEAD:177081df3a793ee0e028b33bd416cdff97eee471\nmeta-toradex-nxp        HEAD:445cdaf4e90c1aa68fa8439a63b032da3dba79b2\nmeta-freescale          HEAD:e1b169c907b2d6743f277f1212fcc6ecb2e068c3\nmeta-freescale-3rdparty HEAD:f57de4d2d9b9cd342e0d01fd1b15be3e842ccd34\nmeta-yocto-bsp          HEAD:3f6857be9be9ab5e2ede9a416c212487357eec0d\nmeta-poky               HEAD:3f6857be9be9ab5e2ede9a416c212487357eec0d\nmeta-security           HEAD:98a6664408f17560549b94f575e058ed84dd6a0d\nmeta-lmp-base           HEAD:3f8596beab50fd502b911426f3cec70d38ff7c51\nmeta                    HEAD:1795f30d8ab73d35710ca99064c51190dc84853e"
+        }
+      },
+      "apalis-imx6/torizon-rt/torizon-core-docker-rt-3738234669ffebc2a6f2f87e85cc7118ad0ef4e87546e65ba79b2c876c5c24c9": {
+        "hashes": {
+          "sha256": "3738234669ffebc2a6f2f87e85cc7118ad0ef4e87546e65ba79b2c876c5c24c9"
+        },
+        "length": 0,
+        "custom": {
+          "commitBody": "meta-toradex-torizon    HEAD:01c52c8dc7974f7345d0c5783783b3f70ad97fcf\nmeta-toradex-distro     HEAD:32d4cdf84966fd20d7dcd58c25d574f3e1ff947f\nmeta-toradex-bsp-common HEAD:45bd3b76849449d2b6de2b75e07d49097d5f1dbf\nmeta-oe                 HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-networking         HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-filesystems        HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-python             HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-perl               HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-virtualization     HEAD:561b597d4ba91dd36147e1af81bd1edc2d6636db\nmeta-updater            HEAD:bf39f0fec9ad410aa37d3001b11d9e731b39d6e7\nmeta-toradex-nxp        HEAD:aa92a5f987267f557aecf5d312fd7f99554a9515\nmeta-freescale          HEAD:db6cdd204764228a2f45f45c346dc026a70c6423\nmeta-freescale-3rdparty HEAD:aea3771baa77e74762358ceb673d407e36637e5f\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:a50e1ae57510f5a84dd8dcea858ef8d9995bee7d\nmeta                    HEAD:c78140941f8a98e013932023a63501ba3b7e975a",
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "commitSubject": "4.0.0-devel-20200404+build.40",
+          "version": "3738234669ffebc2a6f2f87e85cc7118ad0ef4e87546e65ba79b2c876c5c24c9",
+          "hardwareIds": ["apalis-imx6"],
+          "createdAt": "2020-04-04T22:18:26Z",
+          "updatedAt": "2020-04-04T22:18:26Z",
+          "name": "apalis-imx6/torizon-rt/torizon-core-docker-rt"
+        }
+      },
+      "qemuarm64/torizon/torizon-core-podman-b37b573cda68447bbcc98cb625e63a542bf2e614d793d51699ed7dbf889854f2": {
+        "hashes": {
+          "sha256": "b37b573cda68447bbcc98cb625e63a542bf2e614d793d51699ed7dbf889854f2"
+        },
+        "length": 0,
+        "custom": {
+          "commitBody": "meta-toradex-torizon    HEAD:db4bc31d2c1c6618010447fe37ff22af2d02c77a\nmeta-toradex-distro     HEAD:b41d325b2650724e0645acbeddcbc72e6af52747\nmeta-toradex-bsp-common HEAD:02b8668e7f49d163f48e879c51a0d2be34196ab3\nmeta-oe                 HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-networking         HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-filesystems        HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-python             HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-perl               HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-virtualization     HEAD:2f3c13ba3b41dfe07d17a1ca65902a2d794b26dc\nmeta-updater            HEAD:416a934b0555a1131490644a7edcbb644a934e76\nmeta-toradex-nxp        HEAD:7bf4461415b013f3ac83cfc41f0a45b46c6076ca\nmeta-freescale          HEAD:db6cdd204764228a2f45f45c346dc026a70c6423\nmeta-freescale-3rdparty HEAD:aea3771baa77e74762358ceb673d407e36637e5f\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:f9f98d3d8dd61fb3d9b47dbbc847e945ff7af7a6\nmeta                    HEAD:0743dcd0cd70dee87a49d3bcd017168352e60982",
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "commitSubject": "4.0.0-devel-20200422+build.62",
+          "version": "b37b573cda68447bbcc98cb625e63a542bf2e614d793d51699ed7dbf889854f2",
+          "hardwareIds": ["qemuarm64"],
+          "createdAt": "2020-04-22T21:33:10Z",
+          "updatedAt": "2020-04-22T21:33:10Z",
+          "name": "qemuarm64/torizon/torizon-core-podman"
+        }
+      },
+      "4/verdin-imx8mm/torizon/torizon-core-podman/nightly-6e01ca156b7698cfc1fa86f909d58f085e926da9bc580e03cf272c5227f9a6f2": {
+        "hashes": {
+          "sha256": "6e01ca156b7698cfc1fa86f909d58f085e926da9bc580e03cf272c5227f9a6f2"
+        },
+        "length": 0,
+        "custom": {
+          "cliUploaded": false,
+          "name": "4/verdin-imx8mm/torizon/torizon-core-podman/nightly",
+          "version": "6e01ca156b7698cfc1fa86f909d58f085e926da9bc580e03cf272c5227f9a6f2",
+          "hardwareIds": ["verdin-imx8mm"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-07-21T13:43:32Z",
+          "updatedAt": "2020-07-21T13:43:32Z",
+          "commitSubject": "4.0.0-devel-20200721+build.172",
+          "commitBody": "meta-toradex-torizon    HEAD:c43978c62c597ca1c7439c3786e9f759b7d2ab60\nmeta-toradex-distro     HEAD:276c966a04bbe4d19866becb3b8fc147d1079049\nmeta-toradex-bsp-common HEAD:419eba81a51fb8f8e5a4eef9f23f1734c7044c78\nmeta-oe                 HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-networking         HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-filesystems        HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-python             HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-perl               HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-virtualization     HEAD:514ce5f6b240600f06b9956737be1e33900bacac\nmeta-updater            HEAD:2152ac89c04de19d9660b552c2952e542ed8ecb2\nmeta-toradex-nxp        HEAD:acbfe83716e6a045d9290d932eec29a9afb468f1\nmeta-freescale          HEAD:f535ddcd5cd3da846a34b1721ceda3c8b18b37a0\nmeta-freescale-3rdparty HEAD:dbcc686f52c3c84db8cb86aa8973a4e373651b98\nmeta-yocto-bsp          HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-poky               HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-security           HEAD:440c37f0b623ccc0aa0328613908608d6362adda\nmeta-lmp-base           HEAD:067487d1d4a823237eb6e7bbdebf9b023b58affa\nmeta                    HEAD:f5b90eeed7366432b39c7cd8c6ee8c23e2d4abe8"
+        }
+      },
+      "verdin-imx8mm/torizon/torizon-core-podman-4e6016e69c5de8c8a445c534b83eafc2e5b58ae0bdfabded1e5733efdfe68658": {
+        "hashes": {
+          "sha256": "4e6016e69c5de8c8a445c534b83eafc2e5b58ae0bdfabded1e5733efdfe68658"
+        },
+        "length": 0,
+        "custom": {
+          "name": "verdin-imx8mm/torizon/torizon-core-podman",
+          "version": "4e6016e69c5de8c8a445c534b83eafc2e5b58ae0bdfabded1e5733efdfe68658",
+          "hardwareIds": ["verdin-imx8mm"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-05-21T20:30:43Z",
+          "updatedAt": "2020-05-21T20:30:43Z",
+          "commitSubject": "4.0.0-devel-20200521+build.95",
+          "commitBody": "meta-toradex-torizon    HEAD:784412fd9e2338734b351cb6892acfc290c8c5f6\nmeta-toradex-distro     HEAD:cc096714dfd8069eba39e290dba3d361a59e6073\nmeta-toradex-bsp-common HEAD:1f5d1d2cb0bf8711c93de21bccc6e87bea96253a\nmeta-oe                 HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-networking         HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-filesystems        HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-python             HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-perl               HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-virtualization     HEAD:2f3c13ba3b41dfe07d17a1ca65902a2d794b26dc\nmeta-updater            HEAD:416a934b0555a1131490644a7edcbb644a934e76\nmeta-toradex-nxp        HEAD:77e97f0d6e1c131b8039cd62937177b8f9688411\nmeta-freescale          HEAD:361e5a9aa02b4da4936c70f19e98ea82c77b5668\nmeta-freescale-3rdparty HEAD:3e7b9150b7ac6f24f4a6249eaabd05b553a8b031\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:f9f98d3d8dd61fb3d9b47dbbc847e945ff7af7a6\nmeta                    HEAD:5ac98c776f9b77804a0ee812f47f3ecf593e432f"
+        }
+      },
+      "apalis-imx6/torizon-rt/torizon-core-podman-rt-e02a8bc617a3e1fbd8078e008817c0167663713d34c0147dc08a11e4f16fd93c": {
+        "hashes": {
+          "sha256": "e02a8bc617a3e1fbd8078e008817c0167663713d34c0147dc08a11e4f16fd93c"
+        },
+        "length": 0,
+        "custom": {
+          "name": "apalis-imx6/torizon-rt/torizon-core-podman-rt",
+          "version": "e02a8bc617a3e1fbd8078e008817c0167663713d34c0147dc08a11e4f16fd93c",
+          "hardwareIds": ["apalis-imx6"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-05-18T21:08:17Z",
+          "updatedAt": "2020-05-18T21:08:17Z",
+          "commitSubject": "4.0.0-devel-20200518+build.92",
+          "commitBody": "meta-toradex-torizon    HEAD:f09cf90087fa9648f8087a4df37924f3cb718795\nmeta-toradex-distro     HEAD:cc096714dfd8069eba39e290dba3d361a59e6073\nmeta-toradex-bsp-common HEAD:1f5d1d2cb0bf8711c93de21bccc6e87bea96253a\nmeta-oe                 HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-networking         HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-filesystems        HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-python             HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-perl               HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-virtualization     HEAD:2f3c13ba3b41dfe07d17a1ca65902a2d794b26dc\nmeta-updater            HEAD:416a934b0555a1131490644a7edcbb644a934e76\nmeta-toradex-nxp        HEAD:77e97f0d6e1c131b8039cd62937177b8f9688411\nmeta-freescale          HEAD:361e5a9aa02b4da4936c70f19e98ea82c77b5668\nmeta-freescale-3rdparty HEAD:3e7b9150b7ac6f24f4a6249eaabd05b553a8b031\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:f9f98d3d8dd61fb3d9b47dbbc847e945ff7af7a6\nmeta                    HEAD:5ac98c776f9b77804a0ee812f47f3ecf593e432f"
+        }
+      },
+      "4/colibri-imx6ull/torizon/torizon-core-podman/nightly-e1621160bb006fe23108baaa080c950260ad15f974dc14a99a5f3a03e5b9f684": {
+        "hashes": {
+          "sha256": "e1621160bb006fe23108baaa080c950260ad15f974dc14a99a5f3a03e5b9f684"
+        },
+        "length": 0,
+        "custom": {
+          "cliUploaded": false,
+          "name": "4/colibri-imx6ull/torizon/torizon-core-podman/nightly",
+          "version": "e1621160bb006fe23108baaa080c950260ad15f974dc14a99a5f3a03e5b9f684",
+          "hardwareIds": ["colibri-imx6ull"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-07-30T20:47:41Z",
+          "updatedAt": "2020-07-30T20:47:41Z",
+          "commitSubject": "4.0.0-devel-20200730+build.183",
+          "commitBody": "meta-toradex-torizon    HEAD:d810348cc0aaa5fee68e597360b73939a44e1aeb\nmeta-toradex-distro     HEAD:276c966a04bbe4d19866becb3b8fc147d1079049\nmeta-toradex-bsp-common HEAD:419eba81a51fb8f8e5a4eef9f23f1734c7044c78\nmeta-oe                 HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-networking         HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-filesystems        HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-python             HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-perl               HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-virtualization     HEAD:514ce5f6b240600f06b9956737be1e33900bacac\nmeta-updater            HEAD:2152ac89c04de19d9660b552c2952e542ed8ecb2\nmeta-toradex-nxp        HEAD:acbfe83716e6a045d9290d932eec29a9afb468f1\nmeta-freescale          HEAD:f535ddcd5cd3da846a34b1721ceda3c8b18b37a0\nmeta-freescale-3rdparty HEAD:dbcc686f52c3c84db8cb86aa8973a4e373651b98\nmeta-yocto-bsp          HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-poky               HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-security           HEAD:440c37f0b623ccc0aa0328613908608d6362adda\nmeta-lmp-base           HEAD:067487d1d4a823237eb6e7bbdebf9b023b58affa\nmeta                    HEAD:f5b90eeed7366432b39c7cd8c6ee8c23e2d4abe8"
+        }
+      },
+      "4/apalis-imx8x/torizon/torizon-core-docker/nightly-efa6c575522cc23c7855a2b170295b5155759f38f2c4920c0ee3ef7901e81c1f": {
+        "hashes": {
+          "sha256": "efa6c575522cc23c7855a2b170295b5155759f38f2c4920c0ee3ef7901e81c1f"
+        },
+        "length": 0,
+        "custom": {
+          "cliUploaded": false,
+          "name": "4/apalis-imx8x/torizon/torizon-core-docker/nightly",
+          "version": "efa6c575522cc23c7855a2b170295b5155759f38f2c4920c0ee3ef7901e81c1f",
+          "hardwareIds": ["apalis-imx8x"],
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "createdAt": "2020-08-06T20:39:17Z",
+          "updatedAt": "2020-08-06T20:39:17Z",
+          "commitSubject": "4.0.0-devel-20200806+build.190",
+          "commitBody": "meta-toradex-torizon    HEAD:91a0ad6fad89a9512ac8ffc4695a2dec4e0bd8fb\nmeta-toradex-distro     HEAD:276c966a04bbe4d19866becb3b8fc147d1079049\nmeta-toradex-bsp-common HEAD:cf3aca30b171672fe011b404d0c12378b7c79f5d\nmeta-oe                 HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-networking         HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-filesystems        HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-python             HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-perl               HEAD:2b5dd1eb81cd08bc065bc76125f2856e9383e98b\nmeta-virtualization     HEAD:514ce5f6b240600f06b9956737be1e33900bacac\nmeta-updater            HEAD:2152ac89c04de19d9660b552c2952e542ed8ecb2\nmeta-toradex-nxp        HEAD:9e5be3ec9692276079804072784b80431892f206\nmeta-freescale          HEAD:f535ddcd5cd3da846a34b1721ceda3c8b18b37a0\nmeta-freescale-3rdparty HEAD:dbcc686f52c3c84db8cb86aa8973a4e373651b98\nmeta-yocto-bsp          HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-poky               HEAD:2d2dc20359ca75203f2194415b53731ad8ff0066\nmeta-security           HEAD:440c37f0b623ccc0aa0328613908608d6362adda\nmeta-lmp-base           HEAD:067487d1d4a823237eb6e7bbdebf9b023b58affa\nmeta                    HEAD:f5b90eeed7366432b39c7cd8c6ee8c23e2d4abe8"
+        }
+      },
+      "apalis-imx8/torizon/torizon-core-podman-12185198c3f861803960c5a1d4f248cf072e7b383ef70ff724c93f4e8e456272": {
+        "hashes": {
+          "sha256": "12185198c3f861803960c5a1d4f248cf072e7b383ef70ff724c93f4e8e456272"
+        },
+        "length": 0,
+        "custom": {
+          "commitBody": "meta-toradex-torizon    HEAD:8fcbbed6e102d8d18688bd019d7648d963e79195\nmeta-toradex-distro     HEAD:cc096714dfd8069eba39e290dba3d361a59e6073\nmeta-toradex-bsp-common HEAD:d176672a35c6efcd0c4a1b853569dd26a05099c4\nmeta-oe                 HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-networking         HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-filesystems        HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-python             HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-perl               HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-virtualization     HEAD:2f3c13ba3b41dfe07d17a1ca65902a2d794b26dc\nmeta-updater            HEAD:416a934b0555a1131490644a7edcbb644a934e76\nmeta-toradex-nxp        HEAD:b90bae51447483516018b39e9e25e0e141a479ba\nmeta-freescale          HEAD:361e5a9aa02b4da4936c70f19e98ea82c77b5668\nmeta-freescale-3rdparty HEAD:3e7b9150b7ac6f24f4a6249eaabd05b553a8b031\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:f9f98d3d8dd61fb3d9b47dbbc847e945ff7af7a6\nmeta                    HEAD:5ac98c776f9b77804a0ee812f47f3ecf593e432f",
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "commitSubject": "4.0.0-devel-20200429+build.70",
+          "version": "12185198c3f861803960c5a1d4f248cf072e7b383ef70ff724c93f4e8e456272",
+          "hardwareIds": ["apalis-imx8"],
+          "createdAt": "2020-04-29T19:55:36Z",
+          "updatedAt": "2020-04-29T19:55:36Z",
+          "name": "apalis-imx8/torizon/torizon-core-podman"
+        }
+      },
+      "colibri-imx6ull/torizon/torizon-core-podman-3d6fec39731e71ebf333ac670566aa279c5cb3d795290cb616413b95af613df2": {
+        "hashes": {
+          "sha256": "3d6fec39731e71ebf333ac670566aa279c5cb3d795290cb616413b95af613df2"
+        },
+        "length": 0,
+        "custom": {
+          "commitBody": "meta-toradex-torizon    HEAD:01c52c8dc7974f7345d0c5783783b3f70ad97fcf\nmeta-toradex-distro     HEAD:32d4cdf84966fd20d7dcd58c25d574f3e1ff947f\nmeta-toradex-bsp-common HEAD:00b3a4673701ace5584bb1c2926a83b1c530015a\nmeta-oe                 HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-networking         HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-filesystems        HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-python             HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-perl               HEAD:bb65c27a772723dfe2c15b5e1b27bcc1a1ed884c\nmeta-virtualization     HEAD:561b597d4ba91dd36147e1af81bd1edc2d6636db\nmeta-updater            HEAD:bf39f0fec9ad410aa37d3001b11d9e731b39d6e7\nmeta-toradex-nxp        HEAD:e738923de0a89b20ff00eae0c5859746b73940c8\nmeta-freescale          HEAD:db6cdd204764228a2f45f45c346dc026a70c6423\nmeta-freescale-3rdparty HEAD:aea3771baa77e74762358ceb673d407e36637e5f\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:a50e1ae57510f5a84dd8dcea858ef8d9995bee7d\nmeta                    HEAD:c78140941f8a98e013932023a63501ba3b7e975a",
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "commitSubject": "4.0.0-devel-20200413+build.51",
+          "version": "3d6fec39731e71ebf333ac670566aa279c5cb3d795290cb616413b95af613df2",
+          "hardwareIds": ["colibri-imx6ull"],
+          "createdAt": "2020-04-13T22:30:33Z",
+          "updatedAt": "2020-04-13T22:30:33Z",
+          "name": "colibri-imx6ull/torizon/torizon-core-podman"
+        }
+      },
+      "apalis-imx8x/torizon/torizon-core-podman-a32307b0f4abaa1032d0e90d43cef1ae9d1d1ac97fcc850c6bcafc4fb20e6b3f": {
+        "hashes": {
+          "sha256": "a32307b0f4abaa1032d0e90d43cef1ae9d1d1ac97fcc850c6bcafc4fb20e6b3f"
+        },
+        "length": 0,
+        "custom": {
+          "commitBody": "meta-toradex-torizon    HEAD:a8fd4c01199fa1fe823425aad54b9914a57479da\nmeta-toradex-distro     HEAD:045a6a34c51a436e864267f60501702ad6fdbcea\nmeta-toradex-bsp-common HEAD:02b8668e7f49d163f48e879c51a0d2be34196ab3\nmeta-oe                 HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-networking         HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-filesystems        HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-python             HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-perl               HEAD:9e60d30669a2ad0598e9abf0cd15ee06b523986b\nmeta-virtualization     HEAD:2f3c13ba3b41dfe07d17a1ca65902a2d794b26dc\nmeta-updater            HEAD:416a934b0555a1131490644a7edcbb644a934e76\nmeta-toradex-nxp        HEAD:e738923de0a89b20ff00eae0c5859746b73940c8\nmeta-freescale          HEAD:db6cdd204764228a2f45f45c346dc026a70c6423\nmeta-freescale-3rdparty HEAD:aea3771baa77e74762358ceb673d407e36637e5f\nmeta-yocto-bsp          HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-poky               HEAD:f9fe37c5dca3e3fd384b70d2f5e7a890271d8d70\nmeta-security           HEAD:ecd8c30af6b1b957b4fa814d3f25c40f060b3ac1\nmeta-lmp-base           HEAD:f9f98d3d8dd61fb3d9b47dbbc847e945ff7af7a6\nmeta                    HEAD:0743dcd0cd70dee87a49d3bcd017168352e60982",
+          "targetFormat": "OSTREE",
+          "uri": null,
+          "commitSubject": "4.0.0-devel-20200419+build.59",
+          "version": "a32307b0f4abaa1032d0e90d43cef1ae9d1d1ac97fcc850c6bcafc4fb20e6b3f",
+          "hardwareIds": ["apalis-imx8x"],
+          "createdAt": "2020-04-19T22:42:00Z",
+          "updatedAt": "2020-04-19T22:42:00Z",
+          "name": "apalis-imx8x/torizon/torizon-core-podman"
+        }
+      }
+    },
+    "version": 8017
+  }
+}

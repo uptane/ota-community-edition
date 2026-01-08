@@ -1,0 +1,64 @@
+// App Shared Variables
+// --------------------------------------------------
+// To customize the look and feel of this app, you can override
+// the Stylus variables found in Quasar's source Stylus files. Setting
+// variables before Quasar's Stylus will use these variables rather than
+// Quasar's default Stylus variable values. Stylus variables specific
+// to the themes belong in either the variables.ios.styl or variables.mat.styl files.
+
+// Check documentation for full list of Quasar variables
+
+// App Shared Color Variables
+// --------------------------------------------------
+// It's highly recommended to change the default colors
+// to match your app's branding.
+
+// $primary  : #00508C
+
+$primary: #027be3;
+$secondary: #8cc63d;
+$tertiary: #555;
+
+$neutral: #e0e1e2;
+$positive: #21ba45;
+$negative: #db2828;
+$info: #81d4fa;
+$warning: #f2c037;
+
+$dark-theme-bg: #121921;
+$dark-theme-bg-light: #1f2731;
+$dark-theme-bg-dark: #0d1218;
+$dark-theme-fg: #eeeeee;
+
+$light-theme-bg: #f3f3f3;
+$light-theme-bg-light: #ffffff;
+$light-theme-bg-dark: #dddddd;
+$light-theme-fg: #333333;
+
+$toradex_blue: #00508c;
+$toradex_light_blue: #196197;
+
+$muted: #37474f;
+
+// Package type colors
+$pkg-nightly: #c96e6e;
+$pkg-monthly: #50a7c6;
+$pkg-release: #92c37c;
+$pkg-lts: #ead39d;
+$pkg-custom: #a18ddd;
+
+$min-bar-size: 55px;
+$border-light: transparent; //$light-theme-bg-light;
+$border-dark: transparent; //$dark-theme-bg-light;
+
+@mixin border-radius($n) {
+  -webkit-border-radius: $n;
+  -moz-border-radius: $n;
+  border-radius: $n;
+}
+
+@mixin box-shadow($args...) {
+  -webkit-box-shadow: $args;
+  -moz-box-shadow: $args;
+  box-shadow: $args;
+}

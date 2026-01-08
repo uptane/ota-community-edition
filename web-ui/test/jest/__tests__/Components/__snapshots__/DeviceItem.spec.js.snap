@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Device Item Component renders correctly 1`] = `
+<div class=" device-item-wrapper hoverable clickable overflow-hidden animated fadeIn q-card for-layout-list for-view-type-thick not-seen" style="width: 100%;">
+  <!---->
+  <div class="q-item q-item-type row no-wrap">
+    <div class="q-item__section column device-img q-item__section--avatar q-item__section--side justify-center" size="md"><img src="statics/svg/icons/som.svg" class="absolute-top-left"></div>
+    <div class="q-item__section column q-item__section--main justify-center">
+      <div class="q-item__label pr-1">
+        <div class="q-item-tile label device-name ellipsis mxw-80"></div>
+        <div class="q-item-tile sublabel device-id ellipsis mxw-90  w-80">ID: </div>
+        <!---->
+        <div>
+          <div class="q-item-tile sublabel last-seen text-ellipsis w-90">Last seen:
+            <div auto-update="10"></div>
+          </div>
+          <!---->
+          <!---->
+        </div>
+        <!---->
+        <!---->
+        <div class="q-item-tile sublabel device-id row">
+          <div class="col-auto">Status:&nbsp;</div>
+          <div class="col">
+            <div>
+              <div class="opacity-40">
+                Unknown
+              </div>
+              <!---->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="q-item__section column option-section absolute-top-right q-item__section--avatar q-item__section--side justify-center"><button tabindex="0" type="button" role="button" class="q-btn q-btn-item non-selectable no-outline q-btn--flat q-btn--rectangle text-secondary q-btn--actionable q-focusable q-hoverable q-btn--wrap" id="undefined-menu" style="padding: .25rem;"><span class="q-focus-helper"></span><span class="q-btn__wrapper col row q-anchor--skip"><span class="q-btn__content text-center col items-center q-anchor--skip justify-center row"><i aria-hidden="true" role="img" class="material-icons q-icon notranslate">system_update_alt</i></span></span></button>
+      <!---->
+    </div>
+  </div>
+  <div device="[object Object]"></div>
+</div>
+`;

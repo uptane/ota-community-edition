@@ -1,0 +1,86 @@
+@import '../../common.variables';
+
+// $min-bar-size = 60px;
+.q-list .q-item {
+  padding: 0.75rem;
+  &.dash-list-item {
+    height: 6rem;
+    align-items: center;
+  }
+}
+.relaxed {
+  .q-item-tile {
+    height: 1.2rem;
+  }
+}
+
+.card-item,
+.device-card-item {
+  .item-wrapper,
+  .device-item-wrapper {
+    padding: 0.35rem;
+    .device-img {
+      img {
+        max-width: 2.5rem;
+        top: 0.5rem;
+        left: 0.5rem;
+      }
+    }
+    &.for-layout-cards {
+      margin: 0.4rem;
+      margin-bottom: 0rem;
+      margin-right: 0;
+      height: auto;
+      &.lt-md {
+        margin-right: 0.4rem;
+      }
+      &.for-view-type-thin {
+        margin-top: 0.2rem !important;
+        // margin-left: .2rem !important;
+        margin-right: 0.2rem !important;
+        &.not-seen {
+          border-bottom: 0px solid rgba(grey, 0);
+        }
+        &.online {
+          border-bottom: 1px solid rgba($positive, 0.4);
+          // border-left: 2px  solid rgba($positive, 0.4);
+        }
+        &.tired,
+        &.bored {
+          border-bottom: 1px solid rgba($warning, 0.4);
+          // border-left: 2px  solid rgba($warning, 0.4);
+        }
+        &.sleep {
+          border-bottom: 1px solid rgba(grey, 0.2);
+          // border-left: 2px  solid rgba(grey, 0.4);
+        }
+        &.lt-md {
+          margin-right: 0.2rem !important;
+        }
+        height: 3rem;
+        padding: 0;
+        .device-img {
+          img {
+            max-width: 1.5rem;
+            top: 1rem;
+            left: 1rem;
+          }
+        }
+        .q-item {
+          padding: 0;
+        }
+        // padding: 0;
+      }
+      &.for-view-type-thick {
+        margin-right: 0.7rem !important;
+        padding: 0;
+      }
+    }
+    &.for-layout-list {
+      margin: 0;
+      margin-bottom: 0;
+      margin-right: 0;
+      height: 6rem;
+    }
+  }
+}

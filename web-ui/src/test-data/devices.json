@@ -1,0 +1,172 @@
+{
+  "values": [
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "124751e1-e4a5-4db3-bcb4-489bbbe6f481",
+      "deviceName": "Attractive-Gruetze",
+      "deviceId": "unsupported-device-123456abcde-1247",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:58:32Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "3db4ff14-95fc-4d0c-934f-9400c3efd715",
+      "deviceName": "Every-Beetenbartsch",
+      "deviceId": "colibri-imx7-03111815-3db4",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2019-11-20T03:02:34Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "57a0beb0-d8c3-4ed0-a0f1-71540a683ac4",
+      "deviceName": "Fabulous-Orca",
+      "deviceId": "unsupported-device-123456abcde-57a0",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:47:07Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "6e0ad7d8-98af-44c1-9fc8-29dc7d480524",
+      "deviceName": "Interesting-Omelette",
+      "deviceId": "unsupported-device-123456abcde-6e0a",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:58:26Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "6f88d698-cb57-45f3-97fc-42fb8c4ccf59",
+      "deviceName": "Lit-Seagull",
+      "deviceId": "unsupported-device-123456abcde-6f88",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:58:34Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "c6975453-1608-429c-bcf6-b84c46869092",
+      "deviceName": "Living-Room-Apalis",
+      "deviceId": "apalis-imx6-10618317-c697",
+      "deviceType": "Other",
+      "lastSeen": "2020-08-02T01:46:37Z",
+      "createdAt": "2020-05-05T18:00:51Z",
+      "activatedAt": "2020-05-05T18:01:05Z",
+      "deviceStatus": "UpToDate"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "95f16f6a-b135-45fc-bf43-a3dfce3015d3",
+      "deviceName": "Nifty-Lincoln",
+      "deviceId": "unsupported-device-123456abcde-95f1",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:58:03Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "ce4527f7-a8c5-4625-82db-860ddc64de3a",
+      "deviceName": "Prancing-Matthew",
+      "deviceId": "unsupported-device-123456abcde-ce45",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:58:24Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "f761a367-55bb-4303-abb1-0f5be3d34611",
+      "deviceName": "Savage-Gruenkohl",
+      "deviceId": "unsupported-device-123456abcde-f761",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-23T19:33:40Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "96d89b31-64d2-468d-8afd-d17f8c6f73ed",
+      "deviceName": "Spotless-Zimtwaffeln",
+      "deviceId": "unsupported-device-123456abcde-96d8",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:47:10Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "877e6f5d-ba20-484d-aec4-1e91a330104c",
+      "deviceName": "Stylish-Oppossum",
+      "deviceId": "unsupported-device-123456abcde-877e",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:47:04Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "991fef7b-ed6a-47c2-8814-48d443535e6a",
+      "deviceName": "Tasty-Whale",
+      "deviceId": "unsupported-device-123456abcde-991f",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-23T19:33:52Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "27cc8c29-74e5-40c0-968a-2e9a1ff4b97e",
+      "deviceName": "Warm-Canine",
+      "deviceId": "unsupported-device-123456abcde-27cc",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:46:57Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "6b4e9507-87c1-4bb9-a687-228f8e1c4f7a",
+      "deviceName": "Wavy-Jambalaya",
+      "deviceId": "unsupported-device-123456abcde-6b4e",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2020-01-27T13:58:29Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    },
+    {
+      "namespace": "66b31a73-cfb8-4fdb-8dcf-60a7608a7573",
+      "uuid": "0a0dbcdc-8725-4f2d-bc9f-5dcd30a05efb",
+      "deviceName": "test-device-id-0a0dbcdc",
+      "deviceId": "test-device-id-0a0dbcdc",
+      "deviceType": "Other",
+      "lastSeen": null,
+      "createdAt": "2019-11-08T02:03:01Z",
+      "activatedAt": null,
+      "deviceStatus": "NotSeen"
+    }
+  ],
+  "total": 15,
+  "offset": 0,
+  "limit": 3000
+}

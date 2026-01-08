@@ -1,0 +1,22 @@
+{
+  "tests": "./tests/ui/**/*_test.js",
+  "timeout": 10000,
+  "output": "./output",
+  "helpers": {
+    "Puppeteer": {
+      "url": "http://localhost:8080",
+      "show": true
+    }
+  },
+  "include": {
+    "I": "./steps_file.js"
+  },
+  "coverage": {
+    "enabled": true,
+    "include": ["app/*"],
+    "exclude": ["app/cache/*"]
+  },
+  "bootstrap": false,
+  "mocha": {},
+  "name": "pinout-designer-ui"
+}

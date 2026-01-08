@@ -1,0 +1,117 @@
+@import '../../common.variables';
+
+.login-page {
+  background-color: lighten($dark-theme-bg, 1) !important;
+  padding-bottom: 0rem !important;
+
+  .q-field__control-container {
+    margin-top: 0.2rem;
+    height: 90%;
+  }
+
+  .register-form,
+  .login-form {
+    color: $light-theme-fg !important;
+  }
+
+  .register-text,
+  .login-text {
+    color: $dark-theme-fg;
+  }
+
+  .register-text,
+  .register-form,
+  .login-text,
+  .login-form {
+    // width: 50%;
+    // flex-grow: 1;
+  }
+
+  .password-help-section,
+  .reset-password-section,
+  .confirm-code-section,
+  .register-section,
+  .login-section {
+    z-index: 1;
+    display: flex;
+  }
+
+  .login-div-header {
+    margin: -3.5rem;
+    // margin-bottom: 0rem;
+    padding: 2rem;
+    background-color: lighten($dark-theme-bg, 1);
+    color: $dark-theme-fg;
+    font-size: 1.2rem;
+    z-index: 2;
+  }
+
+  .form-bg {
+    background-color: white;
+    width: 50vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transition: all 0.25s ease-in-out;
+  }
+
+  &.login-mode {
+    .register-section,
+    .password-help-section,
+    .confirm-code-section,
+    .reset-password-section {
+      display: none;
+    }
+  }
+
+  &.password-help-mode {
+    .register-section,
+    .reset-password-section,
+    .confirm-code-section,
+    .login-section {
+      display: none;
+    }
+  }
+
+  &.reset-password-mode {
+    .register-section,
+    .confirm-code-section,
+    .login-section,
+    .password-help-section {
+      display: none;
+    }
+  }
+
+  &.confirm-code-mode {
+    .register-section,
+    .reset-password-section,
+    .login-section,
+    .password-help-section {
+      display: none;
+    }
+  }
+
+  &.register-mode {
+    .login-section,
+    .reset-password-section,
+    .confirm-code-section,
+    .password-help-section {
+      display: none;
+    }
+
+    .form-bg {
+      left: 50vw;
+    }
+  }
+
+  &.mobile-mode {
+    .form-bg {
+      left: 0vw;
+    }
+  }
+
+  .login-detail-div {
+    box-shadow: 12px 0px 9px -7px rgba(0, 0, 0, 0.45) inset !important;
+  }
+}

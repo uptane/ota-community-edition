@@ -1,0 +1,19 @@
+version: '2'
+services:
+  toradex_ota_ui_unit:
+    container_name: toradex_ota_ui_cnt_unit
+    image: topeysoft/quasar-pre-unit:latest
+    # build:
+    #   context: .
+    #   dockerfile: gui.Dockerfile
+    volumes:
+      - /Volumes/dev/Toradex/torizon-ota-admin:/app/
+      - /app/node_modules/
+    # - /Volumes/dev/Toradex/torizon-ota-admin/test:/app/test
+    # - /Volumes/dev/Toradex/torizon-ota-admin/jest.config.js:/app/jest.config.js
+    command: npm run test:unit
+    # restart: always
+    # ports:
+    #   - 8086:4000
+    # environment:
+    #   - "API_ENDPOINT_HOST=app.api.toradex.int"

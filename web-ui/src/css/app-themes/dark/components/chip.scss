@@ -1,0 +1,16 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .q-chip {
+    background-color: lighten($dark-theme-bg, 6);
+    color: #fff;
+
+    &.hoverable:hover {
+      background-color: rgba($secondary, 0.3);
+    }
+    &.clickable:active {
+      background-color: rgba(darken($secondary, 15), 0.3);
+    }
+  }
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Keyshape -->
+<svg xmlns="http://www.w3.org/2000/svg" width="17px" height="21px" viewBox="0 0 17 21">
+    <style>
+@keyframes Rectangle-3_t { 0% { transform: translate(-0.05277px,0px); } 100% { transform: translate(-0.05277px,0px); } }
+@keyframes Rectangle-3_d { 0% { d: path('M10,1.90391L10,2.5L12,2.5L9,6.5L6,2.5L8,2.5L8,1.90391L10,1.90391Z'); } 100% { d: path('M10,1.90391L10,9L12,9L9,13L6,9L8,9L8,1.90391L10,1.90391Z'); } }
+@keyframes Rectangle-4_o { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 1; } }
+@keyframes Rectangle-Copy-3_o { 0% { opacity: 0; } 25% { opacity: 0; } 50% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 1; } }
+@keyframes Rectangle-Copy-4_o { 0% { opacity: 0; } 25% { opacity: 0; } 50% { opacity: 0; } 75% { opacity: 1; } 100% { opacity: 1; } }
+    </style>
+    <title>downloading-icon</title>
+    <g id="downloading-icon-2" transform="translate(8.5,10.5) translate(-8.5,-10.5)">
+        <path id="Rectangle-Copy-2" d="M17,9L17,21L0,21L0,9L1.416,9L1.41667,19L15.5833,19L15.583,9L17,9Z" fill="#21ba45" transform="translate(8.5,15) translate(-8.5,-15)"/>
+        <path id="Rectangle-3" d="M10,1.90391L10,2.5L12,2.5L9,6.5L6,2.5L8,2.5L8,1.90391L10,1.90391Z" fill="#21ba45" transform="translate(8.94723,6.5) translate(-9,-6.5)" style="animation: 2s linear infinite both Rectangle-3_t, 2s linear infinite both Rectangle-3_d;"/>
+        <g id="Group-2" transform="translate(8.5,15.5) translate(-6.5,-2.5)">
+            <rect id="Rectangle-4" width="13" height="1" fill="#21ba45" opacity="0" transform="translate(6.5,4.5) translate(-6.5,-0.5)" style="animation: 2s linear infinite both Rectangle-4_o;"/>
+            <rect id="Rectangle-Copy-3" width="13" height="1" fill="#21ba45" opacity="0" transform="translate(6.5,2.5) translate(-6.5,-0.5)" style="animation: 2s linear infinite both Rectangle-Copy-3_o;"/>
+            <rect id="Rectangle-Copy-4" width="13" height="1" fill="#21ba45" opacity="0" transform="translate(6.5,0.5) translate(-6.5,-0.5)" style="animation: 2s linear infinite both Rectangle-Copy-4_o;"/>
+        </g>
+    </g>
+</svg>

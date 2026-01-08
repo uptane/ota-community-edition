@@ -1,0 +1,13 @@
+version: '2'
+services:
+  toradex_ota_ui_ui:
+    container_name: toradex_ota_ui_cnt_vrt
+    image: backstopjs/backstopjs
+    # build:
+    #   context: .
+    #   dockerfile: gui.Dockerfile
+    # restart: always
+    volumes:
+      - ./:/src
+    # environment:
+    #   - "API_ENDPOINT_HOST=app.api.toradex.int"

@@ -1,0 +1,13 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .modal-content {
+    background-color: $dark-theme-bg-light;
+    color: #fff;
+  }
+
+  .modal-body {
+    color: #fff;
+  }
+}

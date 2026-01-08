@@ -1,0 +1,26 @@
+export default {
+  fleets: [],
+  preparedFleets: {},
+  selectedFleet: null,
+  visibleColumns: ['name', 'device_count', 'actions'],
+  columns: [
+    { name: 'id', id: 'id', label: 'Fleet ID', field: 'id', sortable: true, align: 'left' },
+    {
+      required: true,
+      label: 'Fleet Name',
+      align: 'left',
+      field: 'name',
+      format: (val) => `${val}`,
+      sortable: true,
+      classes: 'ellipsis text-bold',
+      style: 'max-width: 100px',
+      headerClasses: 'text-bold',
+      name: 'name',
+      id: 'name',
+    },
+    { name: 'device_count', id: 'device_count', label: 'Device Count', field: 'device_count', sortable: false, align: 'left' },
+    { name: 'devices', id: 'devices', label: 'Devices', field: 'devices', sortable: false, align: 'left' },
+    { name: 'createdDate', id: 'createdDate', label: 'Date Created', field: 'createdDate', sortable: true, align: 'left' },
+    { name: 'actions', id: 'actions', label: 'Actions', field: 'actions', sortable: false, align: 'center', required: true },
+  ],
+};

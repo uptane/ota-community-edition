@@ -1,0 +1,127 @@
+@keyframes revealFromRightKF {
+  0% {
+    // display: none;
+    position: relative;
+    // right: -100%;
+    width: 0;
+    white-space: nowrap;
+  }
+  1% {
+    // display: inline;
+    position: relative;
+  }
+
+  100% {
+    position: relative;
+    right: 0%;
+    white-space: normal;
+
+    // width: auto;
+  }
+}
+@keyframes concealToRightKF {
+  0% {
+    display: inline;
+    position: relative;
+  }
+  10% {
+    right: 0%;
+    position: relative;
+  }
+
+  // 99% {
+  //     width: auto;
+  // }
+  100% {
+    position: relative;
+    right: -100%;
+    display: none;
+    width: 0;
+  }
+}
+@keyframes concealFromViewKF {
+  0% {
+    display: inline;
+  }
+  10% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-110%);
+    display: none;
+    width: 0;
+    padding: 0;
+    margin: 0;
+  }
+}
+@keyframes animateItemInLeftKF {
+  from {
+    transform: translateX(-110%);
+  }
+}
+@keyframes animateItemInRightKF {
+  from {
+    transform: translateX(110%);
+  }
+}
+@keyframes animateItemInUpKF {
+  from {
+    transform: translateY(110%);
+  }
+}
+@keyframes animateItemInDownKF {
+  from {
+    transform: translateY(-110%);
+  }
+}
+$revealFromRightAnim: revealFromRightKF 1s forwards;
+$concealToRightAnim: concealToRightKF 0.5s forwards;
+$concealFromViewAnim: concealFromViewKF 0.5s forwards;
+$animateItemInLeftAnim: animateItemInLeftKF 1s forwards;
+$animateItemInRightAnim: animateItemInRightKF 1s forwards;
+$animateItemInDownAnim: animateItemInDownKF 1s forwards;
+$animateItemInUpAnim: animateItemInUpKF 1s forwards;
+
+.revealFromRight {
+  animation: $revealFromRightAnim;
+  -moz-animation: $revealFromRightAnim;
+  -webkit-animation: $revealFromRightAnim;
+}
+.concealToRight {
+  animation: $concealToRightAnim;
+  -moz-animation: $concealToRightAnim;
+  -webkit-animation: $concealToRightAnim;
+}
+.concealFromView {
+  animation: $concealFromViewAnim;
+  -moz-animation: $concealFromViewAnim;
+  -webkit-animation: $concealFromViewAnim;
+}
+.animateItemInLeft {
+  animation: $animateItemInLeftAnim;
+  -moz-animation: $animateItemInLeftAnim;
+  -webkit-animation: $animateItemInLeftAnim;
+}
+.animateItemInRight {
+  animation: $animateItemInRightAnim;
+  -moz-animation: $animateItemInRightAnim;
+  -webkit-animation: $animateItemInRightAnim;
+}
+.animateItemInUp {
+  animation: $animateItemInUpAnim;
+  -moz-animation: $animateItemInUpAnim;
+  -webkit-animation: $animateItemInUpAnim;
+}
+.animateItemInDown {
+  animation: $animateItemInDownAnim;
+  -moz-animation: $animateItemInDownAnim;
+  -webkit-animation: $animateItemInDownAnim;
+}
+
+.transition-all {
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: linear;
+  transition-delay: 1s;
+}

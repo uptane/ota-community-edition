@@ -1,0 +1,12 @@
+WS_HOST='"ws.torizon.io"' \
+ID_PROVIDER_CLIENT_ID='"ota-app"' \
+ID_PROVIDER_REALM='"ota-users"' \
+ID_PROVIDER_URI='"https://kc.torizon.io"' \
+KEYCLOAK_PROXY_HOST='"https://kc.torizon.io"' \
+API_ENDPOINT_HOST='https://app.torizon.io' \
+API_ENDPOINT_BASE_URL='https://app.torizon.io' \
+SUGARCRM_COMMERCIAL_ACCESS_CAMPAIGN_ID='"campaign-id-here"' \
+SUGARCRM_ONBOARDING_WALKTHROUGH_CAMPAIGN_ID='""' \
+SUGARCRM_NEW_USER_CAMPAIGN_ID='""' \
+GTAG_ID='"g-tag-id-here"' \
+yarn start

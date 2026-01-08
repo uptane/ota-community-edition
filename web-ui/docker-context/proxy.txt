@@ -1,0 +1,11 @@
+/device-registry/api/v1/devices:/api/v1/devices
+/director/api/v1/admin/devices:/api/v1/admin/devices
+/director/api/v1/admin/devices/hardware_identifiers:/api/v1/admin/devices/hardware_identifiers
+/reposerver/api/v1/user_repo/targets.json:/api/v1/user_repo/targets.json
+/device-registry/api/v1/device_packages:/api/v1/device_packages
+/device-registry/api/v1/device_count:/api/v1/device_count
+/device-registry/api/v1/device_groups:/api/v1/device_groups
+/director/api/v1/admin/images/installed_count:/api/v1/admin/images/installed_count
+/director/api/v1/multi_target_updates:/api/v1/multi_target_update
+/core/devices/api/core/devices
+/provision:/api/provision

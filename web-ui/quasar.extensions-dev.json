@@ -1,0 +1,42 @@
+{
+  "@quasar/testing-unit-jest": {
+    "babel": "babelrc",
+    "options": []
+  },
+  "@quasar/testing-e2e-cypress": {
+    "options": ["scripts"]
+  },
+  "@quasar/testing-e2e-webdriver": {
+    "options": ["scripts"]
+  },
+  "@quasar/testing-quality": {
+    "options": ["scripts"]
+  },
+  "@quasar/testing-security": {
+    "options": ["scripts"]
+  },
+  "@quasar/testing": {
+    "harnesses": ["unit-jest", "e2e-cypress", "e2e-webdriver", "quality", "security"]
+  },
+  "@quasar/icon-genie": {
+    "minify_dev": "pngquant",
+    "minify_build": "pngcrush",
+    "cordova": {
+      "background_color": "#000074",
+      "splashscreen_type": "generate"
+    },
+    "build_always": false,
+    "__internal": {
+      "dev": {
+        "spa": {
+          "iconHash": "44dc9a7f47bbdc3c1db6063d96ae909a"
+        }
+      },
+      "build": {
+        "spa": {
+          "iconHash": "44dc9a7f47bbdc3c1db6063d96ae909a"
+        }
+      }
+    }
+  }
+}

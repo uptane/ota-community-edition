@@ -1,0 +1,9 @@
+@import '../../common.variables';
+.body--dark,
+.dark-theme {
+  .q-header {
+    .q-toolbar {
+      background-color: $toradex_blue !important;
+    }
+  }
+}

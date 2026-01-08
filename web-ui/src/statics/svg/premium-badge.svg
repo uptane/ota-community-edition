@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="393px" height="481px" viewBox="0 0 393 481" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>premium-badge</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <polygon id="path-1" points="47.6730614 33.0076919 106.563885 61.364306 124.847313 268.32568 86.3473132 224.860837 47.8473132 268.32568"></polygon>
+        <filter x="-90.7%" y="-21.2%" width="281.4%" height="159.5%" filterUnits="objectBoundingBox" id="filter-2">
+            <feOffset dx="0" dy="20" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="20" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.287343785 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <polygon id="path-3" points="173.5356 3.34161612 232.426424 31.6982303 250.709852 238.659605 212.209852 195.194761 173.709852 238.659605"></polygon>
+        <filter x="-90.7%" y="-21.2%" width="281.4%" height="159.5%" filterUnits="objectBoundingBox" id="filter-4">
+            <feOffset dx="0" dy="20" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="20" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <path d="M78.3739,206.6261 L42.5917228,212.763224 L58.7543746,182.020033 L24.3005109,177.626133 L49.851562,151.835199 L17.0204088,136.338622 L50.6537708,119.003156 L23.5584268,92.5917228 L59.4857752,87.3711735 L42.5917228,55.2367762 L76.8247686,61.1082031 L70.3567869,26.9828417 L102.781132,43.3134985 L107.373867,7.30051087 L134.254156,33.930785 L151,-2.84217094e-14 L167.067199,32.5557003 L192.408277,6.55842682 L197.402811,40.9303589 L227.859242,24.2336261 L222.347539,60.1174611 L258.017158,53.3567869 L240.996729,87.1506684 L278.441573,92.5917228 L252.4443,117.932801 L285,134 L253.853746,149.371595 L279.144837,173.177808 L243.314072,179.024581 L260.766374,210.859242 L223.366881,205.114736 L229.763224,242.408277 L197.628827,225.514225 L192.408277,261.441573 L168.1643,236.569809 L153.338622,267.979591 L136.705696,235.709261 L111.822192,262.144837 L105.728463,224.800655 L72.2367762,242.408277 L78.3739,206.6261 Z" id="path-5"></path>
+        <filter x="-6.5%" y="-4.7%" width="113.1%" height="113.1%" filterUnits="objectBoundingBox" id="filter-6">
+            <feOffset dx="0" dy="5" in="SourceAlpha" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.175154092 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="banners" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="premium-banner" transform="translate(-80.000000, -114.000000)">
+            <g id="badge" transform="translate(123.000000, 28.000000)">
+                <g id="premium-badge" transform="translate(0.000000, 90.000000)">
+                    <g id="shadow" transform="translate(0.000000, 154.000000)" fill="black" fill-opacity="1">
+                        <g id="Rectangle-Copy-2" transform="translate(86.260187, 150.666686) rotate(26.000000) translate(-86.260187, -150.666686) ">
+                            <use filter="url(#filter-2)" xlink:href="#path-1"></use>
+                        </g>
+                        <g id="Rectangle-Copy-3" transform="translate(212.122726, 121.000610) rotate(-31.000000) translate(-212.122726, -121.000610) ">
+                            <use filter="url(#filter-4)" xlink:href="#path-3"></use>
+                        </g>
+                    </g>
+                    <polygon id="Rectangle" fill="#FF6565" transform="translate(93.865665, 270.080766) rotate(26.000000) translate(-93.865665, -270.080766) " points="55.3656651 148.580766 132.365665 148.580766 132.365665 391.580766 93.8656651 348.115922 55.3656651 391.580766"></polygon>
+                    <polygon id="Rectangle-Copy" fill="#FF6565" transform="translate(210.578067, 267.974793) scale(-1, 1) rotate(31.000000) translate(-210.578067, -267.974793) " points="172.078067 146.474793 249.078067 146.474793 249.078067 389.474793 210.578067 346.009949 172.078067 389.474793"></polygon>
+                    <g id="Star-2">
+                        <use fill="black" fill-opacity="1" filter="url(#filter-6)" xlink:href="#path-5"></use>
+                        <use fill="#F5DB7F" fill-rule="evenodd" xlink:href="#path-5"></use>
+                    </g>
+                    <circle id="Oval" stroke="#DAC169" stroke-width="5" fill="#ECD173" cx="151" cy="134" r="82"></circle>
+                    <polygon id="Star" stroke="#DAC169" stroke-width="4" fill="#FFEAA2" points="151 158 122.786308 172.832816 128.174644 141.416408 105.349287 119.167184 136.893154 114.583592 151 86 165.106846 114.583592 196.650713 119.167184 173.825356 141.416408 179.213692 172.832816"></polygon>
+                    <path d="M233,134 C241.5,85.5331217 186.769468,39.8501722 129.5,52.46875 C97.5,59.5195312 84.1391851,82.4504595 82,91.4558824 C79.8330854,100.57804 98.8330854,114.092745 139,132 C171.977575,178.907053 193.477575,201.252398 203.5,199.036036 C213.501295,196.824346 229.181267,155.774362 233,134 Z" id="Oval-Copy" fill-opacity="0.226338704" fill="#FFFFFF"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,51 @@
+@import '../../common.variables';
+
+.body--dark,
+.dark-theme {
+  .q-drawer {
+    &.q-drawer--left {
+      color: $dark-theme-fg;
+      background-color: $dark-theme-bg !important;
+      // border-right: 2px solid $dark-theme-bg-dark !important;
+      overflow-x: hidden;
+
+      .q-list > .q-item {
+        color: $dark-theme-fg;
+        background-color: transparent;
+        cursor: pointer;
+        border-color: darken($dark-theme-bg-dark, 3);
+
+        &:hover {
+          color: darken($primary, 5);
+          background-color: $dark-theme-bg-dark;
+        }
+
+        &.active {
+          color: darken($secondary, 5);
+          border-left: 0.2em solid darken($secondary, 5);
+          background-color: darken($dark-theme-bg-dark, 5); //$dark-theme-bg-dark;
+          border-left: -0.2em;
+        }
+
+        // }
+      }
+    }
+
+    //       color: $dark-theme-fg;
+    //     background-color: $dark-theme-bg !important;
+    //     .q-list > .q-item, .q-item-link {
+    //       color: $dark-theme-fg;
+    //       background-color: transparent;
+    //       &:hover{
+    //         color: $primary;
+    //         background-color: $dark-theme-bg-dark;
+    //       }
+    //       &.q-router-link--active{
+    //         &.q-router-link--exact-active {
+    //             color: $secondary;
+    //             background-color: $dark-theme-bg-dark;
+    //           }
+    //       }
+    //     }
+  }
+}

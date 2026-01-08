@@ -1,0 +1,37 @@
+[
+  { "dest": "/device-registry/api/v1/devices", "src": "/api/v1/devices" },
+  { "dest": "/director/api/v1/admin/devices", "src": "/api/v1/admin/devices" },
+  {
+    "dest": "/director/api/v1/admin/devices/hardware_identifiers",
+    "src": "/api/v1/admin/devices/hardware_identifiers"
+  },
+  {
+    "dest": "/reposerver/api/v1/user_repo/targets.json",
+    "src": "/api/v1/user_repo/targets.json"
+  },
+  {
+    "dest": "/device-registry/api/v1/device_packages",
+    "src": "/api/v1/device_packages"
+  },
+  { "dest": "/device-registry/api/v1/device_count", "src": "/api/v1/device_count" },
+  {
+    "dest": "/device-registry/api/v1/device_groups",
+    "src": "/api/v1/device_groups"
+  },
+  {
+    "dest": "/director/api/v1/admin/images/installed_count",
+    "src": "/api/v1/admin/images/installed_count"
+  },
+  {
+    "dest": "/director/api/v1/multi_target_updates",
+    "src": "/api/v1/multi_target_updates"
+  },
+  {
+    "dest": "/core/devices",
+    "src": "/api/core/devices"
+  },
+  {
+    "dest": "/provision",
+    "src": "/api/provision"
+  }
+]

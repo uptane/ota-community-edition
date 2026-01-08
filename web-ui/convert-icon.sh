@@ -1,0 +1,1 @@
+iconfactory -p=kitchensink -s=./src/statics/icon-1240.png -t=./icon-output -m=pngquant
