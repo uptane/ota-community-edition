@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTA CE Control Panel</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>OTA Community Edition Control Panel</h1>
+    <p>Browser UI to inspect services, manage devices/groups, create updates, and monitor campaigns.</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Connection Settings</h2>
+      <div class="grid two">
+        <label>
+          Base URL
+          <input id="baseUrl" type="text" value="" placeholder="(empty = same origin, e.g. proxy server)" />
+        </label>
+        <label>
+          Bearer Token (optional)
+          <input id="token" type="password" placeholder="Paste JWT token" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="toggleToken" class="secondary">Show token</button>
+        <button id="clearToken" class="secondary danger">Clear token</button>
+      </div>
+      <label class="checkbox-line">
+        <input id="safeMode" type="checkbox" checked />
+        Safety mode (ask confirmation before launch/cancel actions)
+      </label>
+      <p class="hint">Tip: Leave Base URL empty when using the proxy dev server; set an explicit URL only if your API allows CORS.</p>
+    </section>
+
+    <section class="card">
+      <h2>Service Health</h2>
+      <button id="checkHealth">Check all</button>
+      <div id="healthResults" class="results"></div>
+    </section>
+
+    <section class="card">
+      <h2>Device & Group Management</h2>
+      <div class="grid three">
+        <label>
+          Device UUID
+          <input id="deviceUuid" type="text" placeholder="device uuid" />
+        </label>
+        <label>
+          Custom Name
+          <input id="deviceAlias" type="text" placeholder="factory-gateway-01" />
+        </label>
+        <label>
+          Hardware ID
+          <input id="deviceHardwareId" type="text" value="ota-ce-device" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="saveDeviceAlias">Save name ↔ UUID</button>
+        <button id="refreshDevices" class="secondary">Refresh devices</button>
+      </div>
+
+      <div class="grid two mt">
+        <label>
+          Group Name
+          <input id="groupName" type="text" placeholder="poc-group" />
+        </label>
+        <label>
+          Group UUID
+          <input id="groupId" type="text" placeholder="existing group uuid" />
+        </label>
+      </div>
+      <div class="actions">
+        <button id="createGroup">Create group</button>
+        <button id="refreshGroups" class="secondary">Refresh groups</button>
+        <button id="addDeviceToGroup" class="secondary">Add device → group</button>
+        <button id="removeDeviceFromGroup" class="secondary danger">Remove device from group</button>
+      </div>
+
+      <div id="deviceNotice" class="hint"></div>
+      <div class="device-grid">
+        <div>
+          <h3>Custom mappings (local)</h3>
+          <div id="aliasList" class="results"></div>
+        </div>
+        <div>
+          <h3>Devices from OTA API</h3>
+          <div id="deviceList" class="results"></div>
+        </div>
+      </div>
+      <div>
+        <h3>Groups from OTA API</h3>
+        <div id="groupList" class="results"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Quick Update</h2>
+      <p class="hint">Create/update campaign with preflight checks and multiple artifact sources.</p>
+      <div class="grid two">
+        <label>Device UUID<input id="updateDeviceUuid" type="text" placeholder="required" /></label>
+        <label>Device Group UUID<input id="updateGroupId" type="text" placeholder="required" /></label>
+        <label>Package Name<input id="updatePkgName" type="text" value="mypkg" /></label>
+        <label>Package Version<input id="updatePkgVersion" type="text" value="0.0.1" /></label>
+        <label>Update Name<input id="updateName" type="text" value="gui-update" /></label>
+        <label>Campaign Name<input id="campaignName" type="text" value="gui-campaign" /></label>
+        <label>File Name<input id="updateFileName" type="text" value="update.txt" /></label>
+        <label>
+          Campaigner API
+          <select id="campaignerVersion">
+            <option value="v2" selected>v2</option>
+            <option value="v1">v1</option>
+          </select>
+        </label>
+      </div>
+
+      <h3>Artifact Source</h3>
+      <div class="source-modes">
+        <label class="checkbox-line"><input type="radio" name="artifactSource" value="text" checked /> Text input</label>
+        <label class="checkbox-line"><input type="radio" name="artifactSource" value="file" /> File picker</label>
+        <label class="checkbox-line"><input type="radio" name="artifactSource" value="drop" /> Drag & drop</label>
+      </div>
+
+      <div id="textSourcePanel">
+        <label>
+          File Contents
+          <textarea id="updateFileContent" rows="8" placeholder="Type file contents here..."></textarea>
+        </label>
+      </div>
+
+      <div id="fileSourcePanel" class="hidden">
+        <label>
+          Choose File
+          <input id="updateFilePicker" type="file" />
+        </label>
+      </div>
+
+      <div id="dropSourcePanel" class="hidden">
+        <div id="dropZone" class="drop-zone">Drop a file here</div>
+        <div id="dropFileName" class="hint">No file selected.</div>
+      </div>
+
+      <label class="checkbox-line"><input id="launchCampaign" type="checkbox" checked /> Launch campaign automatically</label>
+
+      <div class="actions">
+        <button id="runPreflight" class="secondary">Run preflight checks</button>
+        <button id="createUpdateFromText">Create update</button>
+      </div>
+
+      <pre id="preflightOutput" class="response">Preflight output will appear here.</pre>
+      <pre id="updateFlowOutput" class="response">Update flow output will appear here.</pre>
+    </section>
+
+    <section class="card">
+      <h2>Remote Copy Helper (manual execution)</h2>
+      <p class="hint">Browser UIs cannot run <code>scp/rsync</code> on your host directly. This helper generates commands for you to run locally.</p>
+      <div class="grid two">
+        <label>Local Device UUID<input id="remoteDeviceUuid" type="text" placeholder="same as update device uuid" /></label>
+        <label>Local OTA root path<input id="remoteLocalRoot" type="text" value="./ota-ce-gen/devices" /></label>
+        <label>Remote user<input id="remoteUser" type="text" placeholder="user" /></label>
+        <label>Remote host<input id="remoteHost" type="text" placeholder="192.168.1.50" /></label>
+        <label>Remote path<input id="remotePath" type="text" value="~/ota-device" /></label>
+        <label>
+          Copy method
+          <select id="remoteMethod">
+            <option value="scp" selected>scp</option>
+            <option value="rsync">rsync</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="generateRemoteCommands" class="secondary">Generate commands</button>
+        <button id="copyRemoteCommands">Copy commands</button>
+      </div>
+      <pre id="remoteCommandOutput" class="response">Remote copy commands will appear here.</pre>
+    </section>
+
+
+
+    <section class="card">
+      <h2>Python E2E Flow Helper</h2>
+      <p class="hint">Uses <code>scripts/ota_e2e_flow.py</code> to run the complete flow from terminal with robust debug logs.</p>
+      <div class="actions">
+        <button id="fillPythonCmd" class="secondary">Fill from Quick Update fields</button>
+        <button id="copyPythonCmd">Copy python command</button>
+      </div>
+      <pre id="pythonCmdOutput" class="response">Python command will appear here.</pre>
+    </section>
+
+    <section class="card">
+      <h2>Campaign Monitor</h2>      <div class="grid two">
+        <label>Campaign UUID<input id="monitorCampaignId" type="text" placeholder="campaign id" /></label>
+        <label>
+          Auto refresh interval
+          <select id="monitorInterval">
+            <option value="0">Off</option>
+            <option value="5">5 seconds</option>
+            <option value="10" selected>10 seconds</option>
+            <option value="20">20 seconds</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="refreshCampaign">Refresh campaign status</button>
+        <button id="cancelCampaign" class="danger">Cancel campaign</button>
+      </div>
+      <div id="campaignSummary" class="results"></div>
+      <h3>Deliveries</h3>
+      <div id="deliveryList" class="results"></div>
+    </section>
+
+    <section class="card">
+      <h2>API Explorer</h2>
+      <div class="grid three">
+        <label>
+          Method
+          <select id="method"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select>
+        </label>
+        <label class="span-two">
+          Path
+          <input id="path" type="text" value="/api/v1/devices" placeholder="/api/v1/devices" />
+        </label>
+      </div>
+      <details>
+        <summary>OTA presets</summary>
+        <div class="presets">
+          <button class="preset" data-method="GET" data-path="/director/health/version">Director version</button>
+          <button class="preset" data-method="GET" data-path="/treehub/health/version">Treehub version</button>
+          <button class="preset" data-method="GET" data-path="/deviceregistry/health/version">Device Registry version</button>
+          <button class="preset" data-method="GET" data-path="/campaigner/health/version">Campaigner version</button>
+          <button class="preset" data-method="GET" data-path="/api/v1/devices">List devices</button>
+          <button class="preset" data-method="GET" data-path="/api/v1/campaigns">List campaigns</button>
+        </div>
+      </details>
+      <label>
+        JSON Body
+        <textarea id="body" rows="8" placeholder='{"name":"example"}'></textarea>
+      </label>
+      <button id="sendRequest">Send request</button>
+      <pre id="response" class="response">Response will appear here.</pre>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
