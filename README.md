@@ -83,6 +83,10 @@ If you don't have `sbt` or prefer to use a pre built image, you can use:
     export img=uptane/ota-lith:$(git rev-parse master)
     docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf $img -Dconfig.file=/tmp/ota-lith.conf
 
+## GUI interface
+
+A lightweight GUI for OTA CE is available in `gui/`, including service health, device/group management, quick update creation (text/file/drag-drop artifact sources), campaign monitoring, preflight checks, remote copy command generation for target devices, and an API explorer. See [GUI interface guide](docs/gui-interface.md) for usage instructions.
+
 ## Running With Docker Compose
 
 If you don't have kafka or mariadb running and just want to try ota-ce, run using docker-compose:
