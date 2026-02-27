@@ -83,6 +83,68 @@ If you don't have `sbt` or prefer to use a pre built image, you can use:
     export img=uptane/ota-lith:$(git rev-parse master)
     docker run --name=ota-lith -v $(pwd)/ota-lith.conf:/tmp/ota-lith.conf $img -Dconfig.file=/tmp/ota-lith.conf
 
+## GUI interface
+
+A lightweight GUI for OTA CE is available in `gui/`, including service health, device/group management, quick update creation (text/file/drag-drop artifact sources), campaign monitoring, preflight checks, remote copy command generation for target devices, and an API explorer. See [GUI interface guide](docs/gui-interface.md) for usage instructions.
+
+## GUI quickstart and feature guide
+
+### Start the GUI
+
+From the repository root:
+
+```bash
+python3 -m http.server 8080
+```
+
+Open `http://localhost:8080/gui/`.
+
+### What each panel does
+
+1. **Connection Settings**
+   - Set base URL (default `http://ota.ce`).
+   - Optionally paste bearer token.
+   - Use token show/hide and clear buttons.
+   - Keep **Safety mode** enabled to require confirmations for sensitive actions.
+
+2. **Service Health**
+   - Click **Check all** to query health endpoints of director/treehub/deviceregistry/campaigner/reposerver/keyserver.
+
+3. **Device & Group Management**
+   - Save local custom name ↔ device UUID mappings (stored in browser `localStorage`).
+   - Refresh devices from API and pick one into the forms.
+   - Create/refresh groups and add/remove device membership.
+
+4. **Quick Update**
+   - Fill device UUID, group UUID, package/update/campaign fields.
+   - Choose artifact source:
+     - text input,
+     - file picker,
+     - drag & drop.
+   - Run **preflight checks** before creation.
+   - Click **Create update** to run: target upload → MTU → update → campaign (and optional launch).
+
+5. **Remote Copy Helper**
+   - Generates `scp` or `rsync` commands to copy `ota-ce-gen/devices/:uuid` to a remote target.
+   - Generates SSH command to run `aktualizr` on the remote target.
+   - Use **Copy commands** and run them in your terminal.
+
+6. **Campaign Monitor**
+   - Set campaign UUID.
+   - Refresh manually or enable polling interval.
+   - View campaign summary and deliveries.
+   - Cancel campaign if needed.
+
+7. **API Explorer**
+   - Send custom API requests with method/path/json body.
+   - Use presets for common OTA endpoints.
+
+### Important operational notes
+
+- The GUI is browser-based and cannot execute host commands directly (for example, `scp`, `rsync`, `ssh`, or running `aktualizr`); it can only generate commands for you.
+- For external target devices, copy the generated `ota-ce-gen/devices/:uuid` folder to the target and run `aktualizr` there manually.
+- If APIs are protected, use a valid token and confirm hostnames in `/etc/hosts`.
+
 ## Running With Docker Compose
 
 If you don't have kafka or mariadb running and just want to try ota-ce, run using docker-compose:
