@@ -47,6 +47,11 @@ Docker / packageName := packageName.value
 
 dockerUpdateLatest := true
 
+// The dockerCommands below ADD a flat "opt" directory. Since sbt-native-packager
+// 1.7 the stage directory is split into numbered layer directories (1/opt, 2/opt)
+// by default, so without this setting "ADD opt /opt" fails on a clean checkout.
+Docker / dockerGroupLayers := PartialFunction.empty
+
 Docker / dockerAliases ++= Seq(dockerAlias.value.withTag(git.gitHeadCommit.value))
 
 Docker / defaultLinuxInstallLocation := s"/opt/${moduleName.value}"
@@ -59,6 +64,8 @@ dockerCommands := Seq(
   ExecCmd("ENTRYPOINT", s"/opt/${moduleName.value}/bin/${moduleName.value}"),
   Cmd("RUN", s"chown -R daemon:daemon /opt/${moduleName.value}"),
   Cmd("RUN", s"mkdir /var/lib/${moduleName.value}"),
+  // treehub only creates its object-storage directory if the parent already exists
+  Cmd("RUN", s"mkdir -p /var/lib/${moduleName.value}/treehub-objects"),
   Cmd("RUN", s"chown -R daemon:daemon /var/lib/${moduleName.value}"),
   Cmd("RUN", s"chown -R daemon:daemon /var/log/${moduleName.value}"),
   Cmd("USER", "daemon")

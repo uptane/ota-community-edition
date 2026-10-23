@@ -1,98 +1,91 @@
-# Obtain valid credentials
+# Deploy an update using the API
 
-Using `script/get-credentials.sh`. You don't need the credentials themselves as the default configuration of ota-lith runs without auth, but the script to obtain credentials.zip will create the necessary resources on the server.
+These steps use the services directly through the reverse proxy. The
+default ota-lith configuration runs without authentication; all requests
+use the `default` namespace.
 
-# Create a device
+    NS='x-ats-namespace: default'
 
-Provision a device with a specific hardware id
+## Prerequisites
 
-Get uuid and hardware id from device. `scripts/gen-device.sh` uses `ota-ce-device`.
+1. Run `scripts/get-credentials.sh`. You don't need the credentials
+   themselves for the API calls below, but the script creates the image
+   and director repositories on the server.
 
-# Create device group
+2. Provision a device with `scripts/gen-device.sh` and run `aktualizr`
+   once so it registers its ECUs. Note the device uuid (the name of the
+   directory under `ota-ce-gen/devices/`). `gen-device.sh` uses the
+   hardware id `ota-ce-device`.
 
-http://deviceregistry.ota.ce/api/v1/device_groups
+       DEVICE=<device uuid>
+       HWID=ota-ce-device
 
-    {
-      "name": "esc-dev-group",
-      "groupType": "static",
-      "expression": null
-    }
+## Upload a target to the image repository
 
-Save id to use in campaign below
+Any file works as a test payload. Reposerver stores the file and signs
+the new `targets.json` with its online targets key.
 
-# Add device to group
+    echo "hello from ota-ce" > /tmp/mypkg-0.0.1.bin
+    HASH=$(sha256sum /tmp/mypkg-0.0.1.bin | cut -d' ' -f1)
+    LEN=$(stat -c%s /tmp/mypkg-0.0.1.bin)
 
-`POST http://deviceregistry.ota.ce/api/v1/device_groups/:group-id/devices/:device-id`
+    curl -sf -X PUT -H "$NS" \
+      "http://reposerver.ota.ce/api/v1/user_repo/targets/mypkg_0.0.1?name=mypkg&version=0.0.1&hardwareIds=$HWID" \
+      -F file=@/tmp/mypkg-0.0.1.bin
 
-# Create software version
+Check that the target is listed:
 
-Use hardwareid from device, some random jpeg will work or any binary file.
+    curl -s -H "$NS" http://reposerver.ota.ce/api/v1/user_repo/targets.json | jq '.signed.targets["mypkg_0.0.1"]'
 
-    curl -X PUT 'http://reposerver.ota.ce/api/v1/user_repo/targets/mypkg_0.0.2?name=mypkg&version=0.0.2&hardwareIds=ota-ce-device' -F file=@path/to/binary.bin`
+## Assign the update to a device
 
-Use name/version below.
+The keys of `targets` are ECU hardware ids. The response is the id of
+the new update.
 
-# Create Multi target Update
-
-Get these value from targets.json
-
-POST http://director.ota.ce/api/v1/multi_target_updates
-
+    curl -s -X POST -H "$NS" -H 'Content-Type: application/json' \
+      "http://director.ota.ce/api/v1/updates/devices/$DEVICE" -d @- <<EOF
     {
       "targets": {
-        "ota-ce-device": {
+        "$HWID": {
           "to": {
-            "target": "mypkg_0.0.2",
-            "checksum": {
-              "method": "sha256",
-              "hash": "b02a1d4166c0c89f87ecd90ddff0ba059b219e2b4473cb9f075aeded349a4e4b"
-            },
-            "targetLength": 35445
-          },
-          "targetFormat": "BINARY",
-          "generateDiff": false
+            "target": "mypkg_0.0.1",
+            "checksum": { "method": "sha256", "hash": "$HASH" },
+            "targetLength": $LEN
+          }
         }
       }
     }
+    EOF
 
-Save the response uuid
+To assign the same update to several devices at once, `POST` to
+`http://director.ota.ce/api/v1/updates/devices` with a `devices` array
+next to `targets`.
 
-# Create update
+The assignment is now queued for the device:
 
-Use id from previous step here.
+    curl -s -H "$NS" "http://director.ota.ce/api/v1/assignments/$DEVICE"
 
-POST http://campaigner.ota.ce/api/v2/updates
+## Install the update
 
-    {
-      "updateSource": {
-        "id": "39a20483-fcb2-4cd0-a7ca-6c1774235bd4",
-        "sourceType": "multi_target"
-      },
-      "name": "esc-upd-01",
-      "description": "esc-upd-01"
-    }
+Run aktualizr again from the device directory:
 
-Save response uuid
+    aktualizr --run-mode=once --config=config.toml
 
-# Create campaign
+aktualizr finds the target in director's `targets.json`, verifies it
+against the image repository metadata, downloads it through the
+gateway and installs it. With `[pacman] type = "none"` (as in the
+generated `config.toml`) nothing is installed on the host system.
 
-Use uuid here
+## Check the result
 
-POST http://campaigner.ota.ce/api/v2/campaigns
+    curl -s -H "$NS" "http://director.ota.ce/api/v1/updates/devices/$DEVICE"
+    curl -s -H "$NS" "http://director.ota.ce/api/v1/assignments/$DEVICE"   # empty once installed
 
-    {
-      "name": "esc-campaign-01",
-      "update": "62a675fa-fed0-4b70-b1c5-e38a65a313ac",
-      "groups": [
-        ":group id uuid from above"
-      ],
-      "approvalNeeded": false
-    }
+## Legacy API
 
-Save response uuid
-
-# Launch campaign
-
-Use id here
-
-`POST http://campaigner.ota.ce/api/v2/campaigns/77db80b3-7397-4a6c-bb74-b08900493baf/launch`
+director still supports the multi-target-update flow used by previous
+versions: `POST /api/v1/multi_target_updates` with the same `targets`
+body, followed by `POST /api/v1/assignments` with
+`{"correlationId": "urn:here-ota:mtu:<id>", "devices": [...], "mtuId": "<id>"}`.
+Campaigns and device groups are not available, as campaigner was
+removed in v3.

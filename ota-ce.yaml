@@ -6,8 +6,9 @@
 
 services:
   reverse-proxy:
-    # The official v2 Traefik docker image
-    image: traefik:v2.3
+    # Traefik >= 3.6 negotiates the Docker API version; older releases use API
+    # 1.24, which current Docker Engine releases reject.
+    image: traefik:v3.6
     # Enables the web UI and tells Traefik to listen to docker
     command: --api.insecure=true --providers.docker --providers.docker.exposedbydefault=false
     ports:
@@ -63,7 +64,8 @@ services:
       retries: 10
 
   ota-lith:
-    build: .
+    # Built with `sbt docker:publishLocal`; there is no Dockerfile in the repo root
+    image: uptane/ota-lith:latest
     restart: always
     depends_on:
       db:
@@ -88,7 +90,7 @@ services:
       - ./ota-lith-ce.conf:/tmp/ota-lith.conf:ro
       - objects:/var/lib/ota-lith
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7100/health/version || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:7100/health/version"]
       interval: 30s
       timeout: 10s
       retries: 3

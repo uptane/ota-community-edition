@@ -1,8 +1,15 @@
+> **Note for OTA CE v3:** campaigner and the standalone device-registry
+> service have been removed. The device-registry API is now served by
+> director under `http://director.ota.ce/device-registry`, and the
+> "With a campaign" flow below is not available. These instructions have
+> not been re-verified against v3; see [api-updates.md](api-updates.md)
+> for a tested flow using the API directly.
+
 # Setup device and credentials
 
 1. Run `scripts/gen-device.sh`.
 
-2. Run `scripts/get-credentials.zip`
+2. Run `scripts/get-credentials.sh`
 
 Use ota-cli. In the commands bellow use `cargo run --` instead of `ota` if you are running `ota-cli` from source.
 

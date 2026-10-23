@@ -60,6 +60,6 @@ tls_clientcert_path = "client.pem"
 tls_pkey_path = "pkey.pem"
 EOF
 
-curl -X PUT -d "${body}" http://deviceregistry.ota.ce/api/v1/devices -s -S -v -H "Content-Type: application/json" -H "Accept: application/json, */*"
+curl -X PUT -d "${body}" http://director.ota.ce/device-registry/api/v1/devices -s -S -v -H "Content-Type: application/json" -H "Accept: application/json, */*"
 
 echo "https://ota.ce:30443" > ${device_dir}/gateway.url
