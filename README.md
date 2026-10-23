@@ -108,7 +108,7 @@ The simplest way to deploy ota-community-edition is using docker-compose. This w
 `docker-compose -f ota-ce.yaml up`
 
 The docker-compose configuration will:
-- Build the ota-lith image from the local source
+- Use the ota-lith image built in the previous step (`uptane/ota-lith:latest`)
 - Start MariaDB 10.11 with automatic database initialization
 - Start all HTTP API services (reposerver, keyserver, director, treehub) and background daemons in a single container
 - Use the test message bus mode (no Kafka required for simple deployments)
@@ -120,21 +120,30 @@ Note: Kafka and Zookeeper are commented out in the docker-compose file since the
 
 For example `curl director.ota.ce/health/version`
 
-6. You can now create device credentials and provision devices
+6. Create the TUF repositories
+
+Run `scripts/get-credentials.sh` (requires `jq` and `zip`). Besides
+writing `ota-ce-gen/credentials.zip`, this creates the image and
+director repositories for the `default` namespace. Devices are rejected
+(HTTP 403) until these repositories exist, so run it before provisioning
+the first device. If it fails while fetching `root.json`, wait a few
+seconds for the keys to be generated and run it again.
+
+7. You can now create device credentials and provision devices
 
 Run `scripts/gen-device.sh`. This will create a new dir in `ota-ce-gen/devices/:uuid` where `uuid` is the id of the new device. You can run `aktualizr` in that directory using:
 
     aktualizr --run-mode=once --config=config.toml
     
-7. You can now deploy updates to the devices
+8. You can now deploy updates to the devices
 
 ## Deploy updates
 
 You can either use the API directly or use [ota-cli](https://github.com/simao/ota-cli/) to deploy updates. After provisioning devices (see above).
 
-Before using the api or `ota-cli` you will need to generate a valid `credentials.zip`. Run `scripts/get-credentials.zip`.
+Before using the api or `ota-cli` you will need a valid `credentials.zip`, created by `scripts/get-credentials.sh` (see step 6 above).
 
-To deploy an update using the API and a custom campaign, see [api-updates.md](docs/api-updates.md).
+To deploy an update using the API, see [api-updates.md](docs/api-updates.md).
 
 To deploy an update using [ota-cli](https://github.com/simao/ota-cli/) with or without a custom campaign see [updates-ota-cli.md](docs/updates-ota-cli.md).
 
